@@ -1,8 +1,10 @@
-from fastapi import FastAPI
+from uuid import UUID
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
 from app.core.config import settings
+from app.services.websocket import ws_manager
 
 app = FastAPI(
     title="Casa de Leiloes Verzel API",
@@ -19,6 +21,16 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+
+
+@app.websocket("/ws/lots/{lot_id}")
+async def lot_websocket_endpoint(websocket: WebSocket, lot_id: UUID):
+    await ws_manager.connect(lot_id, websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        ws_manager.disconnect(lot_id, websocket)
 
 
 @app.get("/health")
