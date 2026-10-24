@@ -109,8 +109,12 @@ async def fetch_external_artworks(query: str | None = None) -> list[dict[str, An
 
     url = f"{settings.ARTIC_API_BASE_URL.rstrip('/')}/artworks/search"
     timeout = httpx.Timeout(settings.ARTIC_TIMEOUT_SECONDS)
+    headers = {
+        "User-Agent": "LeilaoVerzel/1.0 (contato@verzel.com.br; avaliacao-tecnica)",
+        "Accept": "application/json",
+    }
 
-    async with httpx.AsyncClient(timeout=timeout) as client:
+    async with httpx.AsyncClient(timeout=timeout, headers=headers) as client:
         response = await client.get(url, params=params)
         response.raise_for_status()
         payload = response.json()
