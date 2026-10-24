@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <!-- Céu azul claro de Iowa -->
+  <rect width="800" height="600" fill="#c7d8e6"/>
+  <!-- Árvores ao fundo -->
+  <circle cx="145" cy="240" r="85" fill="#4d6e46"/>
+  <circle cx="665" cy="250" r="80" fill="#55784c"/>
+  <!-- Casa em estilo Carpinteiro Gótico -->
+  <polygon points="400,55 615,235 185,235" fill="#f4f1e8" stroke="#7d7668" stroke-width="4"/>
+  <rect x="215" y="235" width="370" height="260" fill="#f4f1e8" stroke="#7d7668" stroke-width="4"/>
+  <!-- Janela em arco ogival gótico -->
+  <path d="M355,215 L355,145 Q400,90 445,145 L445,215 Z" fill="#3a4a54" stroke="#695e4c" stroke-width="5"/>
+  <line x1="400" y1="108" x2="400" y2="215" stroke="#f4f1e8" stroke-width="4"/>
+  <path d="M355,165 Q400,130 445,165" fill="none" stroke="#f4f1e8" stroke-width="4"/>
+  <!-- Mulher à esquerda -->
+  <polygon points="180,395 365,395 385,600 160,600" fill="#232429"/>
+  <polygon points="210,405 335,405 350,600 195,600" fill="#7a4c32"/>
+  <polygon points="245,395 300,395 272,435" fill="#f2ede2"/>
+  <circle cx="272" cy="412" r="9" fill="#c99b68"/>
+  <rect x="255" y="345" width="34" height="52" fill="#e5c2a3"/>
+  <ellipse cx="272" cy="285" rx="50" ry="66" fill="#e8c7a7"/>
+  <path d="M222,275 Q272,200 322,275" fill="#b8924e"/>
+  <circle cx="254" cy="282" r="5" fill="#2c353d"/>
+  <circle cx="290" cy="282" r="5" fill="#2c353d"/>
+  <line x1="258" y1="322" x2="286" y2="322" stroke="#8c5a4c" stroke-width="3"/>
+  <!-- Fazendeiro à direita -->
+  <polygon points="415,375 645,375 665,600 395,600" fill="#1e2229"/>
+  <polygon points="455,375 605,375 615,600 445,600" fill="#3c5a78"/>
+  <rect x="468" y="375" width="14" height="165" fill="#2c445c"/>
+  <rect x="578" y="375" width="14" height="165" fill="#2c445c"/>
+  <rect x="510" y="325" width="40" height="55" fill="#deb896"/>
+  <ellipse cx="530" cy="255" rx="54" ry="72" fill="#e3be9b"/>
+  <!-- Óculos redondos -->
+  <circle cx="508" cy="252" r="16" fill="none" stroke="#4a443b" stroke-width="3"/>
+  <circle cx="552" cy="252" r="16" fill="none" stroke="#4a443b" stroke-width="3"/>
+  <line x1="524" y1="252" x2="536" y2="252" stroke="#4a443b" stroke-width="3"/>
+  <circle cx="508" cy="252" r="4" fill="#23272e"/>
+  <circle cx="552" cy="252" r="4" fill="#23272e"/>
+  <line x1="510" y1="296" x2="550" y2="296" stroke="#7a5244" stroke-width="3"/>
+  <!-- Forcado de três dentes (Pitchfork) -->
+  <line x1="435" y1="340" x2="435" y2="600" stroke="#5c4028" stroke-width="8"/>
+  <path d="M402,210 L402,325 Q402,345 435,345 Q468,345 468,325 L468,210" fill="none" stroke="#3c424a" stroke-width="5"/>
+  <line x1="435" y1="205" x2="435" y2="345" stroke="#3c424a" stroke-width="5"/>
+</svg>

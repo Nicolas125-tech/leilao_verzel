@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 540" width="800" height="540">
+  <!-- Céu cinza-perolado de Paris -->
+  <rect width="800" height="270" fill="#d8dce0"/>
+  <!-- Edifícios Haussmannianos ao fundo -->
+  <polygon points="185,95 435,125 435,285 185,285" fill="#b8afa0"/>
+  <polygon points="435,125 585,140 585,285 435,285" fill="#9e9587"/>
+  <rect x="0" y="75" width="135" height="220" fill="#a89e8e"/>
+  <!-- Calçamento de paralelepípedos molhados -->
+  <polygon points="0,285 800,285 800,540 0,540" fill="#8f949c"/>
+  <polygon points="360,285 800,285 800,540 240,540" fill="#7c828c"/>
+  <!-- Poste de gás parisiense -->
+  <rect x="382" y="45" width="9" height="395" fill="#2c3830"/>
+  <polygon points="370,45 402,45 395,22 377,22" fill="#46574c"/>
+  <!-- Casal em primeiro plano sob guarda-chuva -->
+  <path d="M445,215 Q585,135 725,215 Z" fill="#2b3340"/>
+  <circle cx="605" cy="252" r="16" fill="#e6c4a8"/>
+  <polygon points="575,270 640,270 655,540 562,540" fill="#1e222b"/>
+  <circle cx="535" cy="260" r="15" fill="#ebcbb0"/>
+  <polygon points="505,278 565,278 575,540 495,540" fill="#2c3340"/>
+  <!-- Pedestres com guarda-chuvas ao fundo -->
+  <path d="M210,255 Q245,232 280,255 Z" fill="#323a47"/>
+  <rect x="236" y="260" width="18" height="75" fill="#232830"/>
+</svg>

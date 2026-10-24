@@ -6,10 +6,26 @@ import { catalogApi, lotsApi, settlementApi } from "../services/api.ts";
 import type {
   AuctioneerDashboard,
   CatalogItem,
+  LotStatus,
 } from "../types/api.ts";
 import { formatBrlCents, parseBrlToCents } from "../utils/formatters.ts";
 
 type AuctioneerTab = "management" | "catalog";
+
+function formatStatusPt(status: LotStatus): string {
+  switch (status) {
+    case "LIVE":
+      return "Ao vivo";
+    case "SCHEDULED":
+      return "Agendado";
+    case "ENDED":
+      return "Encerrado";
+    case "CANCELLED":
+      return "Cancelado";
+    default:
+      return status;
+  }
+}
 
 export const AuctioneerDashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -44,31 +60,34 @@ export const AuctioneerDashboardPage: React.FC = () => {
         message:
           err instanceof Error
             ? err.message
-            : "Falha ao carregar painel do leiloeiro.",
+            : "Falha ao carregar o painel do leiloeiro.",
       });
     } finally {
       setIsLoadingDashboard(false);
     }
   }, [user]);
 
-  const loadCatalog = useCallback(async (q?: string) => {
-    setIsLoadingCatalog(true);
-    try {
-      const items = await catalogApi.search(q);
-      setCatalogItems(items);
-      if (items.length > 0 && !selectedArtwork) {
-        setSelectedArtwork(items[0]);
+  const loadCatalog = useCallback(
+    async (q?: string) => {
+      setIsLoadingCatalog(true);
+      try {
+        const items = await catalogApi.search(q);
+        setCatalogItems(items);
+        if (items.length > 0 && !selectedArtwork) {
+          setSelectedArtwork(items[0]);
+        }
+      } catch (err) {
+        setFeedback({
+          type: "error",
+          message:
+            err instanceof Error ? err.message : "Erro ao consultar catálogo.",
+        });
+      } finally {
+        setIsLoadingCatalog(false);
       }
-    } catch (err) {
-      setFeedback({
-        type: "error",
-        message:
-          err instanceof Error ? err.message : "Erro ao consultar catalogo.",
-      });
-    } finally {
-      setIsLoadingCatalog(false);
-    }
-  }, [selectedArtwork]);
+    },
+    [selectedArtwork],
+  );
 
   useEffect(() => {
     void loadDashboard();
@@ -84,11 +103,11 @@ export const AuctioneerDashboardPage: React.FC = () => {
     return (
       <main className="mx-auto max-w-[1280px] px-4 py-12 sm:px-6">
         <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-8">
-          <h1 className="font-serif text-2xl font-semibold text-paper-text dark:text-charcoal-text">
-            Acesso Exclusivo ao Leiloeiro
+          <h1 className="font-sans text-xl font-semibold text-paper-text dark:text-charcoal-text">
+            Acesso exclusivo ao leiloeiro
           </h1>
           <p className="mt-2 text-sm text-paper-subtext dark:text-charcoal-subtext">
-            Autentique-se com o perfil Leiloeiro (Helena Curadora) na barra superior para gerenciar lotes e catalogar obras do Art Institute of Chicago.
+            Selecione o perfil de leiloeira (Helena Curadora) na barra superior para gerenciar lotes e publicar obras.
           </p>
         </div>
       </main>
@@ -101,7 +120,7 @@ export const AuctioneerDashboardPage: React.FC = () => {
       await lotsApi.cancel(lotId);
       setFeedback({
         type: "success",
-        message: `Lote #${lotNumber} cancelado com sucesso. Eventual saldo comprometido do lider foi estornado imediatamente.`,
+        message: `Lote #${lotNumber} cancelado. O saldo comprometido do líder foi estornado.`,
       });
       await loadDashboard();
     } catch (err) {
@@ -122,7 +141,7 @@ export const AuctioneerDashboardPage: React.FC = () => {
     if (startingBidCents <= 0 || minIncrementCents <= 0) {
       setFeedback({
         type: "error",
-        message: "Lance inicial e incremento minimo devem ser maiores que zero.",
+        message: "Lance inicial e incremento mínimo devem ser maiores que zero.",
       });
       return;
     }
@@ -135,7 +154,7 @@ export const AuctioneerDashboardPage: React.FC = () => {
       endTime = new Date(now.getTime() + 30 * 60 * 1000);
     } else if (windowPreset === "live_2m") {
       startTime = new Date(now.getTime() - 60 * 1000);
-      endTime = new Date(now.getTime() + 105 * 1000); // Dentro da janela de 120s para testar Anti-Sniping imediato
+      endTime = new Date(now.getTime() + 105 * 1000);
     } else {
       startTime = new Date(now.getTime() + 60 * 60 * 1000);
       endTime = new Date(now.getTime() + 4 * 60 * 60 * 1000);
@@ -159,7 +178,7 @@ export const AuctioneerDashboardPage: React.FC = () => {
       });
       setFeedback({
         type: "success",
-        message: `Lote #${created.lot_number} (${created.title}) publicado com copia integral dos metadados no PostgreSQL.`,
+        message: `Lote #${created.lot_number} (${created.title}) publicado com sucesso.`,
       });
       await loadDashboard();
       setActiveTab("management");
@@ -178,41 +197,40 @@ export const AuctioneerDashboardPage: React.FC = () => {
     <main className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6">
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-paper-border dark:border-charcoal-border pb-6">
         <div>
-          <h1 className="font-serif text-3xl font-semibold text-paper-text dark:text-charcoal-text">
-            Painel de Curadoria &amp; Gestao de Pregao
+          <h1 className="font-sans text-2xl font-semibold tracking-tight text-paper-text dark:text-charcoal-text sm:text-3xl">
+            Painel do Leiloeiro
           </h1>
           <p className="mt-1.5 text-sm text-paper-subtext dark:text-charcoal-subtext">
-            Acompanhe a receita liquidada dos arremates, cancele lotes com estorno automatico ou catalogue novas obras do Art Institute of Chicago.
+            Acompanhe os lotes publicados, o faturamento recebido e cadastre novas obras.
           </p>
         </div>
 
-        {/* Seletor das duas abas confirmadas no Shape Brief */}
         <div className="flex items-center gap-2" role="tablist">
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === "management"}
             onClick={() => setActiveTab("management")}
-            className={`rounded-sm border px-4 py-2 font-mono text-xs font-medium transition-colors ${
+            className={`rounded-sm border px-4 py-2 text-xs font-medium transition-colors ${
               activeTab === "management"
                 ? "border-paper-text bg-paper-text text-paper-surface dark:border-charcoal-text dark:bg-charcoal-text dark:text-charcoal-bg"
                 : "border-paper-border bg-paper-surface text-paper-subtext dark:border-charcoal-border dark:bg-charcoal-surface dark:text-charcoal-subtext"
             }`}
           >
-            LOTES E FATURAMENTO
+            Lotes e Faturamento
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === "catalog"}
             onClick={() => setActiveTab("catalog")}
-            className={`rounded-sm border px-4 py-2 font-mono text-xs font-medium transition-colors ${
+            className={`rounded-sm border px-4 py-2 text-xs font-medium transition-colors ${
               activeTab === "catalog"
                 ? "border-primary bg-primary text-white"
                 : "border-paper-border bg-paper-surface text-paper-subtext dark:border-charcoal-border dark:bg-charcoal-surface dark:text-charcoal-subtext"
             }`}
           >
-            CATALOGAR NOVA OBRA
+            Catalogar Nova Obra
           </button>
         </div>
       </div>
@@ -232,66 +250,64 @@ export const AuctioneerDashboardPage: React.FC = () => {
 
       {activeTab === "management" ? (
         <div className="mt-6">
-          {/* Metricas Financeiras do Leiloeiro */}
           {dashboard && (
             <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-5">
-                <span className="font-mono text-xs uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-                  Faturamento Total Recebido
+                <span className="text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                  Faturamento total recebido
                 </span>
-                <p className="mt-2 font-sans text-2xl font-bold tabular-nums text-status-winning">
+                <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-status-winning">
                   {formatBrlCents(dashboard.total_revenue_cents)}
                 </p>
               </div>
 
               <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-5">
-                <span className="font-mono text-xs uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-                  Lotes Liquidados c/ Vencedor
+                <span className="text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                  Lotes liquidados com vencedor
                 </span>
-                <p className="mt-2 font-sans text-2xl font-bold tabular-nums text-paper-text dark:text-charcoal-text">
+                <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-paper-text dark:text-charcoal-text">
                   {dashboard.settled_with_winner_count}
                 </p>
               </div>
 
               <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-5">
-                <span className="font-mono text-xs uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-                  Lotes Ativos (Ao Vivo / Agendados)
+                <span className="text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                  Lotes ativos (ao vivo ou agendados)
                 </span>
-                <p className="mt-2 font-sans text-2xl font-bold tabular-nums text-paper-text dark:text-charcoal-text">
+                <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-paper-text dark:text-charcoal-text">
                   {dashboard.active_lots_count}
                 </p>
               </div>
             </section>
           )}
 
-          {/* Tabela Gerencial de Lotes */}
           <section className="mt-6 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface">
             <div className="border-b border-paper-border dark:border-charcoal-border px-6 py-4">
-              <h2 className="font-serif text-xl font-semibold text-paper-text dark:text-charcoal-text">
-                Acervo Publicado pelo Leiloeiro
+              <h2 className="font-sans text-lg font-semibold text-paper-text dark:text-charcoal-text">
+                Lotes publicados
               </h2>
             </div>
 
             {isLoadingDashboard ? (
               <div className="p-6 text-sm text-paper-subtext dark:text-charcoal-subtext">
-                Carregando lotes gerenciados...
+                Carregando lotes...
               </div>
             ) : !dashboard || dashboard.lots.length === 0 ? (
               <div className="p-6 text-sm text-paper-subtext dark:text-charcoal-subtext">
-                Nenhum lote publicado ainda. Utilize a aba Catalogar Nova Obra.
+                Nenhum lote publicado ainda. Use a aba Catalogar Nova Obra.
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-left text-sm">
                   <thead>
-                    <tr className="border-b border-paper-border dark:border-charcoal-border bg-paper-muted/50 dark:bg-charcoal-muted/50 font-mono text-xs uppercase text-paper-subtext dark:text-charcoal-subtext">
+                    <tr className="border-b border-paper-border dark:border-charcoal-border bg-paper-muted/50 dark:bg-charcoal-muted/50 text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
                       <th className="px-5 py-3">Lote</th>
                       <th className="px-5 py-3">Obra / Artista</th>
                       <th className="px-5 py-3">Status</th>
                       <th className="px-5 py-3 text-right">Lances</th>
-                      <th className="px-5 py-3 text-right">Maior Oferta / Inicial</th>
-                      <th className="px-5 py-3">Lider / Vencedor</th>
-                      <th className="px-5 py-3 text-right">Acoes</th>
+                      <th className="px-5 py-3 text-right">Maior oferta / Inicial</th>
+                      <th className="px-5 py-3">Líder / Vencedor</th>
+                      <th className="px-5 py-3 text-right">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -306,7 +322,7 @@ export const AuctioneerDashboardPage: React.FC = () => {
                         <td className="px-5 py-3.5">
                           <Link
                             to={`/lots/${lot.id}`}
-                            className="font-serif text-base font-semibold hover:underline"
+                            className="font-sans text-sm font-semibold hover:underline"
                           >
                             {lot.title}
                           </Link>
@@ -314,8 +330,8 @@ export const AuctioneerDashboardPage: React.FC = () => {
                             {lot.artist}
                           </span>
                         </td>
-                        <td className="px-5 py-3.5 font-mono text-xs">
-                          {lot.status}
+                        <td className="px-5 py-3.5 text-xs font-medium">
+                          {formatStatusPt(lot.status)}
                         </td>
                         <td className="px-5 py-3.5 text-right font-mono text-xs tabular-nums">
                           {lot.bid_count}
@@ -333,9 +349,9 @@ export const AuctioneerDashboardPage: React.FC = () => {
                             {lot.certificate && (
                               <Link
                                 to={`/receipts/${lot.certificate.receipt_code}`}
-                                className="rounded-sm border border-gold px-2.5 py-1 font-mono text-xs text-gold hover:bg-gold/10"
+                                className="rounded-sm border border-gold px-2.5 py-1 text-xs font-medium text-gold hover:bg-gold/10"
                               >
-                                {lot.certificate.receipt_code}
+                                Ver comprovante
                               </Link>
                             )}
                             {(lot.status === "LIVE" ||
@@ -345,9 +361,9 @@ export const AuctioneerDashboardPage: React.FC = () => {
                                 onClick={() =>
                                   void handleCancelLot(lot.id, lot.lot_number)
                                 }
-                                className="rounded-sm border border-status-outbid px-2.5 py-1 font-mono text-xs text-status-outbid hover:bg-status-outbid hover:text-white"
+                                className="rounded-sm border border-status-outbid px-2.5 py-1 text-xs font-medium text-status-outbid hover:bg-status-outbid hover:text-white"
                               >
-                                Cancelar Lote
+                                Cancelar lote
                               </button>
                             )}
                           </div>
@@ -361,7 +377,6 @@ export const AuctioneerDashboardPage: React.FC = () => {
           </section>
         </div>
       ) : (
-        /* Aba 2: Catalogar Nova Obra */
         <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-12">
           <section className="lg:col-span-7">
             <form
@@ -381,9 +396,9 @@ export const AuctioneerDashboardPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoadingCatalog}
-                className="h-[42px] rounded-sm border border-paper-text dark:border-charcoal-text bg-paper-text dark:bg-charcoal-text px-4 font-mono text-xs font-semibold text-paper-surface dark:text-charcoal-bg"
+                className="h-[42px] rounded-sm border border-paper-text dark:border-charcoal-text bg-paper-text dark:bg-charcoal-text px-4 text-xs font-semibold text-paper-surface dark:text-charcoal-bg"
               >
-                {isLoadingCatalog ? "Buscando..." : "Buscar Acervo"}
+                {isLoadingCatalog ? "Buscando..." : "Buscar acervo"}
               </button>
             </form>
 
@@ -409,14 +424,14 @@ export const AuctioneerDashboardPage: React.FC = () => {
                       aspectClassName="h-40"
                     />
                     <div className="mt-3 flex items-center justify-between">
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
+                      <span className="font-mono text-[10px] text-paper-subtext dark:text-charcoal-subtext">
                         ID #{item.external_id}
                       </span>
-                      <span className="font-mono text-[10px] uppercase text-gold">
-                        Fonte: {item.source === "artic" ? "Art Institute API" : "Contingencia Local"}
+                      <span className="text-[10px] font-medium text-gold">
+                        {item.source === "artic" ? "Art Institute API" : "Acervo local"}
                       </span>
                     </div>
-                    <h3 className="mt-1 font-serif text-lg font-semibold text-paper-text dark:text-charcoal-text">
+                    <h3 className="mt-1 font-sans text-base font-semibold text-paper-text dark:text-charcoal-text">
                       {item.title}
                     </h3>
                     <p className="text-xs text-paper-subtext dark:text-charcoal-subtext">
@@ -430,8 +445,8 @@ export const AuctioneerDashboardPage: React.FC = () => {
 
           <section className="lg:col-span-5">
             <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-6">
-              <h2 className="font-serif text-2xl font-semibold text-paper-text dark:text-charcoal-text">
-                Configurar e Publicar Lote
+              <h2 className="font-sans text-lg font-semibold text-paper-text dark:text-charcoal-text">
+                Publicar novo lote
               </h2>
 
               {selectedArtwork ? (
@@ -447,18 +462,18 @@ export const AuctioneerDashboardPage: React.FC = () => {
                   />
 
                   <div className="border-b border-paper-border dark:border-charcoal-border pb-3">
-                    <h3 className="font-serif text-xl font-semibold">
+                    <h3 className="font-sans text-base font-semibold">
                       {selectedArtwork.title}
                     </h3>
                     <p className="text-xs text-paper-subtext dark:text-charcoal-subtext">
-                      {selectedArtwork.artist} — {selectedArtwork.date_display} ({selectedArtwork.medium_display})
+                      {selectedArtwork.artist} ({selectedArtwork.date_display}) - {selectedArtwork.medium_display}
                     </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-mono text-xs uppercase text-paper-subtext dark:text-charcoal-subtext">
-                        Lance Inicial (R$)
+                      <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                        Lance inicial (R$)
                       </label>
                       <input
                         type="text"
@@ -469,8 +484,8 @@ export const AuctioneerDashboardPage: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="block font-mono text-xs uppercase text-paper-subtext dark:text-charcoal-subtext">
-                        Incremento Min. (R$)
+                      <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                        Incremento mínimo (R$)
                       </label>
                       <input
                         type="text"
@@ -483,8 +498,8 @@ export const AuctioneerDashboardPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block font-mono text-xs uppercase text-paper-subtext dark:text-charcoal-subtext">
-                      Janela de Pregao
+                    <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                      Duração do lote
                     </label>
                     <select
                       value={windowPreset}
@@ -496,13 +511,13 @@ export const AuctioneerDashboardPage: React.FC = () => {
                       className="mt-1 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3 text-sm"
                     >
                       <option value="live_30m">
-                        Iniciar Ao Vivo Agora (Duracao: 30 minutos)
+                        Iniciar ao vivo agora (duração: 30 minutos)
                       </option>
                       <option value="live_2m">
-                        Iniciar nos Ultimos 105s (Ideal p/ testar Anti-Sniping +2 min)
+                        Iniciar nos últimos 105s (para testar prorrogação +2 min)
                       </option>
                       <option value="scheduled_1h">
-                        Agendar Inicio para +1 Hora (Status: SCHEDULED)
+                        Agendar início para daqui a 1 hora
                       </option>
                     </select>
                   </div>
@@ -512,9 +527,7 @@ export const AuctioneerDashboardPage: React.FC = () => {
                     disabled={isSubmittingLot}
                     className="w-full rounded-sm border border-primary bg-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
                   >
-                    {isSubmittingLot
-                      ? "Publicando Lote..."
-                      : "Publicar Lote no Pregao"}
+                    {isSubmittingLot ? "Publicando..." : "Publicar lote"}
                   </button>
                 </form>
               ) : (

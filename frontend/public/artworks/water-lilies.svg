@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 540" width="800" height="540">
+  <defs>
+    <linearGradient id="wl-pond" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#2c4f6e"/>
+      <stop offset="45%" stop-color="#3a6b7c"/>
+      <stop offset="80%" stop-color="#4d6382"/>
+      <stop offset="100%" stop-color="#283d54"/>
+    </linearGradient>
+    <radialGradient id="wl-reflect" cx="0.6" cy="0.4" r="0.55">
+      <stop offset="0%" stop-color="#8faec4" stop-opacity="0.45"/>
+      <stop offset="60%" stop-color="#5d8275" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#2c4f6e" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="800" height="540" fill="url(#wl-pond)"/>
+  <rect width="800" height="540" fill="url(#wl-reflect)"/>
+  <!-- Reflexos de salgueiro na água -->
+  <path d="M120,0 Q140,180 115,360 Q100,450 130,540" stroke="#365c47" stroke-width="26" fill="none" opacity="0.45"/>
+  <path d="M640,0 Q615,200 645,390 Q660,470 630,540" stroke="#2d523e" stroke-width="32" fill="none" opacity="0.45"/>
+  <!-- Vitórias-régias e nenúfares (grupos impressionistas) -->
+  <!-- Grupo superior esquerdo -->
+  <ellipse cx="210" cy="145" rx="68" ry="22" fill="#4f7d52"/>
+  <ellipse cx="295" cy="160" rx="54" ry="18" fill="#5e8f5c"/>
+  <ellipse cx="165" cy="175" rx="48" ry="16" fill="#3f6944"/>
+  <circle cx="225" cy="138" r="12" fill="#f5e6e8"/>
+  <circle cx="225" cy="138" r="5" fill="#e8c547"/>
+  <circle cx="290" cy="154" r="10" fill="#f2d5dc"/>
+  <!-- Grupo central -->
+  <ellipse cx="455" cy="265" rx="85" ry="26" fill="#4c7a54"/>
+  <ellipse cx="555" cy="285" rx="72" ry="24" fill="#639460"/>
+  <ellipse cx="375" cy="295" rx="64" ry="21" fill="#3e6b48"/>
+  <ellipse cx="485" cy="252" rx="16" ry="9" fill="#f7edf0"/>
+  <circle cx="485" cy="250" r="6" fill="#ebca4b"/>
+  <ellipse cx="565" cy="276" rx="15" ry="8" fill="#f4cad6"/>
+  <circle cx="565" cy="274" r="5" fill="#e8b838"/>
+  <ellipse cx="388" cy="288" rx="14" ry="8" fill="#f7edf0"/>
+  <!-- Grupo inferior direito e primeiro plano -->
+  <ellipse cx="590" cy="420" rx="96" ry="30" fill="#3f6e4a"/>
+  <ellipse cx="460" cy="445" rx="88" ry="28" fill="#558558"/>
+  <ellipse cx="260" cy="430" rx="82" ry="26" fill="#48754e"/>
+  <ellipse cx="160" cy="455" rx="65" ry="22" fill="#5e8c5b"/>
+  <!-- Flores de nenúfar em primeiro plano -->
+  <ellipse cx="605" cy="408" rx="20" ry="11" fill="#f7e8ec"/>
+  <circle cx="605" cy="405" r="7" fill="#e6be3a"/>
+  <ellipse cx="475" cy="435" rx="19" ry="10" fill="#f0c4d1"/>
+  <circle cx="475" cy="432" r="6" fill="#e6be3a"/>
+  <ellipse cx="275" cy="420" rx="18" ry="10" fill="#f9f2f4"/>
+  <circle cx="275" cy="417" r="6" fill="#e6be3a"/>
+  <ellipse cx="170" cy="446" rx="15" ry="8" fill="#f2ccd7"/>
+</svg>

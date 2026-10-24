@@ -23,7 +23,7 @@ export const ReceiptPage: React.FC = () => {
         setErrorMsg(
           err instanceof Error
             ? err.message
-            : "Comprovante de arremate nao encontrado.",
+            : "Comprovante de arremate não encontrado.",
         ),
       )
       .finally(() => setIsLoading(false));
@@ -35,7 +35,7 @@ export const ReceiptPage: React.FC = () => {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2500);
     } catch {
-      // ignora se clipboard nao suportado
+      // ignora se clipboard indisponivel
     }
   };
 
@@ -43,7 +43,7 @@ export const ReceiptPage: React.FC = () => {
     return (
       <main className="mx-auto max-w-[900px] px-4 py-12 sm:px-6">
         <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-8 text-sm text-paper-subtext dark:text-charcoal-subtext">
-          Verificando certificado e assinatura HMAC-SHA256...
+          Carregando comprovante...
         </div>
       </main>
     );
@@ -56,12 +56,12 @@ export const ReceiptPage: React.FC = () => {
           role="alert"
           className="rounded-sm border border-status-outbid bg-status-outbid/10 p-6 text-status-outbid"
         >
-          <h1 className="font-serif text-2xl font-semibold">
-            Comprovante Nao Localizado
+          <h1 className="font-sans text-xl font-semibold">
+            Comprovante não encontrado
           </h1>
           <p className="mt-2 text-sm">{errorMsg}</p>
-          <Link to="/" className="mt-4 inline-block font-mono text-xs underline">
-            Retornar a Vitrine
+          <Link to="/" className="mt-4 inline-block text-xs font-medium underline">
+            Voltar para a vitrine
           </Link>
         </div>
       </main>
@@ -71,40 +71,38 @@ export const ReceiptPage: React.FC = () => {
   return (
     <main className="mx-auto max-w-[900px] px-4 py-10 sm:px-6">
       <article className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-6 sm:p-10">
-        {/* Cabecalho Editorial do Certificado */}
         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-paper-border dark:border-charcoal-border pb-6">
           <div>
-            <h1 className="font-serif text-3xl font-semibold text-paper-text dark:text-charcoal-text">
-              Comprovante #{receipt.receipt_code}
+            <h1 className="font-sans text-2xl font-semibold tracking-tight text-paper-text dark:text-charcoal-text">
+              Comprovante de Arremate #{receipt.receipt_code}
             </h1>
-            <p className="mt-1 font-mono text-xs uppercase tracking-widest text-gold">
-              Certificado Oficial de Liquidacao e Arremate
+            <p className="mt-1 text-xs text-paper-subtext dark:text-charcoal-subtext">
+              Documento público com assinatura verificada.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <span
-              className={`rounded-sm border px-3 py-1 font-mono text-xs font-semibold ${
+              className={`rounded-sm border px-3 py-1 text-xs font-semibold ${
                 receipt.is_signature_valid
                   ? "border-status-winning bg-status-winning/10 text-status-winning"
                   : "border-status-outbid bg-status-outbid/10 text-status-outbid"
               }`}
             >
               {receipt.is_signature_valid
-                ? "ASSINATURA HMAC VALIDA"
-                : "ASSINATURA INVALIDA"}
+                ? "Assinatura válida"
+                : "Assinatura inválida"}
             </span>
             <button
               type="button"
               onClick={() => void handleCopyPublicLink()}
-              className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3 py-1 font-mono text-xs hover:border-paper-text"
+              className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3 py-1 text-xs font-medium hover:border-paper-text"
             >
-              {copied ? "Link Copiado" : "Copiar Link Publico"}
+              {copied ? "Link copiado" : "Copiar link"}
             </button>
           </div>
         </div>
 
-        {/* Obra e Dados Financeiros */}
         <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-12">
           <div className="md:col-span-5">
             <ArtworkFrame
@@ -118,20 +116,20 @@ export const ReceiptPage: React.FC = () => {
           <div className="md:col-span-7 space-y-4">
             <div>
               <span className="font-mono text-xs text-paper-subtext dark:text-charcoal-subtext tabular-nums">
-                LOTE #{receipt.lot_number}
+                Lote #{receipt.lot_number}
               </span>
-              <h2 className="font-serif text-2xl font-semibold text-paper-text dark:text-charcoal-text">
+              <h2 className="font-sans text-xl font-semibold text-paper-text dark:text-charcoal-text">
                 {receipt.title}
               </h2>
               <p className="text-sm text-paper-subtext dark:text-charcoal-subtext">
-                {receipt.artist} ({receipt.date_display}) — {receipt.medium_display}
+                {receipt.artist} ({receipt.date_display}) - {receipt.medium_display}
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4 border-y border-paper-border dark:border-charcoal-border py-4">
               <div>
-                <span className="block font-mono text-[11px] uppercase text-paper-subtext dark:text-charcoal-subtext">
-                  Arrematante (Mascarado)
+                <span className="block text-[11px] text-paper-subtext dark:text-charcoal-subtext">
+                  Arrematante
                 </span>
                 <span className="mt-1 block font-mono text-sm font-bold text-paper-text dark:text-charcoal-text">
                   {receipt.winner_masked_name}
@@ -139,26 +137,25 @@ export const ReceiptPage: React.FC = () => {
               </div>
 
               <div>
-                <span className="block font-mono text-[11px] uppercase text-paper-subtext dark:text-charcoal-subtext">
-                  Valor Final Liquidado
+                <span className="block text-[11px] text-paper-subtext dark:text-charcoal-subtext">
+                  Valor final liquidado
                 </span>
-                <span className="mt-1 block font-sans text-xl font-bold tabular-nums text-status-winning">
+                <span className="mt-1 block font-mono text-xl font-bold tabular-nums text-status-winning">
                   {formatBrlCents(receipt.final_amount_cents)}
                 </span>
               </div>
             </div>
 
             <div className="font-mono text-xs text-paper-subtext dark:text-charcoal-subtext tabular-nums">
-              Data/Hora da Liquidacao (UTC): {receipt.settled_at_iso}
+              Liquidado em: {new Date(receipt.settled_at).toLocaleString("pt-BR")}
             </div>
           </div>
         </div>
 
-        {/* Provas Criptograficas */}
         <div className="mt-8 space-y-3 border-t border-paper-border dark:border-charcoal-border pt-6 font-mono text-xs">
           <div>
             <span className="block text-[10px] uppercase text-paper-subtext dark:text-charcoal-subtext">
-              Hash do Lance Vencedor (Final Bid SHA-256)
+              Hash do lance vencedor
             </span>
             <p className="mt-1 break-all rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg p-2.5">
               {receipt.final_bid_hash}
@@ -167,25 +164,25 @@ export const ReceiptPage: React.FC = () => {
 
           <div>
             <span className="block text-[10px] uppercase text-paper-subtext dark:text-charcoal-subtext">
-              Assinatura Criptografica do Certificado (HMAC-SHA256)
+              Assinatura HMAC-SHA256
             </span>
             <p className="mt-1 break-all rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg p-2.5">
               {receipt.receipt_signature}
             </p>
           </div>
 
-          <div className="pt-2 flex flex-wrap items-center justify-between gap-2">
+          <div className="pt-2 flex flex-wrap items-center justify-between gap-2 font-sans">
             <Link
               to={`/lots/${receipt.lot_id}`}
-              className="underline text-paper-subtext hover:text-paper-text"
+              className="text-xs underline text-paper-subtext hover:text-paper-text"
             >
-              Ver Pagina do Lote #{receipt.lot_number}
+              Ver página do lote #{receipt.lot_number}
             </Link>
             <Link
               to={`/lots/${receipt.lot_id}/audit`}
-              className="underline text-primary hover:text-primary-hover"
+              className="text-xs underline text-primary hover:text-primary-hover"
             >
-              Inspecionar Cadeia Completa de Lances (SHA-256)
+              Auditar cadeia de lances
             </Link>
           </div>
         </div>

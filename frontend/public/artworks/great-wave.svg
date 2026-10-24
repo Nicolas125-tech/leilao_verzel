@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" width="800" height="520">
+  <!-- Céu ukiyo-e -->
+  <rect width="800" height="520" fill="#e8dcc4"/>
+  <rect width="800" height="230" fill="#d9c6a3"/>
+  <!-- Monte Fuji ao fundo -->
+  <polygon points="365,390 485,265 525,265 645,390" fill="#2b4561"/>
+  <polygon points="468,285 485,265 525,265 542,285 518,295 492,288" fill="#f5f2eb"/>
+  <!-- Grande Onda -->
+  <path d="M0,250 Q180,90 390,145 Q310,205 335,285 Q440,340 800,320 L800,520 L0,520 Z" fill="#1d3f63"/>
+  <path d="M0,310 Q210,165 375,215 Q320,280 410,345 Q580,385 800,360 L800,520 L0,520 Z" fill="#2c5985"/>
+  <!-- Espuma da crista da onda -->
+  <circle cx="385" cy="142" r="24" fill="#f5f2eb"/>
+  <circle cx="355" cy="128" r="20" fill="#f5f2eb"/>
+  <circle cx="320" cy="135" r="22" fill="#f5f2eb"/>
+  <circle cx="412" cy="162" r="18" fill="#f5f2eb"/>
+  <circle cx="280" cy="152" r="19" fill="#f5f2eb"/>
+  <path d="M0,425 Q240,355 520,415 Q680,445 800,410 L800,520 L0,520 Z" fill="#16304d"/>
+</svg>

@@ -25,17 +25,17 @@ export const WalletPage: React.FC = () => {
     return (
       <main className="mx-auto max-w-[1280px] px-4 py-12 sm:px-6">
         <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-8">
-          <h1 className="font-serif text-2xl font-semibold text-paper-text dark:text-charcoal-text">
-            Area Restrita a Licitantes
+          <h1 className="font-sans text-xl font-semibold text-paper-text dark:text-charcoal-text">
+            Área restrita a licitantes
           </h1>
           <p className="mt-2 text-sm text-paper-subtext dark:text-charcoal-subtext">
-            Apenas usuarios autenticados com perfil Licitante (BIDDER) possuem carteira de lances e extrato de saldo comprometido.
+            Apenas usuários com perfil de licitante possuem carteira de lances e extrato.
           </p>
           <Link
             to="/login"
             className="mt-4 inline-block rounded-sm border border-primary bg-primary px-4 py-2 text-xs font-semibold text-white"
           >
-            Alternar para Conta de Licitante
+            Trocar para conta de licitante
           </Link>
         </div>
       </main>
@@ -46,7 +46,7 @@ export const WalletPage: React.FC = () => {
     if (amountCents <= 0) {
       setFeedback({
         type: "error",
-        message: "Informe um valor de aporte positivo em reais.",
+        message: "Informe um valor positivo em reais.",
       });
       return;
     }
@@ -57,13 +57,13 @@ export const WalletPage: React.FC = () => {
       await deposit(amountCents);
       setFeedback({
         type: "success",
-        message: `Aporte de ${formatBrlCents(amountCents)} creditado imediatamente no saldo disponivel.`,
+        message: `Depósito de ${formatBrlCents(amountCents)} adicionado ao saldo disponível.`,
       });
     } catch (err) {
       setFeedback({
         type: "error",
         message:
-          err instanceof Error ? err.message : "Erro ao processar deposito.",
+          err instanceof Error ? err.message : "Erro ao processar depósito.",
       });
     } finally {
       setIsDepositing(false);
@@ -79,15 +79,15 @@ export const WalletPage: React.FC = () => {
   const txBadge = (type: string) => {
     switch (type) {
       case "DEPOSIT":
-        return "APORTE DE SALDO";
+        return "Depósito";
       case "BID_HOLD":
-        return "RETENCAO (LIDER)";
+        return "Reserva (Líder)";
       case "BID_RELEASE":
-        return "ESTORNO (SUPERADO)";
+        return "Estorno (Superado)";
       case "SETTLEMENT_DEBIT":
-        return "LIQUIDACAO ARREMATE";
+        return "Liquidação de arremate";
       case "CANCEL_REFUND":
-        return "ESTORNO CANCELAMENTO";
+        return "Estorno por cancelamento";
       default:
         return type;
     }
@@ -95,64 +95,58 @@ export const WalletPage: React.FC = () => {
 
   return (
     <main className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6">
-      <div className="border-b border-paper-border dark:border-charcoal-border pb-6">
-        <h1 className="font-serif text-3xl font-semibold text-paper-text dark:text-charcoal-text">
-          Carteira &amp; Livro-Razao do Licitante
+      <div className="border-b border-paper-border dark:border-charcoal-border pb-5">
+        <h1 className="font-sans text-2xl font-semibold tracking-tight text-paper-text dark:text-charcoal-text sm:text-3xl">
+          Minha Carteira
         </h1>
-        <p className="mt-1.5 max-w-[68ch] text-sm text-paper-subtext dark:text-charcoal-subtext">
-          Todo lance lider reserva imediatamente o valor correspondente no Saldo Comprometido. Se outro licitante superar sua oferta, o valor retorna instantaneamente ao Saldo Disponivel na mesma transacao.
-        </p>
       </div>
 
-      {/* Triade de Saldos */}
+      {/* Saldos */}
       {wallet && (
         <section className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-5">
-            <span className="font-mono text-xs uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-              Saldo Total na Casa
+            <span className="text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+              Saldo total
             </span>
-            <p className="mt-2 font-sans text-2xl font-bold tabular-nums text-paper-text dark:text-charcoal-text">
+            <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-paper-text dark:text-charcoal-text">
               {formatBrlCents(wallet.total_balance_cents)}
             </p>
             <p className="mt-1 text-xs text-paper-subtext dark:text-charcoal-subtext">
-              Patrimonio liquido custodiado (Disponivel + Comprometido).
+              Soma do valor disponível e do valor comprometido.
             </p>
           </div>
 
           <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-5">
-            <span className="font-mono text-xs uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-              Saldo Comprometido em Lances
+            <span className="text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+              Saldo comprometido em lances
             </span>
-            <p className="mt-2 font-sans text-2xl font-bold tabular-nums text-status-warning">
+            <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-status-warning">
               {formatBrlCents(wallet.committed_balance_cents)}
             </p>
             <p className="mt-1 text-xs text-paper-subtext dark:text-charcoal-subtext">
-              Retido exclusivamente nos lotes em que voce detem a lideranca.
+              Reservado apenas nos lotes em que você está liderando.
             </p>
           </div>
 
           <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-5">
-            <span className="font-mono text-xs uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-              Saldo Disponivel p/ Novos Lances
+            <span className="text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+              Saldo disponível
             </span>
-            <p className="mt-2 font-sans text-2xl font-bold tabular-nums text-status-winning">
+            <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-status-winning">
               {formatBrlCents(wallet.available_balance_cents)}
             </p>
             <p className="mt-1 text-xs text-paper-subtext dark:text-charcoal-subtext">
-              Limite imediato livre para novas ofertas no pregao.
+              Livre para enviar novos lances.
             </p>
           </div>
         </section>
       )}
 
-      {/* Aporte Simulado */}
+      {/* Adicionar Saldo */}
       <section className="mt-6 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-6">
-        <h2 className="font-serif text-xl font-semibold text-paper-text dark:text-charcoal-text">
-          Aporte Simulado Instantaneo
+        <h2 className="font-sans text-lg font-semibold text-paper-text dark:text-charcoal-text">
+          Adicionar Saldo
         </h2>
-        <p className="mt-1 text-sm text-paper-subtext dark:text-charcoal-subtext">
-          Adicione fundos instantaneamente para disputar lotes de alto valor na sala ao vivo.
-        </p>
 
         {feedback && (
           <div
@@ -167,7 +161,7 @@ export const WalletPage: React.FC = () => {
           </div>
         )}
 
-        <div className="mt-5 flex flex-wrap items-center gap-3">
+        <div className="mt-4 flex flex-wrap items-center gap-3">
           {PRESET_DEPOSITS_CENTS.map((preset) => (
             <button
               key={preset.cents}
@@ -188,7 +182,7 @@ export const WalletPage: React.FC = () => {
               type="text"
               value={customAmountInput}
               onChange={(e) => setCustomAmountInput(e.target.value)}
-              aria-label="Valor de aporte customizado em reais"
+              aria-label="Valor de depósito em reais"
               placeholder="2500,00"
               className="h-[42px] w-40 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3 font-mono text-sm tabular-nums"
             />
@@ -197,39 +191,39 @@ export const WalletPage: React.FC = () => {
               disabled={isDepositing}
               className="h-[42px] rounded-sm border border-primary bg-primary px-5 text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
             >
-              Confirmar Aporte Customizado
+              Depositar
             </button>
           </form>
         </div>
       </section>
 
-      {/* Tabela do Livro-Razao Cronologico */}
+      {/* Histórico de Movimentações */}
       <section className="mt-8 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface">
         <div className="border-b border-paper-border dark:border-charcoal-border px-6 py-4">
-          <h2 className="font-serif text-xl font-semibold text-paper-text dark:text-charcoal-text">
-            Livro-Razao Cronologico (Extrato Auditavel)
+          <h2 className="font-sans text-lg font-semibold text-paper-text dark:text-charcoal-text">
+            Histórico de Movimentações
           </h2>
         </div>
 
         {isLoadingWallet ? (
           <div className="p-6 text-sm text-paper-subtext dark:text-charcoal-subtext">
-            Sincronizando lancamentos...
+            Carregando movimentações...
           </div>
         ) : transactions.length === 0 ? (
           <div className="p-6 text-sm text-paper-subtext dark:text-charcoal-subtext">
-            Nenhuma movimentacao financeira registrada ate o momento.
+            Nenhuma movimentação registrada até o momento.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-paper-border dark:border-charcoal-border bg-paper-muted/50 dark:bg-charcoal-muted/50 font-mono text-xs uppercase text-paper-subtext dark:text-charcoal-subtext">
-                  <th className="px-6 py-3">Data / Hora (UTC)</th>
-                  <th className="px-6 py-3">Natureza</th>
-                  <th className="px-6 py-3">Historico</th>
+                <tr className="border-b border-paper-border dark:border-charcoal-border bg-paper-muted/50 dark:bg-charcoal-muted/50 text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                  <th className="px-6 py-3">Data / Hora</th>
+                  <th className="px-6 py-3">Tipo</th>
+                  <th className="px-6 py-3">Descrição</th>
                   <th className="px-6 py-3 text-right">Valor</th>
-                  <th className="px-6 py-3 text-right">Total Apos</th>
-                  <th className="px-6 py-3 text-right">Comprometido Apos</th>
+                  <th className="px-6 py-3 text-right">Total após</th>
+                  <th className="px-6 py-3 text-right">Comprometido após</th>
                 </tr>
               </thead>
               <tbody>
@@ -241,7 +235,7 @@ export const WalletPage: React.FC = () => {
                     <td className="px-6 py-3.5 font-mono text-xs tabular-nums text-paper-subtext dark:text-charcoal-subtext">
                       {new Date(tx.created_at).toLocaleString("pt-BR")}
                     </td>
-                    <td className="px-6 py-3.5 font-mono text-xs font-medium">
+                    <td className="px-6 py-3.5 text-xs font-medium">
                       {txBadge(tx.type)}
                     </td>
                     <td className="px-6 py-3.5 text-paper-text dark:text-charcoal-text">

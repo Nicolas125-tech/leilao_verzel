@@ -33,8 +33,8 @@ export default {
         },
       },
       fontFamily: {
-        serif: ["'Cormorant Garamond'", "Georgia", "serif"],
-        sans: ["'Inter'", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        serif: ["'Inter'", "system-ui", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        sans: ["'Inter'", "system-ui", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
         mono: ["'JetBrains Mono'", "ui-monospace", "SFMono-Regular", "monospace"],
       },
       borderRadius: {

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" width="800" height="560">
+  <!-- Paredes azuis de Arles -->
+  <rect width="800" height="360" fill="#6b8ec2"/>
+  <polygon points="0,0 190,85 190,360 0,470" fill="#597cb0"/>
+  <polygon points="620,85 800,0 800,470 620,360" fill="#5476a8"/>
+  <!-- Piso de madeira ocre/rosado -->
+  <polygon points="0,470 190,360 620,360 800,470 800,560 0,560" fill="#c79c68"/>
+  <line x1="190" y1="360" x2="620" y2="360" stroke="#3c2b1c" stroke-width="4"/>
+  <line x1="250" y1="360" x2="120" y2="560" stroke="#8f673c" stroke-width="3"/>
+  <line x1="350" y1="360" x2="310" y2="560" stroke="#8f673c" stroke-width="3"/>
+  <line x1="460" y1="360" x2="500" y2="560" stroke="#8f673c" stroke-width="3"/>
+  <line x1="560" y1="360" x2="680" y2="560" stroke="#8f673c" stroke-width="3"/>
+  <!-- Janela verde entreaberta -->
+  <rect x="330" y="75" width="135" height="175" fill="#427a5b" stroke="#2c3e2e" stroke-width="6"/>
+  <rect x="342" y="87" width="52" height="150" fill="#8ec279" stroke="#2c3e2e" stroke-width="4"/>
+  <rect x="401" y="87" width="52" height="150" fill="#7ab366" stroke="#2c3e2e" stroke-width="4"/>
+  <!-- Quadros na parede direita -->
+  <polygon points="645,75 725,45 725,130 645,150" fill="#d9a74a" stroke="#4a3219" stroke-width="5"/>
+  <polygon points="645,175 725,155 725,235 645,248" fill="#e5d5a7" stroke="#2b2b2b" stroke-width="4"/>
+  <!-- Quadros ao fundo -->
+  <rect x="220" y="95" width="75" height="62" fill="#d99b3c" stroke="#3e2714" stroke-width="5"/>
+  <rect x="505" y="100" width="68" height="82" fill="#e8DFC5" stroke="#2e241b" stroke-width="5"/>
+  <!-- Cama amarela característica de Van Gogh -->
+  <polygon points="465,240 755,215 755,445 465,410" fill="#e3a82b" stroke="#4a2e12" stroke-width="5"/>
+  <!-- Cobertor vermelho escarlote -->
+  <polygon points="475,305 740,320 740,425 475,405" fill="#c4302b" stroke="#4a1614" stroke-width="4"/>
+  <!-- Travesseiros amarelo-claros -->
+  <ellipse cx="665" cy="295" rx="58" ry="22" fill="#f3d87d" stroke="#5c4318" stroke-width="3"/>
+  <ellipse cx="555" cy="298" rx="48" ry="20" fill="#f3d87d" stroke="#5c4318" stroke-width="3"/>
+  <!-- Pés da cama -->
+  <rect x="462" y="235" width="22" height="215" fill="#d4931d" stroke="#4a2e12" stroke-width="4"/>
+  <rect x="738" y="205" width="24" height="265" fill="#d4931d" stroke="#4a2e12" stroke-width="4"/>
+  <!-- Mesinha e cadeira à esquerda -->
+  <polygon points="210,275 320,275 305,300 195,300" fill="#d99b2e" stroke="#4a2e12" stroke-width="4"/>
+  <rect x="215" y="300" width="12" height="95" fill="#b87d1e"/>
+  <rect x="290" y="300" width="12" height="95" fill="#b87d1e"/>
+  <ellipse cx="258" cy="268" rx="22" ry="9" fill="#f2f0e6" stroke="#2c3e50" stroke-width="3"/>
+  <!-- Cadeira amarela em primeiro plano -->
+  <rect x="85" y="295" width="18" height="145" fill="#e0a938" stroke="#4a2e12" stroke-width="4"/>
+  <polygon points="85,365 180,355 195,380 100,392" fill="#f0d78c" stroke="#4a2e12" stroke-width="4"/>
+  <rect x="168" y="360" width="14" height="85" fill="#c98e22" stroke="#4a2e12" stroke-width="3"/>
+</svg>

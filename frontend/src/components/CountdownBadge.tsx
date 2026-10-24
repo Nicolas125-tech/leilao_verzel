@@ -35,16 +35,16 @@ export const CountdownBadge: React.FC<CountdownBadgeProps> = ({
 
   if (status === "CANCELLED") {
     return (
-      <span className="font-mono text-xs font-medium uppercase tracking-wider text-status-outbid tabular-nums">
-        CANCELADO
+      <span className="font-mono text-xs font-medium text-status-outbid tabular-nums">
+        Cancelado
       </span>
     );
   }
 
   if (status === "ENDED") {
     return (
-      <span className="font-mono text-xs font-medium uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext tabular-nums">
-        ENCERRADO
+      <span className="font-mono text-xs font-medium text-paper-subtext dark:text-charcoal-subtext tabular-nums">
+        Encerrado
       </span>
     );
   }
@@ -53,7 +53,7 @@ export const CountdownBadge: React.FC<CountdownBadgeProps> = ({
     const startState = calculateCountdown(startTimeIso, nowMs);
     return (
       <span className="font-mono text-xs font-medium text-paper-subtext dark:text-charcoal-subtext tabular-nums">
-        INICIA EM {startState.formatted}
+        Inicia em {startState.formatted}
       </span>
     );
   }
@@ -73,7 +73,7 @@ export const CountdownBadge: React.FC<CountdownBadgeProps> = ({
       </span>
       {extensionCount > 0 && !countdown.isExpired && (
         <span className="border border-gold/60 bg-gold/10 px-1.5 py-0.5 font-mono text-[11px] font-medium text-gold tabular-nums">
-          +{extensionCount * 2} MIN
+          +{extensionCount * 2} min
         </span>
       )}
     </div>

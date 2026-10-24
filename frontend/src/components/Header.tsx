@@ -55,13 +55,11 @@ export const Header: React.FC = () => {
 
   return (
     <header className="border-b border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface">
-      {/* Barra superior de sessao rapida e controles de ambiente */}
+      {/* Barra superior de troca rápida de conta e tema */}
       <div className="border-b border-paper-border dark:border-charcoal-border bg-paper-muted/70 dark:bg-charcoal-muted/70">
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3 px-4 py-2 sm:px-6">
           <div className="flex flex-wrap items-center gap-2 text-xs text-paper-subtext dark:text-charcoal-subtext">
-            <span className="font-mono uppercase tracking-wider">
-              Acesso Rapido Demo (1 Clique):
-            </span>
+            <span className="font-medium">Troca rápida de perfil:</span>
             {SEED_ACCOUNTS.map((preset) => {
               const isCurrent = user?.email === preset.email;
               return (
@@ -86,10 +84,10 @@ export const Header: React.FC = () => {
             <button
               type="button"
               onClick={toggleTheme}
-              className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-2.5 py-1 font-mono text-xs text-paper-text dark:text-charcoal-text hover:border-paper-text dark:hover:border-charcoal-text"
+              className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-2.5 py-1 text-xs font-medium text-paper-text dark:text-charcoal-text hover:border-paper-text dark:hover:border-charcoal-text"
               aria-label="Alternar tema claro ou escuro"
             >
-              TEMA: {theme === "light" ? "PAPEL CLARO" : "GRAFITE ESCURO"}
+              Tema: {theme === "light" ? "Claro" : "Escuro"}
             </button>
 
             {user ? (
@@ -108,35 +106,33 @@ export const Header: React.FC = () => {
             ) : (
               <Link
                 to="/login"
-                className="font-mono text-xs font-medium underline text-primary hover:text-primary-hover"
+                className="text-xs font-medium underline text-primary hover:text-primary-hover"
               >
-                Autenticar Conta
+                Entrar
               </Link>
             )}
           </div>
         </div>
       </div>
 
-      {/* Linha principal do cabecalho editorial */}
+      {/* Linha principal do cabeçalho */}
       <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <div className="flex items-center gap-8">
-          <Link to="/" className="group block">
-            <span className="block font-serif text-2xl font-semibold tracking-tight text-paper-text dark:text-charcoal-text">
-              Casa de Leiloes Verzel
-            </span>
-            <span className="block font-mono text-[11px] uppercase tracking-widest text-paper-subtext dark:text-charcoal-subtext">
-              Pregao de Arte &amp; Auditoria SHA-256
-            </span>
+          <Link
+            to="/"
+            className="font-sans text-xl font-semibold tracking-tight text-paper-text dark:text-charcoal-text"
+          >
+            Casa de Leilões Verzel
           </Link>
 
-          <nav className="flex flex-wrap items-center gap-1" aria-label="Navegacao principal">
+          <nav className="flex flex-wrap items-center gap-1" aria-label="Navegação principal">
             <Link to="/" className={navLinkClass("/")}>
               Vitrine de Lotes
             </Link>
             {user?.role === "BIDDER" && (
               <>
                 <Link to="/wallet" className={navLinkClass("/wallet")}>
-                  Carteira &amp; Extrato
+                  Carteira
                 </Link>
                 <Link to="/my-bids" className={navLinkClass("/my-bids")}>
                   Meus Arremates
@@ -151,12 +147,12 @@ export const Header: React.FC = () => {
           </nav>
         </div>
 
-        {/* Triade de saldos sempre visivel para Licitante autenticado */}
+        {/* Saldos do Licitante */}
         {user?.role === "BIDDER" && wallet && (
           <div className="flex flex-wrap items-center gap-3 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3.5 py-2">
             <div className="border-r border-paper-border dark:border-charcoal-border pr-3">
-              <span className="block font-mono text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-                Saldo Total
+              <span className="block text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
+                Total
               </span>
               <span className="font-mono text-xs font-semibold tabular-nums text-paper-text dark:text-charcoal-text">
                 {formatBrlCents(wallet.total_balance_cents)}
@@ -164,7 +160,7 @@ export const Header: React.FC = () => {
             </div>
 
             <div className="border-r border-paper-border dark:border-charcoal-border pr-3">
-              <span className="block font-mono text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
+              <span className="block text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
                 Comprometido
               </span>
               <span className="font-mono text-xs font-semibold tabular-nums text-status-warning">
@@ -173,8 +169,8 @@ export const Header: React.FC = () => {
             </div>
 
             <div className="pr-1">
-              <span className="block font-mono text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-                Disponivel p/ Lances
+              <span className="block text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
+                Disponível
               </span>
               <span className="font-mono text-sm font-bold tabular-nums text-status-winning">
                 {formatBrlCents(wallet.available_balance_cents)}
@@ -185,7 +181,7 @@ export const Header: React.FC = () => {
               type="button"
               disabled={isQuickDepositing}
               onClick={() => void handleQuickDeposit()}
-              title="Aporte instantaneo de R$ 1.000,00 na carteira"
+              title="Depositar R$ 1.000,00 na carteira"
               className="rounded-sm border border-primary bg-primary px-2.5 py-1.5 font-mono text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50 tabular-nums"
             >
               {isQuickDepositing ? "Aportando..." : "+ R$ 1.000"}

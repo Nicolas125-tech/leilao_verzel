@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 540" width="800" height="540">
+  <defs>
+    <linearGradient id="gj-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#c9d9e8"/>
+      <stop offset="100%" stop-color="#e8e2c8"/>
+    </linearGradient>
+    <linearGradient id="gj-grass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#b8cf6e"/>
+      <stop offset="50%" stop-color="#8cb352"/>
+      <stop offset="100%" stop-color="#436938"/>
+    </linearGradient>
+    <pattern id="pointillism" width="12" height="12" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.4" fill="#f4e39c" opacity="0.55"/>
+      <circle cx="9" cy="4" r="1.3" fill="#5a8241" opacity="0.45"/>
+      <circle cx="6" cy="9" r="1.4" fill="#7094b8" opacity="0.4"/>
+    </pattern>
+  </defs>
+  <!-- Céu e Rio Sena -->
+  <rect width="800" height="220" fill="url(#gj-sky)"/>
+  <polygon points="0,150 380,150 520,310 0,340" fill="#5e8fb8"/>
+  <!-- Barcos a vela no Sena -->
+  <polygon points="110,165 128,125 140,165" fill="#f7f4eb"/>
+  <polygon points="105,167 145,167 138,175 112,175" fill="#543824"/>
+  <polygon points="235,195 255,145 268,195" fill="#f7f4eb"/>
+  <polygon points="230,197 272,197 265,205 236,205" fill="#3d281a"/>
+  <!-- Gramado ensolarado e sombra em primeiro plano -->
+  <polygon points="240,145 800,145 800,540 0,540 0,320" fill="url(#gj-grass)"/>
+  <polygon points="0,385 800,415 800,540 0,540" fill="#35542d" opacity="0.82"/>
+  <!-- Copa das árvores -->
+  <circle cx="480" cy="85" r="95" fill="#4f7838"/>
+  <circle cx="620" cy="70" r="110" fill="#3f662c"/>
+  <circle cx="750" cy="95" r="90" fill="#5e8742"/>
+  <rect x="468" y="145" width="22" height="145" fill="#4a3728"/>
+  <rect x="615" y="135" width="26" height="175" fill="#3d2d20"/>
+  <!-- Figuras icônicas com sombrinhas -->
+  <!-- Dama em primeiro plano à direita com anquinha e sombrinha -->
+  <path d="M585,220 Q645,190 705,225 Z" fill="#b8433e"/>
+  <line x1="635" y1="215" x2="625" y2="310" stroke="#3b2618" stroke-width="3"/>
+  <circle cx="615" cy="252" r="14" fill="#e6c4a8"/>
+  <polygon points="595,268 632,268 665,455 580,455" fill="#3a2f4c"/>
+  <ellipse cx="645" cy="365" rx="32" ry="24" fill="#3a2f4c"/>
+  <!-- Cavalheiro de cartola ao lado -->
+  <rect x="665" y="212" width="26" height="24" fill="#1e2229"/>
+  <rect x="658" y="234" width="40" height="5" fill="#1e2229"/>
+  <circle cx="678" cy="250" r="14" fill="#deb896"/>
+  <polygon points="658,266 700,266 710,455 652,455" fill="#252b36"/>
+  <!-- Figura central com sombrinha clara -->
+  <path d="M365,235 Q410,210 455,238 Z" fill="#f2dec4"/>
+  <circle cx="408" cy="265" r="11" fill="#e8c5a5"/>
+  <polygon points="392,278 424,278 438,395 380,395" fill="#d97b59"/>
+  <!-- Figuras reclinadas na sombra à esquerda -->
+  <circle cx="155" cy="385" r="14" fill="#d9b18e"/>
+  <polygon points="120,400 195,415 245,465 105,465" fill="#2c3e50"/>
+  <polygon points="205,415 265,435 280,468 190,468" fill="#c74b3c"/>
+  <!-- Camada pontilhista -->
+  <rect width="800" height="540" fill="url(#pointillism)"/>
+</svg>

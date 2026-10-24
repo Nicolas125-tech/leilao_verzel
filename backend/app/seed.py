@@ -11,10 +11,10 @@ from app.core.crypto import (
     format_utc_iso,
     generate_receipt_signature,
 )
-from app.core.database import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal, engine
 from app.core.privacy import generate_public_code, mask_name
 from app.core.security import hash_password
-from app.models.base import utc_now
+from app.models.base import Base, utc_now
 from app.models.lot import Bid, Lot, WinningCertificate
 from app.models.user import User
 from app.models.wallet import Wallet, WalletTransaction
@@ -40,6 +40,22 @@ async def run_seed(db: AsyncSession) -> None:
         select(User).where(User.email == "curador@verzel.com.br")
     )
     if existing.scalar_one_or_none() is not None:
+        lots_res = await db.execute(select(Lot))
+        artwork_by_lot = {
+            101: "/artworks/nighthawks.svg",
+            102: "/artworks/the-bedroom.svg",
+            103: "/artworks/grande-jatte.svg",
+            104: "/artworks/water-lilies.svg",
+            105: "/artworks/american-gothic.svg",
+        }
+        updated = False
+        for lot_obj in lots_res.scalars().all():
+            target_img = artwork_by_lot.get(lot_obj.lot_number)
+            if target_img and lot_obj.image_url != target_img:
+                lot_obj.image_url = target_img
+                updated = True
+        if updated:
+            await db.commit()
         return
 
     now = utc_now()
@@ -84,7 +100,7 @@ async def run_seed(db: AsyncSession) -> None:
         artist="Edward Hopper",
         date_display="1942",
         medium_display="Oil on canvas",
-        image_url="https://www.artic.edu/iiif/2/831a05de-d3f6-f4fa-a460-23008dd58f02/full/843,/0/default.jpg",
+        image_url="/artworks/nighthawks.svg",
         attributes_json={
             "place_of_origin": "United States",
             "dimensions": "84.1 x 152.4 cm",
@@ -115,7 +131,7 @@ async def run_seed(db: AsyncSession) -> None:
         artist="Vincent van Gogh",
         date_display="1889",
         medium_display="Oil on canvas",
-        image_url="https://www.artic.edu/iiif/2/25c31d8d-21a4-9ea1-1d73-6a2eca4dda7e/full/843,/0/default.jpg",
+        image_url="/artworks/the-bedroom.svg",
         attributes_json={
             "place_of_origin": "France",
             "dimensions": "73.6 x 92.3 cm",
@@ -175,7 +191,7 @@ async def run_seed(db: AsyncSession) -> None:
         artist="Georges Seurat",
         date_display="1884-1886",
         medium_display="Oil on canvas",
-        image_url="https://www.artic.edu/iiif/2/1adf2696-8489-499b-cad2-821d7fde4b33/full/843,/0/default.jpg",
+        image_url="/artworks/grande-jatte.svg",
         attributes_json={
             "place_of_origin": "France",
             "dimensions": "207.5 x 308.1 cm",
@@ -227,7 +243,7 @@ async def run_seed(db: AsyncSession) -> None:
         artist="Claude Monet",
         date_display="1906",
         medium_display="Oil on canvas",
-        image_url="https://www.artic.edu/iiif/2/3c27b499-af56-f0d5-9aa1-52191118fdba/full/843,/0/default.jpg",
+        image_url="/artworks/water-lilies.svg",
         attributes_json={
             "place_of_origin": "France",
             "dimensions": "89.9 x 94.1 cm",
@@ -260,7 +276,7 @@ async def run_seed(db: AsyncSession) -> None:
         artist="Grant Wood",
         date_display="1930",
         medium_display="Oil on beaverboard",
-        image_url="https://www.artic.edu/iiif/2/b272df73-a965-ac37-4172-be4e99483637/full/843,/0/default.jpg",
+        image_url="/artworks/american-gothic.svg",
         attributes_json={
             "place_of_origin": "United States",
             "dimensions": "78 x 65.3 cm",
@@ -444,6 +460,12 @@ async def run_seed(db: AsyncSession) -> None:
 
 
 async def _main() -> None:
+    import sys
+
+    if "--reset" in sys.argv:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+            await conn.run_sync(Base.metadata.create_all)
     async with AsyncSessionLocal() as session:
         await run_seed(session)
 

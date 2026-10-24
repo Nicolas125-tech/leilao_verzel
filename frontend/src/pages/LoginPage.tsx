@@ -27,7 +27,7 @@ export const LoginPage: React.FC = () => {
       navigate(loggedUser.role === "AUCTIONEER" ? "/auctioneer" : "/");
     } catch (err) {
       setErrorMsg(
-        err instanceof Error ? err.message : "Falha na autenticacao.",
+        err instanceof Error ? err.message : "Falha na autenticação.",
       );
     } finally {
       setIsSubmitting(false);
@@ -42,7 +42,7 @@ export const LoginPage: React.FC = () => {
       navigate(loggedUser.role === "AUCTIONEER" ? "/auctioneer" : "/");
     } catch (err) {
       setErrorMsg(
-        err instanceof Error ? err.message : "Falha ao autenticar conta de demonstracao.",
+        err instanceof Error ? err.message : "Falha ao autenticar conta de demonstração.",
       );
     } finally {
       setIsSubmitting(false);
@@ -52,13 +52,12 @@ export const LoginPage: React.FC = () => {
   return (
     <main className="mx-auto max-w-[960px] px-4 py-10 sm:px-6">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
-        {/* Coluna de Acesso Rapido 1-Clique */}
         <section className="md:col-span-5 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-6">
-          <h1 className="font-serif text-2xl font-semibold text-paper-text dark:text-charcoal-text">
-            Contas de Demonstracao
+          <h1 className="font-sans text-xl font-semibold text-paper-text dark:text-charcoal-text">
+            Contas de demonstração
           </h1>
           <p className="mt-2 text-sm text-paper-subtext dark:text-charcoal-subtext">
-            Acesse em 1 clique qualquer perfil pre-configurado pelo seed para testar disputas simultaneas, carteira ou curadoria de lotes.
+            Entre com 1 clique em qualquer perfil pré-configurado para testar lances, carteira ou painel do leiloeiro.
           </p>
 
           <div className="mt-5 space-y-3">
@@ -71,7 +70,7 @@ export const LoginPage: React.FC = () => {
                 className="flex w-full items-center justify-between rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-4 py-3 text-left transition-colors hover:border-primary"
               >
                 <div>
-                  <span className="block font-mono text-[11px] font-semibold uppercase tracking-wider text-primary">
+                  <span className="block text-[11px] font-semibold uppercase tracking-wider text-primary">
                     {preset.roleLabel}
                   </span>
                   <span className="mt-0.5 block font-medium text-paper-text dark:text-charcoal-text">
@@ -81,7 +80,7 @@ export const LoginPage: React.FC = () => {
                     {preset.email}
                   </span>
                 </div>
-                <span className="font-mono text-xs font-semibold text-paper-text dark:text-charcoal-text">
+                <span className="text-xs font-semibold text-paper-text dark:text-charcoal-text">
                   Entrar
                 </span>
               </button>
@@ -89,30 +88,29 @@ export const LoginPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Coluna de Login / Cadastro Padrao */}
         <section className="md:col-span-7 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-6">
           <div className="flex border-b border-paper-border dark:border-charcoal-border pb-4 gap-2">
             <button
               type="button"
               onClick={() => setMode("login")}
-              className={`rounded-sm border px-4 py-1.5 font-mono text-xs font-medium ${
+              className={`rounded-sm border px-4 py-1.5 text-xs font-medium ${
                 mode === "login"
                   ? "border-paper-text bg-paper-text text-paper-surface dark:border-charcoal-text dark:bg-charcoal-text dark:text-charcoal-bg"
                   : "border-paper-border text-paper-subtext dark:border-charcoal-border dark:text-charcoal-subtext"
               }`}
             >
-              ENTRAR COM CREDENCIAIS
+              Entrar com e-mail
             </button>
             <button
               type="button"
               onClick={() => setMode("register")}
-              className={`rounded-sm border px-4 py-1.5 font-mono text-xs font-medium ${
+              className={`rounded-sm border px-4 py-1.5 text-xs font-medium ${
                 mode === "register"
                   ? "border-paper-text bg-paper-text text-paper-surface dark:border-charcoal-text dark:bg-charcoal-text dark:text-charcoal-bg"
                   : "border-paper-border text-paper-subtext dark:border-charcoal-border dark:text-charcoal-subtext"
               }`}
             >
-              CRIAR NOVA CONTA
+              Criar conta
             </button>
           </div>
 
@@ -128,8 +126,8 @@ export const LoginPage: React.FC = () => {
           <form onSubmit={(e) => void handleSubmit(e)} className="mt-5 space-y-4">
             {mode === "register" && (
               <div>
-                <label className="block font-mono text-xs uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-                  Nome Completo (Mascarado em Publico)
+                <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                  Nome completo (exibido de forma mascarada em público)
                 </label>
                 <input
                   type="text"
@@ -143,8 +141,8 @@ export const LoginPage: React.FC = () => {
             )}
 
             <div>
-              <label className="block font-mono text-xs uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-                E-mail Institucional ou Pessoal
+              <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                E-mail
               </label>
               <input
                 type="email"
@@ -157,8 +155,8 @@ export const LoginPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block font-mono text-xs uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-                Senha de Acesso
+              <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                Senha
               </label>
               <input
                 type="password"
@@ -166,23 +164,23 @@ export const LoginPage: React.FC = () => {
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimo 6 caracteres"
+                placeholder="Mínimo de 6 caracteres"
                 className="mt-1.5 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3.5 text-sm"
               />
             </div>
 
             {mode === "register" && (
               <div>
-                <label className="block font-mono text-xs uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-                  Papel Operacional na Casa de Leiloes
+                <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                  Tipo de conta
                 </label>
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as UserRole)}
                   className="mt-1.5 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3.5 text-sm"
                 >
-                  <option value="BIDDER">Licitante (Colecionador / Comprador)</option>
-                  <option value="AUCTIONEER">Leiloeiro (Curador / Publicador de Lotes)</option>
+                  <option value="BIDDER">Licitante (Comprador)</option>
+                  <option value="AUCTIONEER">Leiloeiro (Publicador de lotes)</option>
                 </select>
               </div>
             )}
@@ -195,8 +193,8 @@ export const LoginPage: React.FC = () => {
               {isSubmitting
                 ? "Processando..."
                 : mode === "login"
-                  ? "Acessar Plataforma"
-                  : "Concluir Cadastro"}
+                  ? "Entrar"
+                  : "Criar conta"}
             </button>
           </form>
         </section>

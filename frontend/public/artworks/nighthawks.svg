@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" width="800" height="520">
+  <defs>
+    <linearGradient id="nh-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0b161e"/>
+      <stop offset="100%" stop-color="#152934"/>
+    </linearGradient>
+    <linearGradient id="nh-diner" x1="0" y1="0" x2="1" y2="0.4">
+      <stop offset="0%" stop-color="#f5e6a3"/>
+      <stop offset="65%" stop-color="#e8cf74"/>
+      <stop offset="100%" stop-color="#b7963c"/>
+    </linearGradient>
+    <linearGradient id="nh-street" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#182b29"/>
+      <stop offset="60%" stop-color="#2c4c43"/>
+      <stop offset="100%" stop-color="#3c5e4d"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="520" fill="url(#nh-sky)"/>
+  <!-- Prédios ao fundo -->
+  <rect x="0" y="90" width="330" height="290" fill="#1d2f36"/>
+  <rect x="30" y="130" width="55" height="90" fill="#132026"/>
+  <rect x="120" y="130" width="55" height="90" fill="#132026"/>
+  <rect x="210" y="130" width="55" height="90" fill="#132026"/>
+  <rect x="0" y="255" width="310" height="125" fill="#253a3e"/>
+  <!-- Calçada iluminada -->
+  <polygon points="0,380 800,380 800,520 0,520" fill="url(#nh-street)"/>
+  <polygon points="180,380 780,380 800,455 90,440" fill="#6f8969" opacity="0.45"/>
+  <!-- Estrutura do Diner (Phillies) -->
+  <polygon points="270,115 790,75 790,145 270,165" fill="#6b2319"/>
+  <text x="455" y="133" fill="#e9d28c" font-family="Georgia, serif" font-size="28" font-weight="bold" letter-spacing="4">PHILLIES</text>
+  <!-- Interior iluminado do Diner -->
+  <polygon points="285,165 775,145 775,365 285,365" fill="url(#nh-diner)"/>
+  <!-- Parede de fundo interna -->
+  <polygon points="560,155 775,145 775,350 560,335" fill="#c79e46"/>
+  <!-- Balcão em L -->
+  <polygon points="340,285 690,285 720,350 320,350" fill="#6d3522"/>
+  <polygon points="340,280 695,280 690,292 340,292" fill="#8f4b32"/>
+  <!-- Silhuetas das figuras -->
+  <!-- Atendente de branco -->
+  <circle cx="515" cy="245" r="14" fill="#d9b28c"/>
+  <polygon points="495,260 535,260 542,300 490,300" fill="#f3f4f0"/>
+  <rect x="500" y="226" width="30" height="8" fill="#f3f4f0"/>
+  <!-- Casal ao fundo -->
+  <circle cx="585" cy="215" r="14" fill="#c99c78"/>
+  <polygon points="562,232 610,232 618,285 556,285" fill="#1e2a38"/>
+  <polygon points="568,198 604,198 612,210 560,210" fill="#3a4652"/>
+  <circle cx="640" cy="222" r="13" fill="#deb592"/>
+  <polygon points="622,238 660,238 665,285 618,285" fill="#b83a2e"/>
+  <!-- Cliente de costas -->
+  <circle cx="418" cy="222" r="14" fill="#9c7a5c"/>
+  <polygon points="392,240 445,240 455,315 385,315" fill="#23303d"/>
+  <polygon points="398,204 438,204 446,216 390,216" fill="#3e4c59"/>
+  <!-- Colunas da vitrine e base turquesa -->
+  <rect x="275" y="160" width="16" height="245" fill="#214d48"/>
+  <rect x="765" y="142" width="18" height="265" fill="#214d48"/>
+  <polygon points="275,355 783,355 783,408 275,408" fill="#214d48"/>
+  <!-- Banquetas -->
+  <circle cx="365" cy="332" r="11" fill="#462217"/>
+  <rect x="362" y="342" width="6" height="24" fill="#8b7d6b"/>
+  <circle cx="475" cy="332" r="11" fill="#462217"/>
+  <rect x="472" y="342" width="6" height="24" fill="#8b7d6b"/>
+  <circle cx="565" cy="332" r="11" fill="#462217"/>
+  <rect x="562" y="342" width="6" height="24" fill="#8b7d6b"/>
+</svg>

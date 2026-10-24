@@ -12,6 +12,21 @@ import {
   parseBrlToCents,
 } from "../utils/formatters.ts";
 
+function formatLotStatusLabel(status: string): string {
+  switch (status) {
+    case "LIVE":
+      return "Ao vivo";
+    case "SCHEDULED":
+      return "Agendado";
+    case "ENDED":
+      return "Encerrado";
+    case "CANCELLED":
+      return "Cancelado";
+    default:
+      return status;
+  }
+}
+
 export const LiveAuctionPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -45,15 +60,15 @@ export const LiveAuctionPage: React.FC = () => {
           role="alert"
           className="rounded-sm border border-status-outbid bg-status-outbid/10 p-6 text-status-outbid"
         >
-          <h1 className="font-serif text-2xl font-semibold">
-            Lote Indisponivel
+          <h1 className="font-sans text-xl font-semibold">
+            Lote indisponível
           </h1>
           <p className="mt-2 text-sm">{error}</p>
           <Link
             to="/"
-            className="mt-4 inline-block font-mono text-xs underline"
+            className="mt-4 inline-block text-xs font-medium underline"
           >
-            Retornar a Vitrine
+            Voltar para a vitrine
           </Link>
         </div>
       </main>
@@ -64,7 +79,7 @@ export const LiveAuctionPage: React.FC = () => {
     return (
       <main className="mx-auto max-w-[1280px] px-4 py-12 sm:px-6">
         <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-8 text-sm text-paper-subtext dark:text-charcoal-subtext">
-          Carregando sala de pregao e cadeia criptografica...
+          Carregando lote...
         </div>
       </main>
     );
@@ -85,7 +100,7 @@ export const LiveAuctionPage: React.FC = () => {
     if (amountCents <= 0) {
       setBidFeedback({
         type: "error",
-        message: "Informe um valor de lance valido acima de R$ 0,00.",
+        message: "Informe um valor de lance válido acima de R$ 0,00.",
       });
       return;
     }
@@ -97,8 +112,8 @@ export const LiveAuctionPage: React.FC = () => {
       setBidFeedback({
         type: "success",
         message: created.extension_triggered
-          ? `Lance #${created.sequence_number} (${formatBrlCents(created.amount_cents)}) confirmado. Regra Anti-Sniping acionada (+2 min).`
-          : `Lance #${created.sequence_number} (${formatBrlCents(created.amount_cents)}) registrado e encadeado via SHA-256.`,
+          ? `Lance #${created.sequence_number} (${formatBrlCents(created.amount_cents)}) confirmado. Tempo prorrogado em +2 minutos.`
+          : `Lance #${created.sequence_number} (${formatBrlCents(created.amount_cents)}) confirmado.`,
       });
     } catch (err) {
       setBidFeedback({
@@ -106,7 +121,7 @@ export const LiveAuctionPage: React.FC = () => {
         message:
           err instanceof Error
             ? err.message
-            : "Recusa ao processar lance no motor transacional.",
+            : "Não foi possível registrar o lance.",
       });
     } finally {
       setIsSubmittingBid(false);
@@ -120,13 +135,13 @@ export const LiveAuctionPage: React.FC = () => {
   };
 
   const quickAmounts = [
-    { label: "Minimo Exigido", cents: minRequiredCents },
+    { label: "Mínimo", cents: minRequiredCents },
     {
-      label: "+ 1 Incremento",
+      label: "+ 1 incremento",
       cents: minRequiredCents + lotData.min_increment_cents,
     },
     {
-      label: "+ 2 Incrementos",
+      label: "+ 2 incrementos",
       cents: minRequiredCents + lotData.min_increment_cents * 2,
     },
   ];
@@ -135,45 +150,42 @@ export const LiveAuctionPage: React.FC = () => {
 
   return (
     <main className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6">
-      {/* Barra de navegacao contextual */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-paper-border dark:border-charcoal-border pb-4">
         <div className="flex items-center gap-3">
           <Link
             to="/"
-            className="font-mono text-xs underline text-paper-subtext hover:text-paper-text dark:text-charcoal-subtext dark:hover:text-charcoal-text"
+            className="text-xs font-medium underline text-paper-subtext hover:text-paper-text dark:text-charcoal-subtext dark:hover:text-charcoal-text"
           >
-            Voltar a Vitrine
+            Voltar para a vitrine
           </Link>
-          <span className="font-mono text-xs text-paper-subtext dark:text-charcoal-subtext">
+          <span className="text-xs text-paper-subtext dark:text-charcoal-subtext">
             /
           </span>
           <span className="font-mono text-xs font-semibold tabular-nums">
-            LOTE #{lotData.lot_number}
+            Lote #{lotData.lot_number}
           </span>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <span
-            className={`rounded-sm border px-2.5 py-1 font-mono text-[11px] font-medium ${
+            className={`rounded-sm border px-2.5 py-1 text-[11px] font-medium ${
               connectionStatus === "CONNECTED"
                 ? "border-status-winning/50 bg-status-winning/10 text-status-winning"
                 : "border-status-warning/50 bg-status-warning/10 text-status-warning"
             }`}
           >
-            CANAL TEMPO REAL: {connectionStatus}
+            {connectionStatus === "CONNECTED" ? "Tempo real ativo" : "Reconectando..."}
           </span>
           <Link
             to={`/lots/${lotData.id}/audit`}
-            className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-3 py-1 font-mono text-xs font-medium hover:border-paper-text dark:hover:border-charcoal-text"
+            className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-3 py-1 text-xs font-medium hover:border-paper-text dark:hover:border-charcoal-text"
           >
-            Auditoria Criptografica SHA-256
+            Auditoria
           </Link>
         </div>
       </div>
 
-      {/* Layout Bipartido Assimetrico 7/5 conforme DESIGN.md */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-        {/* Coluna Esquerda (7 colunas): Obra, Ficha Catalografica e Ancora SHA-256 */}
         <section className="lg:col-span-7 space-y-6">
           <ArtworkFrame
             imageUrl={lotData.image_url}
@@ -183,21 +195,20 @@ export const LiveAuctionPage: React.FC = () => {
           />
 
           <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-6">
-            <h1 className="font-serif text-3xl font-semibold leading-tight text-paper-text dark:text-charcoal-text sm:text-4xl">
+            <h1 className="font-sans text-2xl font-semibold tracking-tight text-paper-text dark:text-charcoal-text sm:text-3xl">
               {lotData.title}
             </h1>
             <p className="mt-2 text-base font-medium text-paper-text dark:text-charcoal-text">
               {lotData.artist} ({lotData.date_display})
             </p>
             <p className="mt-1 text-sm text-paper-subtext dark:text-charcoal-subtext">
-              Tecnica: {lotData.medium_display}
+              Técnica: {lotData.medium_display}
             </p>
 
-            {/* Atributos Persistidos no PostgreSQL */}
             {attributesEntries.length > 0 && (
               <div className="mt-6 border-t border-paper-border dark:border-charcoal-border pt-4">
-                <h2 className="font-serif text-lg font-semibold text-paper-text dark:text-charcoal-text">
-                  Ficha Catalografica Persistida
+                <h2 className="font-sans text-base font-semibold text-paper-text dark:text-charcoal-text">
+                  Detalhes da obra
                 </h2>
                 <dl className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {attributesEntries.map(([key, val]) => (
@@ -205,11 +216,11 @@ export const LiveAuctionPage: React.FC = () => {
                       key={key}
                       className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg p-3"
                     >
-                      <dt className="font-mono text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
+                      <dt className="text-[11px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
                         {key.replace(/_/g, " ")}
                       </dt>
                       <dd className="mt-1 text-xs font-medium text-paper-text dark:text-charcoal-text">
-                        {String(val ?? "Nao informado")}
+                        {String(val ?? "Não informado")}
                       </dd>
                     </div>
                   ))}
@@ -217,17 +228,16 @@ export const LiveAuctionPage: React.FC = () => {
               </div>
             )}
 
-            {/* Ancora Criptografica do Lote */}
             <div className="mt-6 border-t border-paper-border dark:border-charcoal-border pt-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-mono text-xs uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-                  Head Hash Ancorado no Lote ({lotData.bid_count} lances):
+                <span className="text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                  Hash atual do lote ({lotData.bid_count} lances):
                 </span>
                 <Link
                   to={`/lots/${lotData.id}/audit`}
-                  className="font-mono text-xs underline text-primary"
+                  className="text-xs font-medium underline text-primary"
                 >
-                  Verificar Integridade Completa
+                  Auditar cadeia de lances
                 </Link>
               </div>
               <p className="mt-1.5 break-all rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3 py-2 font-mono text-xs text-paper-text dark:text-charcoal-text">
@@ -237,23 +247,21 @@ export const LiveAuctionPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Coluna Direita (5 colunas): Terminal de Pregao em Tempo Real */}
         <section className="lg:col-span-5 space-y-6">
           <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-6">
-            {/* Linha de Status e Cronometro */}
             <div className="flex items-start justify-between gap-4 border-b border-paper-border dark:border-charcoal-border pb-4">
               <div>
-                <span className="block font-mono text-xs uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-                  Status do Pregao
+                <span className="block text-xs text-paper-subtext dark:text-charcoal-subtext">
+                  Status
                 </span>
-                <span className="mt-1 inline-block font-mono text-sm font-bold uppercase text-primary">
-                  {lotData.status}
+                <span className="mt-1 inline-block text-sm font-bold text-primary">
+                  {formatLotStatusLabel(lotData.status)}
                 </span>
               </div>
 
               <div className="text-right">
-                <span className="block font-mono text-xs uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-                  Tempo Restante
+                <span className="block text-xs text-paper-subtext dark:text-charcoal-subtext">
+                  Tempo restante
                 </span>
                 <div className="mt-1">
                   <CountdownBadge
@@ -267,22 +275,20 @@ export const LiveAuctionPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Aviso Anti-Sniping quando nos 2 minutos finais */}
             {lotData.status === "LIVE" && countdownState.isCritical && (
               <div className="mt-4 rounded-sm border border-status-warning bg-status-warning/10 px-3.5 py-2.5 text-xs text-status-warning">
-                Janela Anti-Sniping ativa (&le; 120s). Qualquer novo lance aceito prorroga automaticamente o encerramento para +2 minutos.
+                Últimos 2 minutos: novos lances prorrogam o encerramento em +2 minutos.
               </div>
             )}
 
-            {/* Preco Atual e Incremento */}
             <div className="mt-5 grid grid-cols-2 gap-4">
               <div>
-                <span className="block font-mono text-xs uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
+                <span className="block text-xs text-paper-subtext dark:text-charcoal-subtext">
                   {lotData.current_bid_cents !== null
-                    ? "Maior Lance Atual"
-                    : "Lance Inicial"}
+                    ? "Lance atual"
+                    : "Lance inicial"}
                 </span>
-                <p className="mt-1 font-sans text-3xl font-bold tabular-nums text-paper-text dark:text-charcoal-text">
+                <p className="mt-1 font-mono text-2xl font-bold tabular-nums text-paper-text dark:text-charcoal-text">
                   {formatBrlCents(
                     lotData.current_bid_cents ?? lotData.starting_bid_cents,
                   )}
@@ -290,36 +296,35 @@ export const LiveAuctionPage: React.FC = () => {
               </div>
 
               <div className="text-right">
-                <span className="block font-mono text-xs uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-                  Incremento Minimo
+                <span className="block text-xs text-paper-subtext dark:text-charcoal-subtext">
+                  Incremento mínimo
                 </span>
                 <p className="mt-1 font-mono text-base font-semibold tabular-nums text-paper-text dark:text-charcoal-text">
                   + {formatBrlCents(lotData.min_increment_cents)}
                 </p>
                 {lotData.leader_masked_name && (
                   <p className="mt-1 font-mono text-xs text-paper-subtext dark:text-charcoal-subtext">
-                    Lider: {lotData.leader_masked_name}
+                    Líder: {lotData.leader_masked_name}
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Painel de Posicao do Licitante na Disputa */}
             {user?.role === "BIDDER" && (
               <div className="mt-5">
                 {isLeader ? (
                   <div className="rounded-sm border border-status-winning bg-status-winning/10 px-4 py-3 text-xs font-medium text-status-winning">
                     {lotData.status === "ENDED"
-                      ? "VOCE ARREMATOU ESTE LOTE. LIQUIDACAO CONCLUIDA."
-                      : `VOCE ESTA LIDERANDO ESTE LOTE. (${formatBrlCents(lotData.current_bid_cents)} reservados no saldo comprometido).`}
+                      ? "Você arrematou este lote."
+                      : `Você está ganhando (${formatBrlCents(lotData.current_bid_cents)} reservados no saldo comprometido).`}
                   </div>
                 ) : isOutbid ? (
                   <div className="rounded-sm border border-status-outbid bg-status-outbid/10 px-4 py-3 text-xs font-medium text-status-outbid">
-                    VOCE FOI SUPERADO. Seu saldo comprometido anterior ja retornou integralmente ao saldo disponivel.
+                    Seu lance foi superado. O valor reservado já voltou para o seu saldo disponível.
                   </div>
                 ) : (
                   <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-4 py-3 text-xs text-paper-subtext dark:text-charcoal-subtext">
-                    Voce ainda nao deu lances neste lote. Proximo lance minimo:{" "}
+                    Você ainda não deu lances neste lote. Próximo lance mínimo:{" "}
                     <strong className="font-mono tabular-nums text-paper-text dark:text-charcoal-text">
                       {formatBrlCents(minRequiredCents)}
                     </strong>
@@ -328,26 +333,23 @@ export const LiveAuctionPage: React.FC = () => {
               </div>
             )}
 
-            {/* Comprovante Assinado quando encerrado com vencedor */}
             {lotData.status === "ENDED" && lotData.certificate && (
               <div className="mt-5 rounded-sm border border-gold bg-gold/10 p-4">
-                <span className="block font-mono text-xs font-semibold uppercase tracking-wider text-gold">
-                  Comprovante de Arremate Emitido
+                <span className="block text-xs font-semibold text-gold">
+                  Lote arrematado
                 </span>
                 <p className="mt-1 font-mono text-xs tabular-nums text-paper-text dark:text-charcoal-text">
-                  Codigo: {lotData.certificate.receipt_code} — Vencedor:{" "}
-                  {lotData.certificate.winner_masked_name}
+                  Vencedor: {lotData.certificate.winner_masked_name}
                 </p>
                 <Link
                   to={`/receipts/${lotData.certificate.receipt_code}`}
-                  className="mt-3 inline-block rounded-sm border border-primary bg-primary px-4 py-2 font-mono text-xs font-semibold text-white hover:bg-primary-hover"
+                  className="mt-3 inline-block rounded-sm border border-primary bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-hover"
                 >
-                  Abrir Certificado Assinado (HMAC-SHA256)
+                  Ver comprovante de arremate
                 </Link>
               </div>
             )}
 
-            {/* Feedback de Aceite ou Recusa de Lance */}
             {bidFeedback && (
               <div
                 role="alert"
@@ -361,37 +363,35 @@ export const LiveAuctionPage: React.FC = () => {
               </div>
             )}
 
-            {/* Controles de Submissao de Lance */}
             {lotData.status === "LIVE" && (
               <div className="mt-5 border-t border-paper-border dark:border-charcoal-border pt-5">
                 {!user ? (
                   <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg p-4 text-center">
                     <p className="text-xs text-paper-subtext dark:text-charcoal-subtext">
-                      Autentique-se como Licitante (ou use os botoes de 1 clique no topo) para submeter lances em tempo real.
+                      Entre como licitante (ou use a troca rápida no topo) para enviar lances.
                     </p>
                     <Link
                       to="/login"
                       className="mt-3 inline-block rounded-sm border border-primary bg-primary px-4 py-2 text-xs font-semibold text-white"
                     >
-                      Autenticar Licitante
+                      Entrar
                     </Link>
                   </div>
                 ) : user.role === "AUCTIONEER" ? (
                   <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg p-4 text-xs text-paper-subtext dark:text-charcoal-subtext">
-                    Voce esta autenticado como Leiloeiro ({user.masked_name}). Para disputar este lote, selecione Licitante 1 ou Licitante 2 na barra de acesso rapido no topo.
+                    Você está conectado como leiloeiro ({user.masked_name}). Para dar lances, alterne para Licitante 1 ou Licitante 2 na barra superior.
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {wallet && (
                       <div className="flex items-center justify-between text-xs text-paper-subtext dark:text-charcoal-subtext">
-                        <span>Seu Saldo Disponivel:</span>
+                        <span>Seu saldo disponível:</span>
                         <span className="font-mono font-semibold tabular-nums text-status-winning">
                           {formatBrlCents(wallet.available_balance_cents)}
                         </span>
                       </div>
                     )}
 
-                    {/* Botoes de Lance Rapido */}
                     <div className="grid grid-cols-3 gap-2">
                       {quickAmounts.map((q) => (
                         <button
@@ -401,7 +401,7 @@ export const LiveAuctionPage: React.FC = () => {
                           onClick={() => void submitBidCents(q.cents)}
                           className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-2 py-2 text-center transition-colors hover:border-primary disabled:opacity-50"
                         >
-                          <span className="block font-mono text-[10px] uppercase text-paper-subtext dark:text-charcoal-subtext">
+                          <span className="block text-[10px] text-paper-subtext dark:text-charcoal-subtext">
                             {q.label}
                           </span>
                           <span className="mt-0.5 block font-mono text-xs font-bold tabular-nums text-paper-text dark:text-charcoal-text">
@@ -411,7 +411,6 @@ export const LiveAuctionPage: React.FC = () => {
                       ))}
                     </div>
 
-                    {/* Formulario de Lance Customizado */}
                     <form
                       onSubmit={(e) => void handleCustomBidSubmit(e)}
                       className="flex gap-2 pt-1"
@@ -429,7 +428,7 @@ export const LiveAuctionPage: React.FC = () => {
                         disabled={isSubmittingBid}
                         className="h-[42px] rounded-sm border border-primary bg-primary px-5 text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
                       >
-                        {isSubmittingBid ? "Enviando..." : "Confirmar Lance"}
+                        {isSubmittingBid ? "Enviando..." : "Dar lance"}
                       </button>
                     </form>
                   </div>
@@ -438,20 +437,19 @@ export const LiveAuctionPage: React.FC = () => {
             )}
           </div>
 
-          {/* Historico de Lances em Tempo Real */}
           <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface">
             <div className="flex items-center justify-between border-b border-paper-border dark:border-charcoal-border px-5 py-3.5">
-              <h2 className="font-serif text-lg font-semibold text-paper-text dark:text-charcoal-text">
-                Livro de Lances em Tempo Real
+              <h2 className="font-sans text-base font-semibold text-paper-text dark:text-charcoal-text">
+                Histórico de lances
               </h2>
               <span className="font-mono text-xs tabular-nums text-paper-subtext dark:text-charcoal-subtext">
-                {bidsHistory.length} registros
+                {bidsHistory.length} {bidsHistory.length === 1 ? "lance" : "lances"}
               </span>
             </div>
 
             {bidsHistory.length === 0 ? (
               <div className="p-6 text-center text-xs text-paper-subtext dark:text-charcoal-subtext">
-                Nenhum lance registrado ainda. O primeiro lance partira do bloco GENESIS.
+                Nenhum lance enviado até o momento.
               </div>
             ) : (
               <ul className="divide-y divide-paper-border dark:divide-charcoal-border max-h-[380px] overflow-y-auto">
@@ -467,7 +465,7 @@ export const LiveAuctionPage: React.FC = () => {
                         </span>
                         {bid.extension_triggered && (
                           <span className="border border-gold/60 bg-gold/10 px-1.5 py-0.5 font-mono text-[10px] text-gold">
-                            +2 MIN
+                            +2 min
                           </span>
                         )}
                       </div>
@@ -482,7 +480,7 @@ export const LiveAuctionPage: React.FC = () => {
                         {new Date(bid.created_at).toLocaleTimeString("pt-BR")}
                       </span>
                       <span title={bid.current_hash}>
-                        SHA-256: {bid.current_hash.slice(0, 16)}...
+                        Hash: {bid.current_hash.slice(0, 16)}...
                       </span>
                     </div>
                   </li>
