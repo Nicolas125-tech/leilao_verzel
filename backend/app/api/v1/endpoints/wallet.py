@@ -86,3 +86,15 @@ async def list_transactions(
     )
     transactions = query.scalars().all()
     return [TransactionResponse.model_validate(tx) for tx in transactions]
+
+
+wallets_router = APIRouter(prefix="/wallets", tags=["wallet"])
+wallets_router.add_api_route("", get_wallet, methods=["GET"], response_model=WalletResponse)
+wallets_router.add_api_route("/me", get_wallet, methods=["GET"], response_model=WalletResponse)
+wallets_router.add_api_route("/deposit", deposit, methods=["POST"], response_model=WalletResponse)
+wallets_router.add_api_route(
+    "/transactions",
+    list_transactions,
+    methods=["GET"],
+    response_model=list[TransactionResponse],
+)

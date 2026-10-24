@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #FAF9F6;
+    color: #18181B;
+    line-height: 1.5;
+  }
+
+  html.dark body {
+    background-color: #121214;
+    color: #F4F4F0;
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  button:focus-visible,
+  a:focus-visible {
+    outline: 2px solid #9E2A2B;
+    outline-offset: 2px;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.passe-partout {
+  padding: 16px;
+  background-color: #F3F1EC;
+  border: 1px solid #E2DFD7;
+}
+
+html.dark .passe-partout {
+  background-color: #222227;
+  border-color: #2E2E36;
+}
