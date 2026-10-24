@@ -2,7 +2,7 @@ import asyncio
 from datetime import timedelta
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.crypto import (
@@ -112,9 +112,9 @@ async def run_seed(db: AsyncSession) -> None:
         current_bid_cents=None,
         leader_user_id=None,
         leader_masked_name=None,
-        start_time=now + timedelta(hours=2),
-        end_time=now + timedelta(hours=6),
-        original_end_time=now + timedelta(hours=6),
+        start_time=now + timedelta(days=1),
+        end_time=now + timedelta(days=8),
+        original_end_time=now + timedelta(days=8),
         extension_count=0,
         status="SCHEDULED",
         bid_count=0,
@@ -143,9 +143,9 @@ async def run_seed(db: AsyncSession) -> None:
         current_bid_cents=None,
         leader_user_id=None,
         leader_masked_name=None,
-        start_time=now - timedelta(minutes=30),
-        end_time=now + timedelta(minutes=45),
-        original_end_time=now + timedelta(minutes=45),
+        start_time=now - timedelta(hours=2),
+        end_time=now + timedelta(days=7),
+        original_end_time=now + timedelta(days=7),
         extension_count=0,
         status="LIVE",
         bid_count=0,
@@ -203,9 +203,9 @@ async def run_seed(db: AsyncSession) -> None:
         current_bid_cents=280000,
         leader_user_id=nicolas.id,
         leader_masked_name=nicolas.masked_name,
-        start_time=now - timedelta(minutes=40),
-        end_time=now + timedelta(minutes=25),
-        original_end_time=now + timedelta(minutes=25),
+        start_time=now - timedelta(hours=3),
+        end_time=now + timedelta(days=7),
+        original_end_time=now + timedelta(days=7),
         extension_count=0,
         status="LIVE",
         bid_count=3,
@@ -457,6 +457,18 @@ async def run_seed(db: AsyncSession) -> None:
     db.add_all(txs)
 
     await db.commit()
+
+
+async def reset_demo_data(db: AsyncSession) -> None:
+    await db.execute(delete(WinningCertificate))
+    await db.execute(delete(WalletTransaction))
+    await db.execute(delete(Bid))
+    await db.execute(delete(Lot))
+    await db.execute(delete(Wallet))
+    await db.execute(delete(User))
+    await db.flush()
+    db.expire_all()
+    await run_seed(db)
 
 
 async def _main() -> None:

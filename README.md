@@ -83,11 +83,16 @@ O script `backend/app/seed.py` é idempotente. As três contas abaixo também co
 | Licitante 2 | Marina Silva | `marina@verzel.com.br` | `Verzel2026!` | `BIDDER` |
 
 Lotes iniciais disponíveis após o seed:
-- Lote #101 (`SCHEDULED`): *Nighthawks* (Edward Hopper), com início agendado no futuro.
-- Lote #102 (`LIVE`, sem lances): *The Bedroom* (Vincent van Gogh), aberto para receber o primeiro lance.
-- Lote #103 (`LIVE`, com disputa): *A Sunday on La Grande Jatte* (Georges Seurat), com 3 lances encadeados e reserva ativa no saldo comprometido do líder.
+- Lote #101 (`SCHEDULED`): *Nighthawks* (Edward Hopper), com início agendado para +1 dia e encerramento em +8 dias.
+- Lote #102 (`LIVE`, sem lances): *The Bedroom* (Vincent van Gogh), aberto por 7 dias para receber o primeiro lance imediatamente.
+- Lote #103 (`LIVE`, com disputa): *A Sunday on La Grande Jatte* (Georges Seurat), aberto por 7 dias com 3 lances encadeados e reserva ativa no saldo comprometido do líder.
 - Lote #104 (`ENDED`, liquidado): *Water Lilies* (Claude Monet), encerrado com transferência financeira concluída e comprovante público emitido (`ARP-`).
 - Lote #105 (`CANCELLED`): *American Gothic* (Grant Wood), oculto na vitrine pública e listado no painel do leiloeiro.
+
+Recursos rápidos para a banca avaliadora:
+- Os lotes ao vivo (`#102` e `#103`) permanecem válidos por 7 dias a partir da execução do seed, permitindo testar lances em tempo real sem precisar cadastrar lotes do zero.
+- O botão `Restaurar Lotes de Teste` na barra superior (ou `POST /api/v1/demo/reset`) reinicia a demonstração a qualquer momento, restaurando saldos, lotes, janelas de 7 dias e cadeias de hash.
+- No Painel do Leiloeiro (`/auctioneer`, aba `Catalogar Nova Obra`), o botão de atalho `Iniciar nos últimos 105s` publica um lote já na janela crítica para validar imediatamente a prorrogação anti-sniping (`+2 min`).
 
 ## 5. Principais rotas da API e WebSockets
 
@@ -100,6 +105,7 @@ Lotes iniciais disponíveis após o seed:
 - `GET /api/v1/receipts/{receipt_code}`
 - `GET /api/v1/me/bids-and-wins`
 - `GET /api/v1/auctioneer/dashboard`
+- `POST /api/v1/demo/reset`
 - `WS /api/v1/ws/lots/{lot_id}` (também acessível em `/ws/lots/{lot_id}`)
 
 ## 6. Como testar a detecção de adulteração no PostgreSQL

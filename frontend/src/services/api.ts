@@ -178,3 +178,11 @@ export const settlementApi = {
     return apiRequest<AuctioneerDashboard>("/auctioneer/dashboard");
   },
 };
+
+export const demoApi = {
+  reset(): Promise<{ status: string; message: string }> {
+    return apiRequest<{ status: string; message: string }>("/demo/reset", {
+      method: "POST",
+    });
+  },
+};

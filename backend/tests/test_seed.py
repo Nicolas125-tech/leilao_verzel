@@ -1,15 +1,20 @@
+from datetime import timedelta
+import httpx
 import pytest
 import pytest_asyncio
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.crypto import verify_receipt_signature
-from app.models.base import Base
+from app.core.database import get_db
+from app.main import app
+from app.models.base import Base, utc_now
 from app.models.lot import Bid, Lot, WinningCertificate
 from app.models.user import User
 from app.models.wallet import Wallet
-from app.seed import run_seed
+from app.seed import reset_demo_data, run_seed
 from app.services.audit import audit_lot_bid_chain
+from app.services.lots import ensure_utc
 
 
 @pytest_asyncio.fixture
@@ -111,3 +116,66 @@ async def test_seed_is_idempotent(db_session: AsyncSession):
     assert lots_count_2 == lots_count_1
     assert bids_count_2 == bids_count_1
     assert certs_count_2 == certs_count_1
+
+
+@pytest.mark.asyncio
+async def test_seed_seven_day_window_and_reset_demo_data(db_session: AsyncSession):
+    await run_seed(db_session)
+    now = utc_now()
+
+    lots_res = await db_session.execute(select(Lot).order_by(Lot.lot_number.asc()))
+    lots_by_number = {lot.lot_number: lot for lot in lots_res.scalars().all()}
+
+    lot_101 = lots_by_number[101]
+    lot_102 = lots_by_number[102]
+    lot_103 = lots_by_number[103]
+
+    assert ensure_utc(lot_101.start_time) >= now + timedelta(hours=23)
+    assert ensure_utc(lot_101.end_time) >= now + timedelta(days=7, hours=23)
+    assert ensure_utc(lot_102.end_time) >= now + timedelta(days=6, hours=23)
+    assert ensure_utc(lot_103.end_time) >= now + timedelta(days=6, hours=23)
+
+    await db_session.execute(
+        update(Lot).where(Lot.lot_number == 102).values(status="CANCELLED")
+    )
+    await db_session.commit()
+
+    await reset_demo_data(db_session)
+
+    refreshed_res = await db_session.execute(select(Lot).where(Lot.lot_number == 102))
+    refreshed_102 = refreshed_res.scalar_one()
+    assert refreshed_102.status == "LIVE"
+    assert refreshed_102.bid_count == 0
+
+
+@pytest.mark.asyncio
+async def test_demo_reset_endpoint_restores_seed_state(db_session: AsyncSession):
+    await run_seed(db_session)
+
+    await db_session.execute(
+        update(Bid).where(Bid.sequence_number == 2).values(amount_cents=999999)
+    )
+    await db_session.commit()
+
+    async def _override_get_db():
+        yield db_session
+
+    app.dependency_overrides[get_db] = _override_get_db
+    try:
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            resp = await client.post("/api/v1/demo/reset")
+            assert resp.status_code == 200
+            payload = resp.json()
+            assert payload == {
+                "status": "ok",
+                "message": "Demonstração restaurada com sucesso.",
+            }
+    finally:
+        app.dependency_overrides.clear()
+
+    lot_103_res = await db_session.execute(select(Lot).where(Lot.lot_number == 103))
+    lot_103 = lot_103_res.scalar_one()
+    audit = await audit_lot_bid_chain(db_session, lot_103.id)
+    assert audit.is_chain_valid is True
+    assert audit.total_bids == 3
