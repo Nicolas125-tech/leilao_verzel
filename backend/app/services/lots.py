@@ -196,4 +196,8 @@ async def cancel_lot(db: AsyncSession, auctioneer: User, lot_id: UUID) -> Lot:
     lot.cancelled_at = now_utc
     await db.commit()
     await db.refresh(lot)
+
+    from app.services.websocket import ws_manager
+
+    await ws_manager.broadcast_lot_cancelled(lot.id)
     return lot

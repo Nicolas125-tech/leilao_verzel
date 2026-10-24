@@ -17,5 +17,37 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: leilao_verzel_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-leilao_verzel}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-verzel-super-secret-jwt-key-change-in-production-32b}
+      HMAC_SECRET_KEY: ${HMAC_SECRET_KEY:-verzel-audit-hmac-sha256-secret-key-production-32b}
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      ENVIRONMENT: development
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: leilao_verzel_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      VITE_API_PROXY_TARGET: http://backend:8000
+      VITE_WS_PROXY_TARGET: ws://backend:8000
+    ports:
+      - "5173:5173"
+
 volumes:
   pgdata:

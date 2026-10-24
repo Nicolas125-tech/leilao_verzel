@@ -24,6 +24,7 @@ app.include_router(api_router)
 
 
 @app.websocket("/ws/lots/{lot_id}")
+@app.websocket("/api/v1/ws/lots/{lot_id}")
 async def lot_websocket_endpoint(websocket: WebSocket, lot_id: UUID):
     await ws_manager.connect(lot_id, websocket)
     try:

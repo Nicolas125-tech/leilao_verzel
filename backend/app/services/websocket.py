@@ -37,15 +37,15 @@ class ConnectionManager:
         bid_dict: dict[str, Any],
         lot_summary: dict[str, Any] | None = None,
     ) -> None:
-        await self.broadcast(
-            lot_id,
-            {
-                "event": "NEW_BID",
-                "lot_id": str(lot_id),
-                "bid": bid_dict,
-                "lot": lot_summary,
-            },
-        )
+        payload: dict[str, Any] = {
+            "event": "NEW_BID",
+            "lot_id": str(lot_id),
+            "bid": bid_dict,
+            "lot": lot_summary,
+        }
+        if lot_summary:
+            payload.update(lot_summary)
+        await self.broadcast(lot_id, payload)
 
     async def broadcast_lot_settled(
         self,

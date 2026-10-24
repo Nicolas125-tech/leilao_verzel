@@ -179,6 +179,18 @@ async def place_bid(
     await db.refresh(new_bid)
 
     bid_payload = BidResponse.model_validate(new_bid).model_dump(mode="json")
-    await ws_manager.broadcast_new_bid(lot.id, bid_payload)
+    lot_summary = {
+        "lot_id": str(lot.id),
+        "lot_number": lot.lot_number,
+        "title": lot.title,
+        "current_bid_cents": lot.current_bid_cents,
+        "bid_count": lot.bid_count,
+        "leader_user_id": str(lot.leader_user_id) if lot.leader_user_id else None,
+        "leader_masked_name": lot.leader_masked_name,
+        "lot_end_time": format_utc_iso(lot.end_time),
+        "extension_count": lot.extension_count,
+        "current_hash": lot.head_hash,
+    }
+    await ws_manager.broadcast_new_bid(lot.id, bid_payload, lot_summary)
 
     return new_bid
