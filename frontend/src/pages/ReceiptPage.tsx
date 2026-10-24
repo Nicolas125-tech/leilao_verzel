@@ -34,8 +34,8 @@ export const ReceiptPage: React.FC = () => {
       await navigator.clipboard.writeText(window.location.href);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2500);
-    } catch {
-      // ignora se clipboard indisponivel
+    } catch (err) {
+      console.warn("Não foi possível copiar o link para a área de transferência:", err);
     }
   };
 
@@ -152,21 +152,21 @@ export const ReceiptPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-8 space-y-3 border-t border-paper-border dark:border-charcoal-border pt-6 font-mono text-xs">
+        <div className="mt-8 space-y-3 border-t border-paper-border dark:border-charcoal-border pt-6 text-xs">
           <div>
-            <span className="block text-[10px] uppercase text-paper-subtext dark:text-charcoal-subtext">
+            <span className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
               Hash do lance vencedor
             </span>
-            <p className="mt-1 break-all rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg p-2.5">
+            <p className="mt-1 break-all rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg p-2.5 font-mono">
               {receipt.final_bid_hash}
             </p>
           </div>
 
           <div>
-            <span className="block text-[10px] uppercase text-paper-subtext dark:text-charcoal-subtext">
+            <span className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
               Assinatura HMAC-SHA256
             </span>
-            <p className="mt-1 break-all rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg p-2.5">
+            <p className="mt-1 break-all rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg p-2.5 font-mono">
               {receipt.receipt_signature}
             </p>
           </div>

@@ -137,7 +137,7 @@ async def get_lot_by_id(db: AsyncSession, lot_id: UUID) -> Lot:
     if not lot:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Lote nao encontrado.",
+            detail="Lote não encontrado.",
         )
     return await sync_lot_temporal_state(db, lot)
 
@@ -148,13 +148,13 @@ async def cancel_lot(db: AsyncSession, auctioneer: User, lot_id: UUID) -> Lot:
     if not lot:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Lote nao encontrado.",
+            detail="Lote não encontrado.",
         )
 
     if lot.auctioneer_id != auctioneer.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Apenas o leiloeiro responsavel por este lote pode cancela-lo.",
+            detail="Apenas o leiloeiro responsável por este lote pode cancelá-lo.",
         )
 
     now_utc = datetime.now(timezone.utc)
@@ -167,7 +167,7 @@ async def cancel_lot(db: AsyncSession, auctioneer: User, lot_id: UUID) -> Lot:
             await db.commit()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Nao e possivel cancelar um lote com status {resolved}.",
+            detail=f"Não é possível cancelar um lote com status {resolved}.",
         )
 
     if lot.leader_user_id is not None and lot.current_bid_cents is not None:
@@ -188,7 +188,7 @@ async def cancel_lot(db: AsyncSession, auctioneer: User, lot_id: UUID) -> Lot:
                 amount_cents=refund_amount,
                 balance_after_cents=leader_wallet.total_balance_cents,
                 committed_after_cents=leader_wallet.committed_balance_cents,
-                description=f"Estorno automatico por cancelamento do Lote #{lot.lot_number}",
+                description=f"Estorno automático por cancelamento do Lote #{lot.lot_number}",
             )
             db.add(refund_tx)
 

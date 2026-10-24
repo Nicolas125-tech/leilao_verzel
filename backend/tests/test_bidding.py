@@ -230,7 +230,7 @@ async def test_bidding_rejection_rules(client: httpx.AsyncClient):
         json={"amount_cents": 90000},
     )
     assert below_starting.status_code == 400
-    assert "minimo" in below_starting.json()["detail"].lower()
+    assert "mínimo" in below_starting.json()["detail"].lower()
 
     valid_first = await client.post(
         f"/api/v1/lots/{lot_id}/bids",
@@ -247,7 +247,7 @@ async def test_bidding_rejection_rules(client: httpx.AsyncClient):
     assert self_outbid.status_code == 400
     assert any(
         term in self_outbid.json()["detail"].lower()
-        for term in ("lider", "maior lance", "ganhando")
+        for term in ("líder", "maior lance", "ganhando")
     )
 
     below_increment = await client.post(
@@ -256,7 +256,7 @@ async def test_bidding_rejection_rules(client: httpx.AsyncClient):
         json={"amount_cents": 105000},
     )
     assert below_increment.status_code == 400
-    assert "minimo" in below_increment.json()["detail"].lower()
+    assert "mínimo" in below_increment.json()["detail"].lower()
 
     insufficient_funds = await client.post(
         f"/api/v1/lots/{lot_id}/bids",

@@ -7,9 +7,9 @@ from app.core.config import settings
 from app.services.websocket import ws_manager
 
 app = FastAPI(
-    title="Casa de Leiloes Verzel API",
+    title="Casa de Leilões Verzel API",
     version="0.1.0",
-    description="API para pregao de arte em tempo real com liquidacao atomica e auditoria criptografica",
+    description="API para pregão de arte em tempo real com liquidação atômica e auditoria criptográfica",
 )
 
 app.add_middleware(

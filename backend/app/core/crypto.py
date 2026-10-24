@@ -70,7 +70,7 @@ def verify_bid_chain(
     if len(bids) != expected_count:
         error_msg = (
             f"Contagem divergente: lote registra {expected_count} lances, "
-            f"mas foram encontrados {len(bids)} registros no banco (possivel exclusao)"
+            f"mas foram encontrados {len(bids)} registros no banco (possível exclusão)"
         )
         anomalies.append(error_msg)
         if broken_at is None:
@@ -86,7 +86,7 @@ def verify_bid_chain(
         stored_prev = bid.get("previous_hash")
 
         if seq != expected_seq:
-            msg = f"Quebra de sequencia no registro {idx + 1}: esperado #{expected_seq}, encontrado #{seq}"
+            msg = f"Quebra de sequência no registro {idx + 1}: esperado #{expected_seq}, encontrado #{seq}"
             anomalies.append(msg)
             if broken_at is None:
                 broken_at = expected_seq
@@ -114,8 +114,8 @@ def verify_bid_chain(
 
         if stored_curr != recalculated:
             msg = (
-                f"Adulteracao detectada no lance #{seq}: hash armazenado '{stored_curr}' "
-                f"nao confere com o hash recalculado '{recalculated}'"
+                f"Adulteração detectada no lance #{seq}: hash armazenado '{stored_curr}' "
+                f"não confere com o hash recalculado '{recalculated}'"
             )
             anomalies.append(msg)
             if broken_at is None:
@@ -129,7 +129,7 @@ def verify_bid_chain(
     if last_bid_hash != expected_head_hash:
         msg = (
             f"Topo da cadeia inconsistente: lote aponta head_hash '{expected_head_hash}', "
-            f"mas ultimo lance da lista possui '{last_bid_hash}'"
+            f"mas último lance da lista possui '{last_bid_hash}'"
         )
         anomalies.append(msg)
         if broken_at is None:

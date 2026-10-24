@@ -23,7 +23,7 @@ async def register(
     if existing_user_query.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Ja existe um usuario cadastrado com este e-mail.",
+            detail="Já existe um usuário cadastrado com este e-mail.",
         )
 
     user_id = uuid.uuid4()

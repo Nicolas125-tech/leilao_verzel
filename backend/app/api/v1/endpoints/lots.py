@@ -28,7 +28,7 @@ async def create_new_lot(
 @router.get("", response_model=list[LotResponse])
 async def get_public_lots(
     status: str | None = Query(default=None, description="Filtro por status: LIVE, SCHEDULED, ENDED"),
-    q: str | None = Query(default=None, description="Busca por titulo, artista ou tecnica"),
+    q: str | None = Query(default=None, description="Busca por título, artista ou técnica"),
     db: AsyncSession = Depends(get_db),
 ):
     lots = await list_public_lots(db=db, status_filter=status, query_text=q)

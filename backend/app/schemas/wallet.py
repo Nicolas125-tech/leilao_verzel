@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class DepositRequest(BaseModel):
-    amount_cents: int = Field(..., gt=0, description="Valor do deposito em centavos (maior que zero)")
+    amount_cents: int = Field(..., gt=0, description="Valor do depósito em centavos (maior que zero)")
 
 
 class WalletResponse(BaseModel):

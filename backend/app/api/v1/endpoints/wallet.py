@@ -21,7 +21,7 @@ async def get_wallet(
     if not wallet:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Carteira nao encontrada para este usuario.",
+            detail="Carteira não encontrada para este usuário.",
         )
     return WalletResponse(
         id=wallet.id,
@@ -45,11 +45,11 @@ async def deposit(
     if not wallet:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Carteira nao encontrada.",
+            detail="Carteira não encontrada.",
         )
 
     wallet.total_balance_cents += payload.amount_cents
-    description = f"Deposito simulado de R$ {payload.amount_cents / 100:.2f}"
+    description = f"Depósito simulado de R$ {payload.amount_cents / 100:.2f}"
 
     transaction = WalletTransaction(
         wallet_id=wallet.id,

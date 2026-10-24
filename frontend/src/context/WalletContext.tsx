@@ -42,8 +42,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
       ]);
       setWallet(walletData);
       setTransactions(txData);
-    } catch {
-      // ignora silenciosamente se sessao expirou
+    } catch (err) {
+      console.warn("Não foi possível atualizar a carteira do licitante:", err);
     } finally {
       setIsLoadingWallet(false);
     }

@@ -86,7 +86,7 @@ export const LotAuditPage: React.FC = () => {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h2
-                  className={`text-sm font-bold uppercase tracking-wider ${
+                  className={`text-sm font-semibold ${
                     audit.is_chain_valid
                       ? "text-status-winning"
                       : "text-status-outbid"
@@ -106,7 +106,7 @@ export const LotAuditPage: React.FC = () => {
                   Total de lances: <strong>{audit.total_bids}</strong>
                 </span>
                 <span className="block text-paper-subtext dark:text-charcoal-subtext">
-                  Head hash: {audit.head_hash.slice(0, 20)}...
+                  Hash de topo: {audit.head_hash.slice(0, 20)}...
                 </span>
               </div>
             </div>
@@ -179,34 +179,34 @@ export const LotAuditPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="mt-4 grid grid-cols-1 gap-3 font-mono text-xs md:grid-cols-2">
+                    <div className="mt-4 grid grid-cols-1 gap-3 text-xs md:grid-cols-2">
                       <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg p-3">
-                        <span className="block text-[10px] uppercase text-paper-subtext dark:text-charcoal-subtext">
-                          Hash anterior (previous_hash)
+                        <span className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                          Hash anterior (elo anterior)
                         </span>
                         <p
-                          className={`mt-1 break-all ${
+                          className={`mt-1 break-all font-mono ${
                             prevMismatch ? "text-status-outbid font-bold" : ""
                           }`}
                         >
                           {node.previous_hash}
                         </p>
                         {prevMismatch && (
-                          <p className="mt-1 break-all text-[11px] text-status-outbid">
+                          <p className="mt-1 break-all font-mono text-[11px] text-status-outbid">
                             Esperado: {node.expected_previous_hash}
                           </p>
                         )}
                       </div>
 
                       <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg p-3">
-                        <span className="block text-[10px] uppercase text-paper-subtext dark:text-charcoal-subtext">
+                        <span className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
                           Hash gravado vs. recalculado
                         </span>
-                        <p className="mt-1 break-all">
+                        <p className="mt-1 break-all font-mono">
                           Gravado: {node.stored_hash}
                         </p>
                         <p
-                          className={`mt-1 break-all ${
+                          className={`mt-1 break-all font-mono ${
                             hashMismatch
                               ? "font-bold text-status-outbid"
                               : "text-status-winning"

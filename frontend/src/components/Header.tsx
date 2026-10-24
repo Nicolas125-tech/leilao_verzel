@@ -19,7 +19,7 @@ export const Header: React.FC = () => {
     if (isQuickDepositing) return;
     setIsQuickDepositing(true);
     try {
-      await deposit(100000); // + R$ 1.000,00
+      await deposit(100000);
     } finally {
       setIsQuickDepositing(false);
     }
@@ -55,7 +55,6 @@ export const Header: React.FC = () => {
 
   return (
     <header className="border-b border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface">
-      {/* Barra superior de troca rápida de conta e tema */}
       <div className="border-b border-paper-border dark:border-charcoal-border bg-paper-muted/70 dark:bg-charcoal-muted/70">
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3 px-4 py-2 sm:px-6">
           <div className="flex flex-wrap items-center gap-2 text-xs text-paper-subtext dark:text-charcoal-subtext">
@@ -68,7 +67,7 @@ export const Header: React.FC = () => {
                   type="button"
                   disabled={isSwitchingProfile}
                   onClick={() => void handleProfileSwitch(preset.email)}
-                  className={`rounded-sm border px-2 py-0.5 font-mono text-xs transition-colors ${
+                  className={`rounded-sm border px-2 py-0.5 text-xs font-medium transition-colors ${
                     isCurrent
                       ? "border-primary bg-primary text-white"
                       : "border-paper-border bg-paper-surface text-paper-text hover:border-paper-text dark:border-charcoal-border dark:bg-charcoal-surface dark:text-charcoal-text"
@@ -115,7 +114,6 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Linha principal do cabeçalho */}
       <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <div className="flex items-center gap-8">
           <Link
@@ -147,11 +145,10 @@ export const Header: React.FC = () => {
           </nav>
         </div>
 
-        {/* Saldos do Licitante */}
         {user?.role === "BIDDER" && wallet && (
           <div className="flex flex-wrap items-center gap-3 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3.5 py-2">
             <div className="border-r border-paper-border dark:border-charcoal-border pr-3">
-              <span className="block text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
+              <span className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
                 Total
               </span>
               <span className="font-mono text-xs font-semibold tabular-nums text-paper-text dark:text-charcoal-text">
@@ -160,7 +157,7 @@ export const Header: React.FC = () => {
             </div>
 
             <div className="border-r border-paper-border dark:border-charcoal-border pr-3">
-              <span className="block text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
+              <span className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
                 Comprometido
               </span>
               <span className="font-mono text-xs font-semibold tabular-nums text-status-warning">
@@ -169,7 +166,7 @@ export const Header: React.FC = () => {
             </div>
 
             <div className="pr-1">
-              <span className="block text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
+              <span className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
                 Disponível
               </span>
               <span className="font-mono text-sm font-bold tabular-nums text-status-winning">
@@ -182,7 +179,7 @@ export const Header: React.FC = () => {
               disabled={isQuickDepositing}
               onClick={() => void handleQuickDeposit()}
               title="Depositar R$ 1.000,00 na carteira"
-              className="rounded-sm border border-primary bg-primary px-2.5 py-1.5 font-mono text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50 tabular-nums"
+              className="rounded-sm border border-primary bg-primary px-2.5 py-1.5 font-sans text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50 tabular-nums"
             >
               {isQuickDepositing ? "Aportando..." : "+ R$ 1.000"}
             </button>

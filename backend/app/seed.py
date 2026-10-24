@@ -67,11 +67,11 @@ async def run_seed(db: AsyncSession) -> None:
     db.add_all([auctioneer, nicolas, marina])
     await db.flush()
 
-    # Carteiras iniciais e depositos base:
+    # Carteiras iniciais e depósitos base:
     # - Nicolas deposita R$ 15.000,00 (1_500_000 centavos), arremata Lote #104 por R$ 3.200,00 (320_000)
     #   e lidera Lote #103 por R$ 2.800,00 (280_000 comprometidos).
     # - Marina deposita R$ 12.000,00 (1_200_000 centavos), sem saldo comprometido ativo.
-    # - Leiloeira recebe R$ 3.200,00 (320_000 centavos) da liquidacao do Lote #104.
+    # - Leiloeira recebe R$ 3.200,00 (320_000 centavos) da liquidação do Lote #104.
     auc_wallet = Wallet(
         user_id=auctioneer.id,
         total_balance_cents=320000,
@@ -99,13 +99,13 @@ async def run_seed(db: AsyncSession) -> None:
         title="Nighthawks",
         artist="Edward Hopper",
         date_display="1942",
-        medium_display="Oil on canvas",
+        medium_display="Óleo sobre tela",
         image_url="/artworks/nighthawks.svg",
         attributes_json={
-            "place_of_origin": "United States",
+            "place_of_origin": "Estados Unidos",
             "dimensions": "84.1 x 152.4 cm",
-            "department_title": "Arts of the Americas",
-            "classification_title": "Oil on canvas",
+            "department_title": "Artes das Américas",
+            "classification_title": "Pintura",
         },
         starting_bid_cents=350000,
         min_increment_cents=25000,
@@ -130,13 +130,13 @@ async def run_seed(db: AsyncSession) -> None:
         title="The Bedroom",
         artist="Vincent van Gogh",
         date_display="1889",
-        medium_display="Oil on canvas",
+        medium_display="Óleo sobre tela",
         image_url="/artworks/the-bedroom.svg",
         attributes_json={
-            "place_of_origin": "France",
+            "place_of_origin": "França",
             "dimensions": "73.6 x 92.3 cm",
-            "department_title": "Painting and Sculpture of Europe",
-            "classification_title": "Painting",
+            "department_title": "Pintura e Escultura",
+            "classification_title": "Pintura",
         },
         starting_bid_cents=180000,
         min_increment_cents=15000,
@@ -190,13 +190,13 @@ async def run_seed(db: AsyncSession) -> None:
         title="A Sunday on La Grande Jatte",
         artist="Georges Seurat",
         date_display="1884-1886",
-        medium_display="Oil on canvas",
+        medium_display="Óleo sobre tela",
         image_url="/artworks/grande-jatte.svg",
         attributes_json={
-            "place_of_origin": "France",
+            "place_of_origin": "França",
             "dimensions": "207.5 x 308.1 cm",
-            "department_title": "Painting and Sculpture of Europe",
-            "classification_title": "Oil on canvas",
+            "department_title": "Pintura e Escultura",
+            "classification_title": "Pintura",
         },
         starting_bid_cents=200000,
         min_increment_cents=20000,
@@ -242,13 +242,13 @@ async def run_seed(db: AsyncSession) -> None:
         title="Water Lilies",
         artist="Claude Monet",
         date_display="1906",
-        medium_display="Oil on canvas",
+        medium_display="Óleo sobre tela",
         image_url="/artworks/water-lilies.svg",
         attributes_json={
-            "place_of_origin": "France",
+            "place_of_origin": "França",
             "dimensions": "89.9 x 94.1 cm",
-            "department_title": "Painting and Sculpture of Europe",
-            "classification_title": "Oil on canvas",
+            "department_title": "Pintura e Escultura",
+            "classification_title": "Pintura",
         },
         starting_bid_cents=260000,
         min_increment_cents=20000,
@@ -275,13 +275,13 @@ async def run_seed(db: AsyncSession) -> None:
         title="American Gothic",
         artist="Grant Wood",
         date_display="1930",
-        medium_display="Oil on beaverboard",
+        medium_display="Óleo sobre painel",
         image_url="/artworks/american-gothic.svg",
         attributes_json={
-            "place_of_origin": "United States",
+            "place_of_origin": "Estados Unidos",
             "dimensions": "78 x 65.3 cm",
-            "department_title": "Arts of the Americas",
-            "classification_title": "Painting",
+            "department_title": "Artes das Américas",
+            "classification_title": "Pintura",
         },
         starting_bid_cents=220000,
         min_increment_cents=20000,
@@ -396,7 +396,7 @@ async def run_seed(db: AsyncSession) -> None:
     )
     db.add(certificate)
 
-    # Transacoes de carteira para historico realista
+    # Transações de carteira para histórico realista
     txs = [
         WalletTransaction(
             wallet_id=nicolas_wallet.id,
@@ -406,7 +406,7 @@ async def run_seed(db: AsyncSession) -> None:
             amount_cents=1500000,
             balance_after_cents=1500000,
             committed_after_cents=0,
-            description="Aporte inicial de demonstracao na carteira",
+            description="Aporte inicial de demonstração na carteira",
             created_at=now - timedelta(hours=5),
         ),
         WalletTransaction(
@@ -417,7 +417,7 @@ async def run_seed(db: AsyncSession) -> None:
             amount_cents=1200000,
             balance_after_cents=1200000,
             committed_after_cents=0,
-            description="Aporte inicial de demonstracao na carteira",
+            description="Aporte inicial de demonstração na carteira",
             created_at=now - timedelta(hours=5),
         ),
         WalletTransaction(
@@ -428,7 +428,7 @@ async def run_seed(db: AsyncSession) -> None:
             amount_cents=320000,
             balance_after_cents=1180000,
             committed_after_cents=0,
-            description="Liquidacao definitiva de arremate do Lote #104",
+            description="Liquidação definitiva de arremate do Lote #104",
             created_at=settled_time,
         ),
         WalletTransaction(
@@ -439,7 +439,7 @@ async def run_seed(db: AsyncSession) -> None:
             amount_cents=320000,
             balance_after_cents=320000,
             committed_after_cents=0,
-            description="Credito recebido pela venda do Lote #104",
+            description="Crédito recebido pela venda do Lote #104",
             created_at=settled_time,
         ),
         WalletTransaction(
@@ -450,7 +450,7 @@ async def run_seed(db: AsyncSession) -> None:
             amount_cents=280000,
             balance_after_cents=1180000,
             committed_after_cents=280000,
-            description="Reserva de saldo por lideranca no Lote #103",
+            description="Reserva de saldo por liderança no Lote #103",
             created_at=b3_time,
         ),
     ]

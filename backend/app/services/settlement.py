@@ -93,7 +93,7 @@ async def settle_lot(db: AsyncSession, lot: Lot) -> Lot:
             amount_cents=final_amount,
             balance_after_cents=winner_wallet.total_balance_cents,
             committed_after_cents=winner_wallet.committed_balance_cents,
-            description=f"Liquidacao definitiva de arremate do Lote #{locked_lot.lot_number}",
+            description=f"Liquidação definitiva de arremate do Lote #{locked_lot.lot_number}",
             created_at=utc_now(),
         )
         db.add(debit_tx)
@@ -109,7 +109,7 @@ async def settle_lot(db: AsyncSession, lot: Lot) -> Lot:
             amount_cents=final_amount,
             balance_after_cents=auctioneer_wallet.total_balance_cents,
             committed_after_cents=auctioneer_wallet.committed_balance_cents,
-            description=f"Credito recebido pela venda do Lote #{locked_lot.lot_number}",
+            description=f"Crédito recebido pela venda do Lote #{locked_lot.lot_number}",
             created_at=utc_now(),
         )
         db.add(credit_tx)
@@ -165,7 +165,7 @@ async def get_public_receipt(
     if not cert:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Comprovante de arremate nao encontrado.",
+            detail="Comprovante de arremate não encontrado.",
         )
 
     lot_res = await db.execute(select(Lot).where(Lot.id == cert.lot_id))

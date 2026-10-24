@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Any
 from uuid import UUID
-from fastapi import WebSocket
+from fastapi import WebSocket, WebSocketDisconnect
 
 
 class ConnectionManager:
@@ -26,7 +26,7 @@ class ConnectionManager:
         for ws in active:
             try:
                 await ws.send_json(message)
-            except Exception:
+            except (WebSocketDisconnect, RuntimeError):
                 stale.append(ws)
         for ws in stale:
             self.disconnect(key, ws)

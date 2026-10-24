@@ -22,7 +22,7 @@ async def audit_lot_bid_chain(
     if not lot:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Lote nao encontrado.",
+            detail="Lote não encontrado.",
         )
 
     bids_res = await db.execute(

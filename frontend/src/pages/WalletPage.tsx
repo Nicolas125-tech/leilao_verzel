@@ -101,7 +101,6 @@ export const WalletPage: React.FC = () => {
         </h1>
       </div>
 
-      {/* Saldos */}
       {wallet && (
         <section className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-5">
@@ -142,7 +141,6 @@ export const WalletPage: React.FC = () => {
         </section>
       )}
 
-      {/* Adicionar Saldo */}
       <section className="mt-6 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-6">
         <h2 className="font-sans text-lg font-semibold text-paper-text dark:text-charcoal-text">
           Adicionar Saldo
@@ -168,7 +166,7 @@ export const WalletPage: React.FC = () => {
               type="button"
               disabled={isDepositing}
               onClick={() => void handleDepositCents(preset.cents)}
-              className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-4 py-2.5 font-mono text-xs font-semibold tabular-nums text-paper-text dark:text-charcoal-text transition-colors hover:border-primary"
+              className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-4 py-2.5 font-sans text-xs font-semibold tabular-nums text-paper-text dark:text-charcoal-text transition-colors hover:border-primary"
             >
               {preset.label}
             </button>
@@ -197,7 +195,6 @@ export const WalletPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Histórico de Movimentações */}
       <section className="mt-8 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface">
         <div className="border-b border-paper-border dark:border-charcoal-border px-6 py-4">
           <h2 className="font-sans text-lg font-semibold text-paper-text dark:text-charcoal-text">

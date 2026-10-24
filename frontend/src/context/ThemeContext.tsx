@@ -20,8 +20,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
       if (saved === "dark" || saved === "light") {
         return saved;
       }
-    } catch {
-      // ignora erro de storage
+    } catch (err) {
+      console.warn("Não foi possível ler o tema salvo no localStorage:", err);
     }
     return "light";
   });
@@ -35,8 +35,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     }
     try {
       localStorage.setItem(THEME_STORAGE_KEY, theme);
-    } catch {
-      // ignora erro de storage
+    } catch (err) {
+      console.warn("Não foi possível persistir o tema no localStorage:", err);
     }
   }, [theme]);
 

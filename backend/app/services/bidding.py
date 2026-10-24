@@ -27,7 +27,7 @@ async def place_bid(
     if not lot:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Lote nao encontrado.",
+            detail="Lote não encontrado.",
         )
 
     now_utc = utc_now()
@@ -36,7 +36,7 @@ async def place_bid(
     if resolved_status == "SCHEDULED":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Este lote ainda nao foi iniciado.",
+            detail="Este lote ainda não foi iniciado.",
         )
 
     if resolved_status == "ENDED":
@@ -47,7 +47,7 @@ async def place_bid(
             await db.commit()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Este lote ja foi encerrado.",
+            detail="Este lote já foi encerrado.",
         )
 
     if resolved_status == "CANCELLED":
@@ -59,7 +59,7 @@ async def place_bid(
     if lot.leader_user_id == bidder.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Voce ja detem o maior lance neste lote.",
+            detail="Você já detém o maior lance neste lote.",
         )
 
     if lot.current_bid_cents is None:
@@ -70,7 +70,7 @@ async def place_bid(
     if payload.amount_cents < min_required_cents:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Lance abaixo do valor minimo exigido de R$ {min_required_cents / 100:.2f}.",
+            detail=f"Lance abaixo do valor mínimo exigido de R$ {min_required_cents / 100:.2f}.",
         )
 
     involved_user_ids = sorted(
@@ -91,13 +91,13 @@ async def place_bid(
     if not bidder_wallet:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Carteira do licitante nao encontrada.",
+            detail="Carteira do licitante não encontrada.",
         )
 
     if payload.amount_cents > bidder_wallet.available_balance_cents:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Saldo disponivel insuficiente para cobrir este lance.",
+            detail="Saldo disponível insuficiente para cobrir este lance.",
         )
 
     if lot.leader_user_id is not None and lot.current_bid_cents is not None:
@@ -129,7 +129,7 @@ async def place_bid(
         amount_cents=payload.amount_cents,
         balance_after_cents=bidder_wallet.total_balance_cents,
         committed_after_cents=bidder_wallet.committed_balance_cents,
-        description=f"Reserva de saldo por lideranca no Lote #{lot.lot_number}",
+        description=f"Reserva de saldo por liderança no Lote #{lot.lot_number}",
         created_at=utc_now(),
     )
     db.add(hold_tx)

@@ -180,8 +180,8 @@ export function useLotWebSocket(lotId: string | undefined): UseLotWebSocketResul
             });
             void refreshWallet();
           }
-        } catch {
-          // ignora mensagens malformadas
+        } catch (err) {
+          console.warn("Falha ao processar evento WebSocket do lote:", err);
         }
       };
 

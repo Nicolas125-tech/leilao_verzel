@@ -19,7 +19,7 @@ async def get_current_user(
     if not credentials or not credentials.credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token de autenticacao ausente.",
+            detail="Token de autenticação ausente.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -28,7 +28,7 @@ async def get_current_user(
     if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token de autenticacao invalido ou expirado.",
+            detail="Token de autenticação inválido ou expirado.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -45,7 +45,7 @@ async def get_current_user(
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Identificador de usuario invalido no token.",
+            detail="Identificador de usuário inválido no token.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -54,7 +54,7 @@ async def get_current_user(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuario nao encontrado.",
+            detail="Usuário não encontrado.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -66,7 +66,7 @@ def require_role(allowed_roles: list[str]) -> Callable:
         if current_user.role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Acesso negado. Acao permitida apenas para: {', '.join(allowed_roles)}.",
+                detail=f"Acesso negado. Ação permitida apenas para: {', '.join(allowed_roles)}.",
             )
         return current_user
 

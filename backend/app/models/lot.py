@@ -201,6 +201,3 @@ class WinningCertificate(Base):
         back_populates="certificate",
         lazy="selectin",
     )
-
-
-Settlement = WinningCertificate

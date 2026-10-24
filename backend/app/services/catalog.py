@@ -12,13 +12,13 @@ LOCAL_FALLBACK_ARTWORKS: list[dict[str, Any]] = [
         "title": "A Sunday on La Grande Jatte",
         "artist": "Georges Seurat",
         "date_display": "1884/86",
-        "medium_display": "Oil on canvas",
+        "medium_display": "Óleo sobre tela",
         "image_url": "/artworks/grande-jatte.svg",
         "attributes": {
             "dimensions": "207.5 x 308.1 cm",
-            "place_of_origin": "France",
-            "department": "Painting and Sculpture",
-            "classification": "Painting",
+            "place_of_origin": "França",
+            "department": "Pintura e Escultura",
+            "classification": "Pintura",
         },
         "source": "local_fallback",
     },
@@ -27,13 +27,13 @@ LOCAL_FALLBACK_ARTWORKS: list[dict[str, Any]] = [
         "title": "The Bedroom",
         "artist": "Vincent van Gogh",
         "date_display": "1889",
-        "medium_display": "Oil on canvas",
+        "medium_display": "Óleo sobre tela",
         "image_url": "/artworks/the-bedroom.svg",
         "attributes": {
             "dimensions": "73.6 x 92.3 cm",
-            "place_of_origin": "Saint-Remy-de-Provence",
-            "department": "Painting and Sculpture",
-            "classification": "Painting",
+            "place_of_origin": "França",
+            "department": "Pintura e Escultura",
+            "classification": "Pintura",
         },
         "source": "local_fallback",
     },
@@ -42,13 +42,13 @@ LOCAL_FALLBACK_ARTWORKS: list[dict[str, Any]] = [
         "title": "Water Lilies",
         "artist": "Claude Monet",
         "date_display": "1906",
-        "medium_display": "Oil on canvas",
+        "medium_display": "Óleo sobre tela",
         "image_url": "/artworks/water-lilies.svg",
         "attributes": {
             "dimensions": "89.9 x 94.1 cm",
-            "place_of_origin": "France",
-            "department": "Painting and Sculpture",
-            "classification": "Painting",
+            "place_of_origin": "França",
+            "department": "Pintura e Escultura",
+            "classification": "Pintura",
         },
         "source": "local_fallback",
     },
@@ -57,13 +57,13 @@ LOCAL_FALLBACK_ARTWORKS: list[dict[str, Any]] = [
         "title": "Nighthawks",
         "artist": "Edward Hopper",
         "date_display": "1942",
-        "medium_display": "Oil on canvas",
+        "medium_display": "Óleo sobre tela",
         "image_url": "/artworks/nighthawks.svg",
         "attributes": {
             "dimensions": "84.1 x 152.4 cm",
-            "place_of_origin": "United States",
-            "department": "Arts of the Americas",
-            "classification": "Painting",
+            "place_of_origin": "Estados Unidos",
+            "department": "Artes das Américas",
+            "classification": "Pintura",
         },
         "source": "local_fallback",
     },
@@ -72,13 +72,13 @@ LOCAL_FALLBACK_ARTWORKS: list[dict[str, Any]] = [
         "title": "The Great Wave off Kanagawa",
         "artist": "Katsushika Hokusai",
         "date_display": "c. 1830/32",
-        "medium_display": "Color woodblock print; oban",
+        "medium_display": "Xilogravura colorida",
         "image_url": "/artworks/great-wave.svg",
         "attributes": {
             "dimensions": "25.7 x 37.9 cm",
-            "place_of_origin": "Japan",
-            "department": "Asian Art",
-            "classification": "Print",
+            "place_of_origin": "Japão",
+            "department": "Arte Asiática",
+            "classification": "Gravura",
         },
         "source": "local_fallback",
     },
@@ -87,13 +87,13 @@ LOCAL_FALLBACK_ARTWORKS: list[dict[str, Any]] = [
         "title": "American Gothic",
         "artist": "Grant Wood",
         "date_display": "1930",
-        "medium_display": "Oil on beaverboard",
+        "medium_display": "Óleo sobre painel",
         "image_url": "/artworks/american-gothic.svg",
         "attributes": {
             "dimensions": "78 x 65.3 cm",
-            "place_of_origin": "United States",
-            "department": "Arts of the Americas",
-            "classification": "Painting",
+            "place_of_origin": "Estados Unidos",
+            "department": "Artes das Américas",
+            "classification": "Pintura",
         },
         "source": "local_fallback",
     },
@@ -131,14 +131,14 @@ async def fetch_external_artworks(query: str | None = None) -> list[dict[str, An
         results.append(
             {
                 "external_id": str(item.get("id")),
-                "title": item.get("title") or "Obra Sem Titulo",
+                "title": item.get("title") or "Obra Sem Título",
                 "artist": first_line_artist,
                 "date_display": item.get("date_display") or "Data Desconhecida",
-                "medium_display": item.get("medium_display") or "Tecnica Mista",
+                "medium_display": item.get("medium_display") or "Técnica Mista",
                 "image_url": image_url,
                 "attributes": {
-                    "dimensions": item.get("dimensions") or "Dimensoes nao informadas",
-                    "place_of_origin": item.get("place_of_origin") or "Origem nao informada",
+                    "dimensions": item.get("dimensions") or "Dimensões não informadas",
+                    "place_of_origin": item.get("place_of_origin") or "Origem não informada",
                     "department": item.get("department_title") or "Acervo Geral",
                 },
                 "source": "artic",
@@ -153,8 +153,8 @@ async def search_catalog(query: str | None = None) -> list[dict[str, Any]]:
         artworks = await fetch_external_artworks(query)
         if artworks:
             return artworks
-    except Exception as exc:
-        logger.warning("Falha ao consultar catalogo externo, acionando contingencia local: %s", exc)
+    except (httpx.HTTPError, httpx.TimeoutException) as exc:
+        logger.warning("Falha ao consultar catálogo externo, acionando contingência local: %s", exc)
 
     if query and query.strip():
         q_clean = query.strip().lower()

@@ -18,7 +18,7 @@ class LotCreateRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     artist: str = Field(..., min_length=1, max_length=255)
     date_display: str = Field(default="Data Desconhecida", max_length=120)
-    medium_display: str = Field(default="Tecnica Mista", max_length=255)
+    medium_display: str = Field(default="Técnica Mista", max_length=255)
     image_url: str = Field(..., min_length=1)
     attributes_json: dict[str, Any] = Field(default_factory=dict)
     starting_bid_cents: int = Field(..., gt=0)
@@ -31,7 +31,7 @@ class LotCreateRequest(BaseModel):
         start_utc = _to_utc(self.start_time)
         end_utc = _to_utc(self.end_time)
         if end_utc <= start_utc:
-            raise ValueError("O horario de encerramento deve ser posterior ao horario de inicio.")
+            raise ValueError("O horário de encerramento deve ser posterior ao horário de início.")
         self.start_time = start_utc
         self.end_time = end_utc
         return self
@@ -126,8 +126,3 @@ class AuctioneerDashboardResponse(BaseModel):
     settled_with_winner_count: int
     active_lots_count: int
     lots: list[LotResponse]
-
-    @computed_field
-    @property
-    def settled_With_winner_count(self) -> int:
-        return self.settled_with_winner_count

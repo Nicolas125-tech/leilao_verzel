@@ -159,7 +159,7 @@ def test_crypto_tampering_detection_sql_update():
     assert valid is False
     assert res["is_valid"] is False
     assert res["broken_at_sequence"] == 1
-    assert any("Adulteracao detectada" in a for a in res["anomalies"])
+    assert any("Adulteração detectada" in a for a in res["anomalies"])
 
 
 def test_crypto_deletion_middle_bid():
@@ -183,7 +183,7 @@ def test_crypto_deletion_middle_bid():
     assert res["is_valid"] is False
     # Detected count mismatch and sequence gap
     assert any("Contagem divergente" in a for a in res["anomalies"])
-    assert any("Quebra de sequencia" in a for a in res["anomalies"])
+    assert any("Quebra de sequência" in a for a in res["anomalies"])
 
 
 def test_crypto_deletion_last_bid():
