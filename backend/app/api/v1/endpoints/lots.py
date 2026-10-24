@@ -5,8 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import require_auctioneer, require_bidder
 from app.core.database import get_db
 from app.models.user import User
+from app.schemas.audit import AuditChainResponse
 from app.schemas.bid import BidCreateRequest, BidResponse
 from app.schemas.lot import LotCreateRequest, LotResponse
+from app.services.audit import audit_lot_bid_chain
 from app.services.bidding import place_bid
 from app.services.lots import cancel_lot, create_lot, get_lot_by_id, list_public_lots
 
@@ -61,3 +63,11 @@ async def submit_bid(
 ):
     bid = await place_bid(db=db, bidder=current_user, lot_id=lot_id, payload=payload)
     return BidResponse.model_validate(bid)
+
+
+@router.get("/{lot_id}/audit", response_model=AuditChainResponse)
+async def get_lot_audit_chain(
+    lot_id: UUID,
+    db: AsyncSession = Depends(get_db),
+) -> AuditChainResponse:
+    return await audit_lot_bid_chain(db=db, lot_id=lot_id)

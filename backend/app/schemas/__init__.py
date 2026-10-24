@@ -1,3 +1,4 @@
+from app.schemas.audit import AuditChainResponse, AuditNodeResponse
 from app.schemas.auth import (
     TokenResponse,
     UserLoginRequest,
@@ -22,6 +23,8 @@ from app.schemas.wallet import (
 )
 
 __all__ = [
+    "AuditNodeResponse",
+    "AuditChainResponse",
     "UserRegisterRequest",
     "UserLoginRequest",
     "UserResponse",
