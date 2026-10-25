@@ -14,7 +14,8 @@ import type {
   WalletTransaction,
 } from "../types/api.ts";
 
-const API_BASE = "/api/v1";
+const RAW_API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/+$/, "") || "";
+const API_BASE = `${RAW_API_URL}/api/v1`;
 const TOKEN_STORAGE_KEY = "verzel_token";
 
 export function getStoredToken(): string | null {

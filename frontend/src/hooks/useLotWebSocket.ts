@@ -100,8 +100,15 @@ export function useLotWebSocket(lotId: string | undefined): UseLotWebSocketResul
     const establishConnection = () => {
       if (!isMountedRef.current) return;
 
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const endpoint = `${protocol}//${window.location.host}/api/v1/ws/lots/${lotId}`;
+      const customWsUrl = (import.meta.env.VITE_WS_URL as string | undefined)?.replace(/\/+$/, "");
+      let endpoint: string;
+      if (customWsUrl) {
+        const normalizedWs = customWsUrl.replace(/^https:\/\//, "wss://").replace(/^http:\/\//, "ws://");
+        endpoint = `${normalizedWs}/api/v1/ws/lots/${lotId}`;
+      } else {
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        endpoint = `${protocol}//${window.location.host}/api/v1/ws/lots/${lotId}`;
+      }
 
       setConnectionStatus(
         retryCountRef.current === 0 ? "CONNECTING" : "RECONNECTING",
