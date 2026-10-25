@@ -1,5 +1,7 @@
 import asyncio
 from datetime import timedelta
+import logging
+from typing import Any
 import uuid
 
 from sqlalchemy import delete, select
@@ -19,6 +21,109 @@ from app.models.lot import Bid, Lot, WinningCertificate
 from app.models.user import User
 from app.models.wallet import Wallet, WalletTransaction
 
+logger = logging.getLogger(__name__)
+
+FALLBACK_LOT_101: dict[str, Any] = {
+    "external_artwork_id": "111628",
+    "title": "Nighthawks",
+    "artist": "Edward Hopper",
+    "date_display": "1942",
+    "medium_display": "Óleo sobre tela",
+    "image_url": "/artworks/nighthawks.svg",
+    "attributes_json": {
+        "place_of_origin": "Estados Unidos",
+        "dimensions": "84.1 x 152.4 cm",
+        "department_title": "Artes das Américas",
+        "classification_title": "Pintura",
+    },
+}
+
+FALLBACK_LOT_102: dict[str, Any] = {
+    "external_artwork_id": "28560",
+    "title": "The Bedroom",
+    "artist": "Vincent van Gogh",
+    "date_display": "1889",
+    "medium_display": "Óleo sobre tela",
+    "image_url": "/artworks/the-bedroom.svg",
+    "attributes_json": {
+        "place_of_origin": "França",
+        "dimensions": "73.6 x 92.3 cm",
+        "department_title": "Pintura e Escultura",
+        "classification_title": "Pintura",
+    },
+}
+
+FALLBACK_LOT_103: dict[str, Any] = {
+    "external_artwork_id": "27992",
+    "title": "A Sunday on La Grande Jatte",
+    "artist": "Georges Seurat",
+    "date_display": "1884-1886",
+    "medium_display": "Óleo sobre tela",
+    "image_url": "/artworks/grande-jatte.svg",
+    "attributes_json": {
+        "place_of_origin": "França",
+        "dimensions": "207.5 x 308.1 cm",
+        "department_title": "Pintura e Escultura",
+        "classification_title": "Pintura",
+    },
+}
+
+FALLBACK_LOT_104: dict[str, Any] = {
+    "external_artwork_id": "16568",
+    "title": "Water Lilies",
+    "artist": "Claude Monet",
+    "date_display": "1906",
+    "medium_display": "Óleo sobre tela",
+    "image_url": "/artworks/water-lilies.svg",
+    "attributes_json": {
+        "place_of_origin": "França",
+        "dimensions": "89.9 x 94.1 cm",
+        "department_title": "Pintura e Escultura",
+        "classification_title": "Pintura",
+    },
+}
+
+
+async def _resolve_seed_artwork(query: str, fallback: dict[str, Any]) -> dict[str, Any]:
+    try:
+        from app.services.catalog import fetch_external_artworks
+
+        artworks = await fetch_external_artworks(query)
+        if artworks and len(artworks) > 0:
+            first = artworks[0]
+            return {
+                "external_artwork_id": first["external_id"],
+                "title": first["title"],
+                "artist": first["artist"],
+                "date_display": first["date_display"],
+                "medium_display": first["medium_display"],
+                "image_url": first["image_url"],
+                "attributes_json": first["attributes"],
+            }
+    except Exception as exc:
+        logger.warning(
+            "Seed: Falha ao buscar '%s' na API externa, usando contingência local: %s",
+            query,
+            exc,
+        )
+
+    return fallback
+
+
+async def _resolve_all_seed_artworks() -> dict[int, dict[str, Any]]:
+    art_101, art_102, art_103, art_104 = await asyncio.gather(
+        _resolve_seed_artwork("landscape", FALLBACK_LOT_101),
+        _resolve_seed_artwork("van gogh", FALLBACK_LOT_102),
+        _resolve_seed_artwork("monet", FALLBACK_LOT_103),
+        _resolve_seed_artwork("water lilies", FALLBACK_LOT_104),
+    )
+    return {
+        101: art_101,
+        102: art_102,
+        103: art_103,
+        104: art_104,
+    }
+
 
 def _build_user(name: str, email: str, role: str, password: str = "Verzel2026!") -> User:
     user_id = uuid.uuid4()
@@ -36,23 +141,24 @@ def _build_user(name: str, email: str, role: str, password: str = "Verzel2026!")
 
 
 async def run_seed(db: AsyncSession) -> None:
+    resolved_by_lot = await _resolve_all_seed_artworks()
+
     existing = await db.execute(
         select(User).where(User.email == "curador@verzel.com.br")
     )
     if existing.scalar_one_or_none() is not None:
         lots_res = await db.execute(select(Lot))
-        artwork_by_lot = {
-            101: "/artworks/nighthawks.svg",
-            102: "/artworks/the-bedroom.svg",
-            103: "/artworks/grande-jatte.svg",
-            104: "/artworks/water-lilies.svg",
-            105: "/artworks/american-gothic.svg",
-        }
         updated = False
         for lot_obj in lots_res.scalars().all():
-            target_img = artwork_by_lot.get(lot_obj.lot_number)
-            if target_img and lot_obj.image_url != target_img:
-                lot_obj.image_url = target_img
+            target_art = resolved_by_lot.get(lot_obj.lot_number)
+            if target_art and lot_obj.image_url != target_art["image_url"]:
+                lot_obj.external_artwork_id = target_art["external_artwork_id"]
+                lot_obj.title = target_art["title"]
+                lot_obj.artist = target_art["artist"]
+                lot_obj.date_display = target_art["date_display"]
+                lot_obj.medium_display = target_art["medium_display"]
+                lot_obj.image_url = target_art["image_url"]
+                lot_obj.attributes_json = target_art["attributes_json"]
                 updated = True
         if updated:
             await db.commit()
@@ -95,18 +201,7 @@ async def run_seed(db: AsyncSession) -> None:
         id=uuid.uuid4(),
         lot_number=101,
         auctioneer_id=auctioneer.id,
-        external_artwork_id="111628",
-        title="Nighthawks",
-        artist="Edward Hopper",
-        date_display="1942",
-        medium_display="Óleo sobre tela",
-        image_url="/artworks/nighthawks.svg",
-        attributes_json={
-            "place_of_origin": "Estados Unidos",
-            "dimensions": "84.1 x 152.4 cm",
-            "department_title": "Artes das Américas",
-            "classification_title": "Pintura",
-        },
+        **resolved_by_lot[101],
         starting_bid_cents=350000,
         min_increment_cents=25000,
         current_bid_cents=None,
@@ -126,18 +221,7 @@ async def run_seed(db: AsyncSession) -> None:
         id=uuid.uuid4(),
         lot_number=102,
         auctioneer_id=auctioneer.id,
-        external_artwork_id="28560",
-        title="The Bedroom",
-        artist="Vincent van Gogh",
-        date_display="1889",
-        medium_display="Óleo sobre tela",
-        image_url="/artworks/the-bedroom.svg",
-        attributes_json={
-            "place_of_origin": "França",
-            "dimensions": "73.6 x 92.3 cm",
-            "department_title": "Pintura e Escultura",
-            "classification_title": "Pintura",
-        },
+        **resolved_by_lot[102],
         starting_bid_cents=180000,
         min_increment_cents=15000,
         current_bid_cents=None,
@@ -186,18 +270,7 @@ async def run_seed(db: AsyncSession) -> None:
         id=lot_live_disputed_id,
         lot_number=103,
         auctioneer_id=auctioneer.id,
-        external_artwork_id="27992",
-        title="A Sunday on La Grande Jatte",
-        artist="Georges Seurat",
-        date_display="1884-1886",
-        medium_display="Óleo sobre tela",
-        image_url="/artworks/grande-jatte.svg",
-        attributes_json={
-            "place_of_origin": "França",
-            "dimensions": "207.5 x 308.1 cm",
-            "department_title": "Pintura e Escultura",
-            "classification_title": "Pintura",
-        },
+        **resolved_by_lot[103],
         starting_bid_cents=200000,
         min_increment_cents=20000,
         current_bid_cents=280000,
@@ -238,18 +311,7 @@ async def run_seed(db: AsyncSession) -> None:
         id=lot_settled_id,
         lot_number=104,
         auctioneer_id=auctioneer.id,
-        external_artwork_id="16568",
-        title="Water Lilies",
-        artist="Claude Monet",
-        date_display="1906",
-        medium_display="Óleo sobre tela",
-        image_url="/artworks/water-lilies.svg",
-        attributes_json={
-            "place_of_origin": "França",
-            "dimensions": "89.9 x 94.1 cm",
-            "department_title": "Pintura e Escultura",
-            "classification_title": "Pintura",
-        },
+        **resolved_by_lot[104],
         starting_bid_cents=260000,
         min_increment_cents=20000,
         current_bid_cents=320000,

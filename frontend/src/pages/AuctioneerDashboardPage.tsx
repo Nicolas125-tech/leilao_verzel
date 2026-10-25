@@ -429,8 +429,8 @@ export const AuctioneerDashboardPage: React.FC = () => {
                       </span>
                       <span className="text-[10px] font-medium text-gold">
                         {item.source === "local_fallback"
-                          ? "Acervo local (Offline)"
-                          : "Cleveland Museum API (Ao Vivo)"}
+                          ? "Acervo local"
+                          : "Cleveland Museum of Art"}
                       </span>
                     </div>
                     <h3 className="mt-1 font-sans text-base font-semibold text-paper-text dark:text-charcoal-text">

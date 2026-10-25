@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 interface ArtworkFrameProps {
   imageUrl: string;
@@ -22,6 +22,16 @@ const KNOWN_ARTWORK_MAP: Array<{ match: string; path: string }> = [
   { match: "25567b36", path: "/artworks/great-wave.svg" },
   { match: "paris street", path: "/artworks/paris-street.svg" },
 ];
+
+function resolveLocalFallback(imageUrl: string, title: string): string {
+  const combined = `${title} ${imageUrl}`.toLowerCase();
+  for (const item of KNOWN_ARTWORK_MAP) {
+    if (combined.includes(item.match)) {
+      return item.path;
+    }
+  }
+  return "/artworks/paris-street.svg";
+}
 
 function resolveLocalOrExternalImage(imageUrl: string, title: string): string {
   if (imageUrl && imageUrl.includes("clevelandart.org")) {
@@ -48,7 +58,13 @@ export const ArtworkFrame: React.FC<ArtworkFrameProps> = ({
   );
   const [fallbackTriggered, setFallbackTriggered] = useState(false);
 
-  const finalSrc = fallbackTriggered ? "/artworks/paris-street.svg" : resolvedSrc;
+  useEffect(() => {
+    setFallbackTriggered(false);
+  }, [imageUrl, title]);
+
+  const finalSrc = fallbackTriggered
+    ? resolveLocalFallback(imageUrl, title)
+    : resolvedSrc;
 
   return (
     <div
