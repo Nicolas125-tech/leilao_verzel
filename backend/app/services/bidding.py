@@ -137,7 +137,7 @@ async def place_bid(
     remaining_seconds = (ensure_utc(lot.end_time) - now_utc).total_seconds()
     extension_triggered = False
     if remaining_seconds <= ANTI_SNIPING_WINDOW_SECONDS:
-        lot.end_time = now_utc + timedelta(seconds=ANTI_SNIPING_WINDOW_SECONDS)
+        lot.end_time = ensure_utc(lot.end_time) + timedelta(seconds=ANTI_SNIPING_WINDOW_SECONDS)
         lot.extension_count += 1
         extension_triggered = True
 

@@ -320,7 +320,8 @@ async def test_anti_sniping_extension(client: httpx.AsyncClient):
     updated_lot = (await client.get(f"/api/v1/lots/{lot_id}")).json()
     new_end = datetime.fromisoformat(updated_lot["end_time"])
     assert updated_lot["extension_count"] == 1
-    assert new_end > original_end + timedelta(seconds=60)
+    extension_delta = (new_end - original_end).total_seconds()
+    assert abs(extension_delta - 120) < 1
 
 
 @pytest.mark.asyncio

@@ -17,7 +17,7 @@ Todos os cálculos financeiros usam inteiros em centavos (`int` no Python e `BIG
 Ao receber um lance em `POST /api/v1/lots/{lot_id}/bids`, o backend aplica `SELECT ... FOR UPDATE` no registro do lote e nas carteiras envolvidas (ordenadas por `user_id` crescente para evitar deadlock). Dentro da mesma transação:
 1. O valor antes retido do líder anterior é liberado (`BID_RELEASE`) e volta ao saldo disponível.
 2. O valor do novo lance passa para o saldo comprometido (`committed_balance_cents`) do novo líder (`BID_HOLD`).
-3. Se restarem 120 segundos ou menos para o encerramento, a regra de anti-sniping ajusta `end_time` para `agora + 120s` e soma 1 em `extension_count`.
+3. Se restarem 120 segundos ou menos para o encerramento, a regra de anti-sniping soma 120 segundos ao término vigente (`end_time += 120s`, preservando os segundos residuais) e soma 1 em `extension_count`.
 
 ### 2.2. Consulta ao Cleveland Museum of Art e contingência local
 A rota `GET /api/v1/catalog?q=...` consulta a API pública `https://openaccess-api.clevelandart.org/api/artworks/` (licença CC0 de domínio público, sem exigência de chave de API e com imagens servidas por CDN de alta disponibilidade em `openaccess-cdn.clevelandart.org`) com timeout de 4 segundos. Em caso de timeout, erro HTTP (`5xx`) ou indisponibilidade de rede, o serviço aciona automaticamente a lista local `LOCAL_FALLBACK_ARTWORKS` definida em `backend/app/services/catalog.py`.
