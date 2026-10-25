@@ -1,0 +1,21 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
+  <defs>
+    <linearGradient id="logoGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E5C158"/>
+      <stop offset="100%" stop-color="#A27D3E"/>
+    </linearGradient>
+    <linearGradient id="logoRed" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9E2A2B"/>
+      <stop offset="100%" stop-color="#6F1A1B"/>
+    </linearGradient>
+  </defs>
+  <rect width="40" height="40" rx="9" fill="#18181B"/>
+  <rect x="2.5" y="2.5" width="35" height="35" rx="7" fill="url(#logoRed)" stroke="url(#logoGold)" stroke-width="1.4"/>
+  <rect x="5.5" y="5.5" width="29" height="29" rx="4.5" fill="#121214" stroke="url(#logoGold)" stroke-width="0.8" opacity="0.6"/>
+  <g transform="translate(20, 20) rotate(-38)">
+    <rect x="-1.2" y="-11" width="2.4" height="19" rx="1.2" fill="#FAF9F6"/>
+    <rect x="-5.5" y="-16" width="11" height="5.5" rx="1.2" fill="url(#logoGold)"/>
+    <rect x="-1.2" y="-16" width="2.4" height="5.5" fill="url(#logoRed)"/>
+    <path d="M -5.5 11 L 5.5 11" stroke="url(#logoGold)" stroke-width="1.8" stroke-linecap="round"/>
+  </g>
+</svg>

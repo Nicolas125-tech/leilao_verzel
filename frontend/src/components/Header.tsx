@@ -129,9 +129,10 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-8">
           <Link
             to="/"
-            className="font-sans text-xl font-semibold tracking-tight text-paper-text dark:text-charcoal-text"
+            className="flex items-center gap-2.5 font-sans text-xl font-semibold tracking-tight text-paper-text dark:text-charcoal-text"
           >
-            Casa de Leilões Verzel
+            <img src="/logo.svg" alt="Emblema Verzel" className="h-7 w-7 rounded-sm shadow-sm" />
+            <span>Casa de Leilões Verzel</span>
           </Link>
 
           <nav className="flex flex-wrap items-center gap-1" aria-label="Navegação principal">
