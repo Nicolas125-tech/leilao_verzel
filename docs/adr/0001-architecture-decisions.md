@@ -27,17 +27,18 @@ Essa abordagem garante que um licitante superado recupere seu poder de compra no
 
 ### 3. Desacoplamento e Resiliencia da API Externa
 
-Para o catalogo de obras e raridades, integramos a API publica do Art Institute of Chicago (`api.artic.edu`). Como APIs publicas estao sujeitas a indisponibilidade, lentidao ou limites de taxa, o cliente HTTP no back-end opera com timeout curto (4 segundos) e possui um catalogo local de contingencia acionado automaticamente em caso de falha de rede.
+Para o catalogo de obras e raridades, integramos a API publica do Cleveland Museum of Art (Open Access). Como APIs publicas estao sujeitas a indisponibilidade, lentidao ou limites de taxa, o cliente HTTP no back-end opera com timeout curto (4 segundos) e possui um catalogo local de contingencia acionado automaticamente em caso de falha de rede.
 
 Mais importante: a API externa e consultada exclusivamente no momento de pesquisa pelo leiloeiro. Ao publicar um lote, o back-end persiste uma copia completa dos dados da obra (titulo, autor, datacao, URL da imagem e objeto JSON de atributos tecnicos) diretamente na tabela `lots` do PostgreSQL. Dessa forma, a vitrine, a sala de pregao ao vivo, a liquidacao, o comprovante e a auditoria funcionam com autonomia total mesmo se a API externa ficar fora do ar.
 
-### 4. Prorrogacao Anti-Sniping e Liquidacao Automatica
+### 4. Prorrogacao Anti-Sniping e Liquidacao sob Demanda (Lazy Evaluation)
 
-Lances validos recebidos nos ultimos 120 segundos antes do `end_time` redefinem o encerramento do lote para `agora + 2 minutos`, garantindo tempo habil de reacao aos demais licitantes.
+Lances validos recebidos nos ultimos 120 segundos antes do `end_time` prorrogam o encerramento do lote em +120 segundos a partir do termino vigente (preservando os segundos residuais), garantindo tempo habil de reacao aos demais licitantes sem reinicio indevido do relogio.
 
-A liquidacao ocorre por meio de duas camadas complementares:
-1. Um worker assincrono em background executado no ciclo de vida do FastAPI verifica a cada segundo lotes cujo `end_time` expirou utilizando `SELECT ... FOR UPDATE SKIP LOCKED`.
-2. Uma verificacao sob demanda (lazy evaluation) e executada antes de leituras ou tentativas de lance sobre um lote, garantindo que nenhum estado vencido fique pendente.
+A liquidacao ocorre de forma atomica sob demanda (lazy evaluation):
+1. Antes de qualquer leitura publica, listagem ou tentativa de lance sobre um lote, a funcao `sync_lot_temporal_state` avalia se `now_utc >= end_time`.
+2. Se o lote expirou, a liquidacao financeira e a emissao do certificado criptografico sao executadas imediatamente sob bloqueio pessimista (`SELECT ... FOR UPDATE`), garantindo consistencia estrita e idempotencia.
+3. Decisao arquitetural: Optou-se pela avaliacao sob demanda em vez de um worker continuo em background com polling a cada segundo para evitar consumo ocioso de CPU e conexoes desnecessarias no PostgreSQL em instancias cloud compartilhadas (como Render), assegurando que nenhum estado vencido seja entregue ao cliente com custo zero de infraestrutura em periodos de inatividade.
 
 No encerramento de um lote com lances, o sistema debita em definitivo o saldo comprometido do vencedor, credita o montante na carteira do leiloeiro e emite o comprovante de arremate com codigo publico compartilhavel. No cancelamento de lote pelo leiloeiro (permitido em lotes agendados ou ao vivo), se houver lance lider ativo, o saldo comprometido retorna automaticamente ao saldo disponivel do licitante.
 

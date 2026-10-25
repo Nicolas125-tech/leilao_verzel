@@ -119,7 +119,7 @@ Recursos rápidos para a banca avaliadora:
 
 ## 7. Execução dos testes automatizados
 
-Para rodar a suíte do backend (44 testes com Pytest):
+Para rodar a suíte do backend (47 testes com Pytest):
 ```bash
 python -m pytest backend/tests -v
 ```
@@ -129,3 +129,25 @@ Para rodar os testes unitários do frontend (formatação em centavos e cálculo
 cd frontend
 npm test
 ```
+
+## 8. Decisões de engenharia e metodologia técnica
+
+Pontos centrais da arquitetura e decisões de projeto adotadas na entrega:
+
+1. **Resolução de instabilidade e resiliência da API externa:**
+   A integração com acervo de arte utiliza a API pública do Cleveland Museum of Art (Open Access), implementando timeout estrito de 4 segundos e fallback local em memória. Ao criar um lote, os metadados são desnormalizados e persistidos na tabela `lots`, conferindo autonomia total à vitrine, sala de pregão e auditoria mesmo se a API externa estiver fora do ar.
+
+2. **Controle rigoroso de concorrência e integridade de saldo:**
+   A homologação de lances utiliza transações com `SELECT ... FOR UPDATE` adquiridos em ordem determinística crescente de identificador (`user_id`), eliminando deadlocks (cenários AB-BA). A caução do líder superado é liberada imediatamente (`BID_RELEASE`), e o saldo do novo líder é bloqueado (`BID_HOLD`), respeitando o livro-razão financeiro.
+
+3. **Lógica de pregão e anti-sniping cumulativo:**
+   O término do lote é prorrogado adicionando 120 segundos ao término vigente (`lot.end_time += timedelta(seconds=120)`) sempre que um lance válido entra nos últimos dois minutos, preservando segundos residuais e evitando o reset indevido do relógio.
+
+4. **Liquidação sob demanda (Lazy Evaluation) com travas de linha:**
+   A liquidação é executada atomicamente no momento da consulta (`sync_lot_temporal_state`) antes de leituras ou novos lances. Essa abordagem elimina loops vazios de polling a cada segundo, poupando CPU e conexões com o banco de dados em instâncias compartilhadas na nuvem (como Render), com garantia de estado consistente.
+
+5. **Resiliência e estabilidade em tempo real:**
+   O cliente WebSocket implementa reconexão automática com backoff exponencial somado a jitter aleatório, prevenindo tempestades de requisições simultâneas em oscilações de rede.
+
+6. **Modularização e cobertura de testes:**
+   Frontend estruturado em componentes desacoplados de domínio (controle de lances, feed de auditoria, catálogo e faturamento) e suíte completa com 47 testes no backend (Pytest com isolamento assíncrono) e testes unitários no frontend.
