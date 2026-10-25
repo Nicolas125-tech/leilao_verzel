@@ -26,6 +26,8 @@ class Settings(BaseSettings):
 
     ARTIC_API_BASE_URL: str = "https://api.artic.edu/api/v1"
     ARTIC_TIMEOUT_SECONDS: int = 4
+    CLEVELAND_ART_API_BASE_URL: str = "https://openaccess-api.clevelandart.org/api/artworks/"
+    CLEVELAND_TIMEOUT_SECONDS: int = 4
 
     @property
     def cors_origins_list(self) -> list[str]:

@@ -390,7 +390,7 @@ export const AuctioneerDashboardPage: React.FC = () => {
                 type="search"
                 value={catalogQuery}
                 onChange={(e) => setCatalogQuery(e.target.value)}
-                placeholder="Pesquisar no Art Institute of Chicago (ex: Monet, Van Gogh, Hopper)..."
+                placeholder="Pesquisar no Cleveland Museum of Art (ex: Monet, Picasso, Van Gogh, Rembrandt)..."
                 className="h-[42px] flex-1 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-3.5 text-sm"
               />
               <button
@@ -428,7 +428,9 @@ export const AuctioneerDashboardPage: React.FC = () => {
                         ID #{item.external_id}
                       </span>
                       <span className="text-[10px] font-medium text-gold">
-                        {item.source === "artic" ? "Art Institute API" : "Acervo local"}
+                        {item.source === "local_fallback"
+                          ? "Acervo local (Offline)"
+                          : "Cleveland Museum API (Ao Vivo)"}
                       </span>
                     </div>
                     <h3 className="mt-1 font-sans text-base font-semibold text-paper-text dark:text-charcoal-text">

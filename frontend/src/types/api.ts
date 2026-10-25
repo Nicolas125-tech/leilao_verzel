@@ -53,7 +53,7 @@ export interface CatalogItem {
   medium_display: string;
   image_url: string;
   attributes: Record<string, unknown>;
-  source: "artic" | "local_fallback" | string;
+  source: "cleveland_art" | "local_fallback" | string;
 }
 
 export interface Bid {

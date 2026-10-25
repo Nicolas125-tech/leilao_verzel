@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Any
 import httpx
 
@@ -103,12 +104,12 @@ LOCAL_FALLBACK_ARTWORKS: list[dict[str, Any]] = [
 async def fetch_external_artworks(query: str | None = None) -> list[dict[str, Any]]:
     params = {
         "q": query.strip() if query and query.strip() else "painting",
-        "fields": "id,title,artist_display,date_display,medium_display,image_id,dimensions,place_of_origin,department_title",
+        "has_image": 1,
         "limit": 12,
     }
 
-    url = f"{settings.ARTIC_API_BASE_URL.rstrip('/')}/artworks/search"
-    timeout = httpx.Timeout(settings.ARTIC_TIMEOUT_SECONDS)
+    url = settings.CLEVELAND_ART_API_BASE_URL
+    timeout = httpx.Timeout(settings.CLEVELAND_TIMEOUT_SECONDS)
     headers = {
         "User-Agent": "LeilaoVerzel/1.0 (contato@verzel.com.br; avaliacao-tecnica)",
         "Accept": "application/json",
@@ -120,32 +121,43 @@ async def fetch_external_artworks(query: str | None = None) -> list[dict[str, An
         payload = response.json()
 
     data = payload.get("data", [])
-    iiif_url = payload.get("config", {}).get("iiif_url", "https://www.artic.edu/iiif/2").rstrip("/")
-
     results: list[dict[str, Any]] = []
+
     for item in data:
-        image_id = item.get("image_id")
-        if not image_id:
+        images = item.get("images") or {}
+        web_image = images.get("web") or {}
+        image_url = web_image.get("url")
+        if not image_url:
             continue
 
-        image_url = f"{iiif_url}/{image_id}/full/843,/0/default.jpg"
-        artist = item.get("artist_display") or "Artista Desconhecido"
-        first_line_artist = artist.split("\n")[0].strip()
+        creators = item.get("creators") or []
+        if creators and isinstance(creators, list):
+            raw_desc = creators[0].get("description") or ""
+            artist = re.sub(r"\s*\([^)]*\)", "", raw_desc).strip() or "Artista Desconhecido"
+        else:
+            artist = "Artista Desconhecido"
+
+        culture_list = item.get("culture") or []
+        place_of_origin = (
+            culture_list[0]
+            if isinstance(culture_list, list) and culture_list
+            else "Origem não informada"
+        )
 
         results.append(
             {
                 "external_id": str(item.get("id")),
                 "title": item.get("title") or "Obra Sem Título",
-                "artist": first_line_artist,
-                "date_display": item.get("date_display") or "Data Desconhecida",
-                "medium_display": item.get("medium_display") or "Técnica Mista",
+                "artist": artist,
+                "date_display": item.get("creation_date") or "Data Desconhecida",
+                "medium_display": item.get("technique") or "Técnica Mista",
                 "image_url": image_url,
                 "attributes": {
-                    "dimensions": item.get("dimensions") or "Dimensões não informadas",
-                    "place_of_origin": item.get("place_of_origin") or "Origem não informada",
-                    "department": item.get("department_title") or "Acervo Geral",
+                    "dimensions": item.get("measurements") or "Dimensões não informadas",
+                    "place_of_origin": place_of_origin,
+                    "department": item.get("department") or "Acervo Geral",
                 },
-                "source": "artic",
+                "source": "cleveland_art",
             }
         )
 

@@ -1,6 +1,6 @@
 # Casa de Leilões Verzel
 
-Sistema web para pregão online de obras de arte em tempo real, integrado ao acervo público do Art Institute of Chicago. A aplicação controla concorrência de lances no banco de dados, reserva saldo comprometido de forma atômica, aplica prorrogação anti-sniping nos minutos finais, liquida o lote no encerramento e expõe auditoria criptográfica pública por cadeia de hashes.
+Sistema web para pregão online de obras de arte em tempo real, integrado à API pública do Cleveland Museum of Art Open Access. A aplicação controla concorrência de lances no banco de dados, reserva saldo comprometido de forma atômica, aplica prorrogação anti-sniping nos minutos finais, liquida o lote no encerramento e expõe auditoria criptográfica pública por cadeia de hashes.
 
 ## 1. Arquitetura e stack
 
@@ -19,10 +19,10 @@ Ao receber um lance em `POST /api/v1/lots/{lot_id}/bids`, o backend aplica `SELE
 2. O valor do novo lance passa para o saldo comprometido (`committed_balance_cents`) do novo líder (`BID_HOLD`).
 3. Se restarem 120 segundos ou menos para o encerramento, a regra de anti-sniping ajusta `end_time` para `agora + 120s` e soma 1 em `extension_count`.
 
-### 2.2. Consulta ao Art Institute of Chicago e contingência local
-A rota `GET /api/v1/catalog?q=...` consulta `https://api.artic.edu/api/v1/artworks/search` com timeout de 4 segundos. Em caso de timeout, erro HTTP (`5xx`) ou indisponibilidade de rede, o serviço retorna a lista local `LOCAL_FALLBACK_ARTWORKS` definida em `backend/app/services/catalog.py`.
+### 2.2. Consulta ao Cleveland Museum of Art e contingência local
+A rota `GET /api/v1/catalog?q=...` consulta a API pública `https://openaccess-api.clevelandart.org/api/artworks/` (licença CC0 de domínio público, sem exigência de chave de API e com imagens servidas por CDN de alta disponibilidade em `openaccess-cdn.clevelandart.org`) com timeout de 4 segundos. Em caso de timeout, erro HTTP (`5xx`) ou indisponibilidade de rede, o serviço aciona automaticamente a lista local `LOCAL_FALLBACK_ARTWORKS` definida em `backend/app/services/catalog.py`.
 
-Quando o leiloeiro publica um lote (`POST /api/v1/lots`), os dados da obra (título, artista, data, técnica, URL da imagem e atributos JSON) são copiados para a tabela `lots`. Dessa forma, a vitrine, a sala ao vivo, os comprovantes e a auditoria funcionam mesmo se a API externa sair do ar depois.
+Quando o leiloeiro publica um lote (`POST /api/v1/lots`), os dados da obra (título, artista, data, técnica, URL da imagem e atributos JSON) são copiados para a tabela `lots`. Dessa forma, a vitrine, a sala ao vivo, os comprovantes e a auditoria continuam funcionando integralmente mesmo que a API externa fique indisponível.
 
 ### 2.3. Mascaramento de dados de licitantes
 Rotas públicas, mensagens de WebSocket, recibos e logs de auditoria não expõem nome completo nem e-mail de licitantes. Cada conta recebe um código público determinístico (`LIC-XXXX` ou `LEI-XXXX`) e um identificador mascarado no padrão `LIC-XXXX (N***s B.)`.

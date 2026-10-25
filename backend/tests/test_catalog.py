@@ -42,42 +42,67 @@ async def client(db_session: AsyncSession):
     app.dependency_overrides.clear()
 
 
-MOCK_EXTERNAL_ARTWORKS = [
-    {
-        "external_id": "27992",
-        "title": "A Sunday on La Grande Jatte",
-        "artist": "Georges Seurat",
-        "date_display": "1884/86",
-        "medium_display": "Oil on canvas",
-        "image_url": "https://www.artic.edu/iiif/2/1adf2696-8489-499b-cad2-821d7fde4b33/full/843,/0/default.jpg",
-        "attributes": {
-            "dimensions": "207.5 x 308.1 cm",
-            "place_of_origin": "France",
-            "department": "Painting and Sculpture",
+MOCK_CLEVELAND_API_PAYLOAD = {
+    "data": [
+        {
+            "id": 135378,
+            "title": "The Red Kerchief",
+            "creators": [
+                {
+                    "description": "Claude Monet (French, 1840-1926)",
+                }
+            ],
+            "creation_date": "c. 1868-1873",
+            "technique": "Oil on canvas",
+            "measurements": "Framed: 125.7 x 106.7 x 11.4 cm",
+            "culture": ["France, 19th century"],
+            "department": "European Painting and Sculpture",
+            "images": {
+                "web": {
+                    "url": "https://openaccess-cdn.clevelandart.org/1958.39/1958.39_web.jpg",
+                }
+            },
         },
-        "source": "artic",
-    }
-]
+        {
+            "id": 999999,
+            "title": "Artwork Without Web Image",
+            "creators": [],
+            "images": {},
+        },
+    ]
+}
 
 
 @pytest.mark.asyncio
 async def test_catalog_successful_external_fetch(client: httpx.AsyncClient):
-    with patch(
-        "app.services.catalog.fetch_external_artworks",
-        new_callable=AsyncMock,
-    ) as mock_fetch:
-        mock_fetch.return_value = MOCK_EXTERNAL_ARTWORKS
+    mock_response = httpx.Response(
+        200,
+        json=MOCK_CLEVELAND_API_PAYLOAD,
+        request=httpx.Request("GET", "https://openaccess-api.clevelandart.org/api/artworks/"),
+    )
+    mock_http_client = AsyncMock()
+    mock_http_client.get.return_value = mock_response
+    mock_http_client.__aenter__.return_value = mock_http_client
+    mock_http_client.__aexit__.return_value = None
 
-        resp = await client.get("/api/v1/catalog?q=seurat")
+    with patch(
+        "app.services.catalog.httpx.AsyncClient",
+        return_value=mock_http_client,
+    ):
+        resp = await client.get("/api/v1/catalog?q=monet")
         assert resp.status_code == 200
         items = resp.json()
         assert len(items) == 1
         first = items[0]
-        assert first["external_id"] == "27992"
-        assert first["title"] == "A Sunday on La Grande Jatte"
-        assert first["artist"] == "Georges Seurat"
-        assert "1adf2696-8489-499b-cad2-821d7fde4b33" in first["image_url"]
-        assert first["source"] == "artic"
+        assert first["external_id"] == "135378"
+        assert first["title"] == "The Red Kerchief"
+        assert first["artist"] == "Claude Monet"
+        assert first["date_display"] == "c. 1868-1873"
+        assert first["medium_display"] == "Oil on canvas"
+        assert first["image_url"] == "https://openaccess-cdn.clevelandart.org/1958.39/1958.39_web.jpg"
+        assert first["attributes"]["place_of_origin"] == "France, 19th century"
+        assert first["attributes"]["department"] == "European Painting and Sculpture"
+        assert first["source"] == "cleveland_art"
 
 
 @pytest.mark.asyncio
@@ -106,7 +131,7 @@ async def test_catalog_http_error_triggers_local_fallback(client: httpx.AsyncCli
     ) as mock_fetch:
         mock_fetch.side_effect = httpx.HTTPStatusError(
             "503 Service Unavailable",
-            request=httpx.Request("GET", "https://api.artic.edu/api/v1/artworks/search"),
+            request=httpx.Request("GET", "https://openaccess-api.clevelandart.org/api/artworks/"),
             response=httpx.Response(503),
         )
 

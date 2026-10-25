@@ -24,6 +24,9 @@ const KNOWN_ARTWORK_MAP: Array<{ match: string; path: string }> = [
 ];
 
 function resolveLocalOrExternalImage(imageUrl: string, title: string): string {
+  if (imageUrl && imageUrl.includes("clevelandart.org")) {
+    return imageUrl;
+  }
   const combined = `${title} ${imageUrl}`.toLowerCase();
   for (const item of KNOWN_ARTWORK_MAP) {
     if (combined.includes(item.match)) {
