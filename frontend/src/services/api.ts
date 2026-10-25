@@ -33,7 +33,6 @@ export function setStoredToken(token: string | null): void {
       localStorage.removeItem(TOKEN_STORAGE_KEY);
     }
   } catch {
-    // fallback silencioso em ambientes restritos
   }
 }
 
@@ -66,7 +65,6 @@ async function apiRequest<T>(
         errorDetail = errBody.detail.map((d: { msg?: string }) => d.msg).join("; ");
       }
     } catch {
-      // preserva mensagem padrao
     }
     throw new Error(errorDetail);
   }

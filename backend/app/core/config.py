@@ -24,8 +24,6 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
 
-    ARTIC_API_BASE_URL: str = "https://api.artic.edu/api/v1"
-    ARTIC_TIMEOUT_SECONDS: int = 4
     CLEVELAND_ART_API_BASE_URL: str = "https://openaccess-api.clevelandart.org/api/artworks/"
     CLEVELAND_TIMEOUT_SECONDS: int = 4
 

@@ -82,7 +82,6 @@ export const ShowcasePage: React.FC = () => {
           Acompanhe os lotes abertos e dê o seu lance em tempo real.
         </p>
 
-        {/* Filtros e busca */}
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Filtrar lotes por status">
             {FILTER_TABS.map((tab) => {

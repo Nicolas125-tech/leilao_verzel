@@ -9,6 +9,8 @@ from app.models.lot import Lot
 from app.models.user import User
 from app.models.wallet import Wallet, WalletTransaction
 from app.schemas.lot import LotCreateRequest
+from app.services.settlement import settle_lot
+from app.services.websocket import ws_manager
 
 
 def ensure_utc(dt: datetime) -> datetime:
@@ -38,8 +40,6 @@ async def sync_lot_temporal_state(db: AsyncSession, lot: Lot) -> Lot:
     now_utc = datetime.now(timezone.utc)
     resolved = resolve_lot_status(lot, now_utc)
     if resolved == "ENDED" and (lot.status != "ENDED" or lot.settled_at is None):
-        from app.services.settlement import settle_lot
-
         return await settle_lot(db, lot)
 
     if resolved != lot.status:
@@ -196,8 +196,6 @@ async def cancel_lot(db: AsyncSession, auctioneer: User, lot_id: UUID) -> Lot:
     lot.cancelled_at = now_utc
     await db.commit()
     await db.refresh(lot)
-
-    from app.services.websocket import ws_manager
 
     await ws_manager.broadcast_lot_cancelled(lot.id)
     return lot

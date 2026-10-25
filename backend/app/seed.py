@@ -1,9 +1,11 @@
 import asyncio
 from datetime import timedelta
 import logging
+import sys
 from typing import Any
 import uuid
 
+import httpx
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,6 +22,7 @@ from app.models.base import Base, utc_now
 from app.models.lot import Bid, Lot, WinningCertificate
 from app.models.user import User
 from app.models.wallet import Wallet, WalletTransaction
+from app.services import catalog
 
 logger = logging.getLogger(__name__)
 
@@ -86,9 +89,7 @@ FALLBACK_LOT_104: dict[str, Any] = {
 
 async def _resolve_seed_artwork(query: str, fallback: dict[str, Any]) -> dict[str, Any]:
     try:
-        from app.services.catalog import fetch_external_artworks
-
-        artworks = await fetch_external_artworks(query)
+        artworks = await catalog.fetch_external_artworks(query)
         if artworks and len(artworks) > 0:
             first = artworks[0]
             return {
@@ -100,7 +101,7 @@ async def _resolve_seed_artwork(query: str, fallback: dict[str, Any]) -> dict[st
                 "image_url": first["image_url"],
                 "attributes_json": first["attributes"],
             }
-    except Exception as exc:
+    except (httpx.HTTPError, httpx.TimeoutException) as exc:
         logger.warning(
             "Seed: Falha ao buscar '%s' na API externa, usando contingência local: %s",
             query,
@@ -173,11 +174,6 @@ async def run_seed(db: AsyncSession) -> None:
     db.add_all([auctioneer, nicolas, marina])
     await db.flush()
 
-    # Carteiras iniciais e depósitos base:
-    # - Nicolas deposita R$ 15.000,00 (1_500_000 centavos), arremata Lote #104 por R$ 3.200,00 (320_000)
-    #   e lidera Lote #103 por R$ 2.800,00 (280_000 comprometidos).
-    # - Marina deposita R$ 12.000,00 (1_200_000 centavos), sem saldo comprometido ativo.
-    # - Leiloeira recebe R$ 3.200,00 (320_000 centavos) da liquidação do Lote #104.
     auc_wallet = Wallet(
         user_id=auctioneer.id,
         total_balance_cents=320000,
@@ -196,7 +192,6 @@ async def run_seed(db: AsyncSession) -> None:
     db.add_all([auc_wallet, nicolas_wallet, marina_wallet])
     await db.flush()
 
-    # Lote 101: SCHEDULED (agendado para iniciar no futuro, sem lances)
     lot_scheduled = Lot(
         id=uuid.uuid4(),
         lot_number=101,
@@ -216,7 +211,6 @@ async def run_seed(db: AsyncSession) -> None:
         head_hash=GENESIS_HASH,
     )
 
-    # Lote 102: LIVE sem lances (aberto para o primeiro lance)
     lot_live_empty = Lot(
         id=uuid.uuid4(),
         lot_number=102,
@@ -236,7 +230,6 @@ async def run_seed(db: AsyncSession) -> None:
         head_hash=GENESIS_HASH,
     )
 
-    # Lote 103: LIVE disputado com 3 lances encadeados
     lot_live_disputed_id = uuid.uuid4()
     b1_time = now - timedelta(minutes=25)
     b1_hash = compute_bid_hash(
@@ -285,7 +278,6 @@ async def run_seed(db: AsyncSession) -> None:
         head_hash=b3_hash,
     )
 
-    # Lote 104: ENDED / SETTLED com certificado assinado
     lot_settled_id = uuid.uuid4()
     s1_time = now - timedelta(hours=3, minutes=20)
     s1_hash = compute_bid_hash(
@@ -327,7 +319,6 @@ async def run_seed(db: AsyncSession) -> None:
         settled_at=settled_time,
     )
 
-    # Lote 105: CANCELLED
     cancelled_time = now - timedelta(hours=1)
     lot_cancelled = Lot(
         id=uuid.uuid4(),
@@ -371,7 +362,6 @@ async def run_seed(db: AsyncSession) -> None:
     )
     await db.flush()
 
-    # Lances do Lote 103 (LIVE disputado)
     bids_103 = [
         Bid(
             lot_id=lot_live_disputed.id,
@@ -408,7 +398,6 @@ async def run_seed(db: AsyncSession) -> None:
         ),
     ]
 
-    # Lances do Lote 104 (SETTLED)
     bids_104 = [
         Bid(
             lot_id=lot_settled.id,
@@ -435,7 +424,6 @@ async def run_seed(db: AsyncSession) -> None:
     ]
     db.add_all(bids_103 + bids_104)
 
-    # Certificado de arremate assinado para o Lote 104
     receipt_code = f"ARP-{settled_time.year}-104A9F"
     settled_at_iso = format_utc_iso(settled_time)
     cert_signature = generate_receipt_signature(
@@ -458,7 +446,6 @@ async def run_seed(db: AsyncSession) -> None:
     )
     db.add(certificate)
 
-    # Transações de carteira para histórico realista
     txs = [
         WalletTransaction(
             wallet_id=nicolas_wallet.id,
@@ -534,8 +521,6 @@ async def reset_demo_data(db: AsyncSession) -> None:
 
 
 async def _main() -> None:
-    import sys
-
     if "--reset" in sys.argv:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
