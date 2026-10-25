@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import logging
 from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy import func, or_, select
@@ -11,6 +12,8 @@ from app.models.wallet import Wallet, WalletTransaction
 from app.schemas.lot import LotCreateRequest
 from app.services.settlement import settle_lot
 from app.services.websocket import ws_manager
+
+logger = logging.getLogger("verzel.auction.catalog")
 
 
 def ensure_utc(dt: datetime) -> datetime:
@@ -97,6 +100,15 @@ async def create_lot(
     db.add(lot)
     await db.commit()
     await db.refresh(lot)
+
+    logger.info(
+        "Novo lote catalogado: #%s ('%s', %s) com lance inicial de R$ %.2f",
+        lot.lot_number,
+        lot.title,
+        lot.artist,
+        lot.starting_bid_cents / 100,
+    )
+
     return lot
 
 
@@ -191,11 +203,23 @@ async def cancel_lot(db: AsyncSession, auctioneer: User, lot_id: UUID) -> Lot:
                 description=f"Estorno automático por cancelamento do Lote #{lot.lot_number}",
             )
             db.add(refund_tx)
+            logger.info(
+                "Lote #%s: caução de R$ %.2f estornada para o licitante líder %s por cancelamento do pregão",
+                lot.lot_number,
+                refund_amount / 100,
+                lot.leader_masked_name,
+            )
 
     lot.status = "CANCELLED"
     lot.cancelled_at = now_utc
     await db.commit()
     await db.refresh(lot)
+
+    logger.warning(
+        "Lote #%s cancelado pelo leiloeiro %s",
+        lot.lot_number,
+        auctioneer.masked_name,
+    )
 
     await ws_manager.broadcast_lot_cancelled(lot.id)
     return lot

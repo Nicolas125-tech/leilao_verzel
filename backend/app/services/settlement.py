@@ -1,3 +1,4 @@
+import logging
 import uuid
 from uuid import UUID
 from fastapi import HTTPException, status
@@ -23,6 +24,8 @@ from app.schemas.lot import (
 )
 from app.services.websocket import ws_manager
 
+logger = logging.getLogger("verzel.auction.clearing")
+
 
 async def settle_lot(db: AsyncSession, lot: Lot) -> Lot:
     res = await db.execute(select(Lot).where(Lot.id == lot.id).with_for_update())
@@ -47,6 +50,11 @@ async def settle_lot(db: AsyncSession, lot: Lot) -> Lot:
         locked_lot.settled_at = now_utc
         await db.commit()
         await db.refresh(locked_lot)
+        logger.info(
+            "Lote #%s (%s) encerrado sem lances registrados (declarado deserto)",
+            locked_lot.lot_number,
+            locked_lot.title,
+        )
         await ws_manager.broadcast_lot_settled(locked_lot.id, None)
         return locked_lot
 
@@ -78,6 +86,7 @@ async def settle_lot(db: AsyncSession, lot: Lot) -> Lot:
 
     final_amount = locked_lot.current_bid_cents
     winner_wallet = wallets_by_user.get(locked_lot.leader_user_id)
+
     if winner_wallet:
         winner_wallet.committed_balance_cents = max(
             0, winner_wallet.committed_balance_cents - final_amount
@@ -148,6 +157,14 @@ async def settle_lot(db: AsyncSession, lot: Lot) -> Lot:
     await db.refresh(certificate)
     locked_lot.certificate = certificate
 
+    logger.info(
+        "Batida de martelo no Lote #%s: arrematado por %s (R$ %.2f) com recibo %s",
+        locked_lot.lot_number,
+        winner_masked,
+        final_amount / 100,
+        receipt_code,
+    )
+
     cert_payload = CertificateSummaryResponse.model_validate(certificate).model_dump(mode="json")
     await ws_manager.broadcast_lot_settled(locked_lot.id, cert_payload)
 
@@ -179,6 +196,13 @@ async def get_public_receipt(
         winner_masked_name=cert.winner_masked_name,
         final_amount_cents=cert.final_amount_cents,
         settled_at_iso=settled_at_iso,
+    )
+
+    logger.info(
+        "Verificação pública do recibo %s (Lote #%s): assinatura %s",
+        receipt_code,
+        lot.lot_number,
+        "VÁLIDA" if is_valid else "INVÁLIDA",
     )
 
     return PublicReceiptResponse(
@@ -218,45 +242,52 @@ async def get_bidder_bids_and_wins(
     ordered_lot_ids: list[UUID] = []
     for b in user_bids:
         if b.lot_id not in max_bid_by_lot:
+            max_bid_by_lot[b.lot_id] = b.amount_cents
             ordered_lot_ids.append(b.lot_id)
-            max_bid_by_lot[b.lot_id] = b.amount_cents
-        elif b.amount_cents > max_bid_by_lot[b.lot_id]:
-            max_bid_by_lot[b.lot_id] = b.amount_cents
+        else:
+            if b.amount_cents > max_bid_by_lot[b.lot_id]:
+                max_bid_by_lot[b.lot_id] = b.amount_cents
 
     if not ordered_lot_ids:
         return BidderBidsAndWinsResponse(participated_lots=[], won_lots=[])
 
     lots_res = await db.execute(select(Lot).where(Lot.id.in_(ordered_lot_ids)))
-    lots_by_id: dict[UUID, Lot] = {lot.id: lot for lot in lots_res.scalars().all()}
+    lots_by_id = {l.id: l for l in lots_res.scalars().all()}
 
     participated_lots: list[ParticipatedLotItem] = []
-    won_lots: list[LotResponse] = []
-
-    for lot_id in ordered_lot_ids:
-        lot = lots_by_id.get(lot_id)
+    for lid in ordered_lot_ids:
+        lot = lots_by_id.get(lid)
         if not lot:
             continue
-        synced_lot = await sync_lot_temporal_state(db, lot)
-        lot_resp = LotResponse.model_validate(synced_lot)
-        is_leader = synced_lot.leader_user_id == bidder.id
 
-        if synced_lot.status == "ENDED" and is_leader:
-            user_bid_status = "WON"
-            won_lots.append(lot_resp)
-        elif synced_lot.status == "CANCELLED":
-            user_bid_status = "CANCELLED"
-        elif is_leader:
-            user_bid_status = "WINNING"
+        lot = await sync_lot_temporal_state(db, lot)
+
+        if lot.status == "CANCELLED":
+            user_status = "CANCELLED"
+        elif lot.status == "ENDED":
+            user_status = "WON" if lot.leader_user_id == bidder.id else "OUTBID"
         else:
-            user_bid_status = "OUTBID"
+            user_status = "WINNING" if lot.leader_user_id == bidder.id else "OUTBID"
 
+        lot_resp = LotResponse.model_validate(lot)
         participated_lots.append(
             ParticipatedLotItem(
                 lot=lot_resp,
-                my_highest_bid_cents=max_bid_by_lot[lot_id],
-                user_bid_status=user_bid_status,
+                my_highest_bid_cents=max_bid_by_lot[lid],
+                user_bid_status=user_status,
             )
         )
+
+    won_lots_res = await db.execute(
+        select(Lot)
+        .where(
+            Lot.status == "ENDED",
+            Lot.leader_user_id == bidder.id,
+        )
+        .order_by(Lot.settled_at.desc())
+    )
+    won_lots_raw = list(won_lots_res.scalars().all())
+    won_lots = [LotResponse.model_validate(l) for l in won_lots_raw]
 
     return BidderBidsAndWinsResponse(
         participated_lots=participated_lots,
@@ -275,27 +306,28 @@ async def get_auctioneer_dashboard(
         .where(Lot.auctioneer_id == auctioneer.id)
         .order_by(Lot.lot_number.desc())
     )
-    raw_lots = list(lots_res.scalars().all())
+    lots = list(lots_res.scalars().all())
 
     synced_lots: list[Lot] = []
-    for lot in raw_lots:
-        synced = await sync_lot_temporal_state(db, lot)
-        synced_lots.append(synced)
+    for l in lots:
+        synced_lots.append(await sync_lot_temporal_state(db, l))
 
-    certs_res = await db.execute(
-        select(WinningCertificate).where(
-            WinningCertificate.auctioneer_user_id == auctioneer.id
-        )
-    )
-    certs = list(certs_res.scalars().all())
+    total_revenue_cents = 0
+    settled_with_winner_count = 0
+    active_lots_count = 0
 
-    total_revenue_cents = sum(c.final_amount_cents for c in certs)
-    settled_with_winner_count = len(certs)
-    active_lots_count = sum(1 for l in synced_lots if l.status in ("LIVE", "SCHEDULED"))
+    for l in synced_lots:
+        if l.status == "LIVE":
+            active_lots_count += 1
+        elif l.status == "ENDED" and l.leader_user_id is not None and l.current_bid_cents is not None:
+            settled_with_winner_count += 1
+            total_revenue_cents += l.current_bid_cents
+
+    lot_responses = [LotResponse.model_validate(l) for l in synced_lots]
 
     return AuctioneerDashboardResponse(
         total_revenue_cents=total_revenue_cents,
         settled_with_winner_count=settled_with_winner_count,
         active_lots_count=active_lots_count,
-        lots=[LotResponse.model_validate(l) for l in synced_lots],
+        lots=lot_responses,
     )

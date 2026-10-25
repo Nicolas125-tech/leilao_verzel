@@ -1,4 +1,5 @@
 from datetime import timedelta
+import logging
 from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -12,6 +13,8 @@ from app.models.wallet import Wallet, WalletTransaction
 from app.schemas.bid import BidCreateRequest, BidResponse
 from app.services.lots import ensure_utc, resolve_lot_status
 from app.services.websocket import ws_manager
+
+logger = logging.getLogger("verzel.auction.pregao")
 
 ANTI_SNIPING_WINDOW_SECONDS = 120
 
@@ -119,6 +122,12 @@ async def place_bid(
                 created_at=utc_now(),
             )
             db.add(release_tx)
+            logger.info(
+                "Lote #%s: caução de R$ %.2f liberada para licitante anterior %s",
+                lot.lot_number,
+                released_amount / 100,
+                lot.leader_masked_name,
+            )
 
     bidder_wallet.committed_balance_cents += payload.amount_cents
     hold_tx = WalletTransaction(
@@ -140,6 +149,12 @@ async def place_bid(
         lot.end_time = ensure_utc(lot.end_time) + timedelta(seconds=ANTI_SNIPING_WINDOW_SECONDS)
         lot.extension_count += 1
         extension_triggered = True
+        logger.info(
+            "Lote #%s: anti-sniping acionado (+120s, extensão #%d); novo término: %s",
+            lot.lot_number,
+            lot.extension_count,
+            format_utc_iso(lot.end_time),
+        )
 
     sequence_number = lot.bid_count + 1
     previous_hash = lot.head_hash
@@ -177,6 +192,14 @@ async def place_bid(
 
     await db.commit()
     await db.refresh(new_bid)
+
+    logger.info(
+        "Lote #%s: lance #%d homologado (R$ %.2f por %s)",
+        lot.lot_number,
+        sequence_number,
+        payload.amount_cents / 100,
+        bidder.masked_name,
+    )
 
     bid_payload = BidResponse.model_validate(new_bid).model_dump(mode="json")
     lot_summary = {
