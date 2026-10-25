@@ -91,7 +91,6 @@ Lotes iniciais disponíveis após o seed:
 
 Recursos rápidos para a banca avaliadora:
 - Os lotes ao vivo (`#102` e `#103`) permanecem válidos por 7 dias a partir da execução do seed, permitindo testar lances em tempo real sem precisar cadastrar lotes do zero.
-- O botão `Restaurar Lotes de Teste` na barra superior (ou `POST /api/v1/demo/reset`) reinicia a demonstração a qualquer momento, restaurando saldos, lotes, janelas de 7 dias e cadeias de hash.
 - No Painel do Leiloeiro (`/auctioneer`, aba `Catalogar Nova Obra`), o botão de atalho `Iniciar nos últimos 105s` publica um lote já na janela crítica para validar imediatamente a prorrogação anti-sniping (`+2 min`).
 
 ## 5. Principais rotas da API e WebSockets
@@ -105,7 +104,6 @@ Recursos rápidos para a banca avaliadora:
 - `GET /api/v1/receipts/{receipt_code}`
 - `GET /api/v1/me/bids-and-wins`
 - `GET /api/v1/auctioneer/dashboard`
-- `POST /api/v1/demo/reset`
 - `WS /api/v1/ws/lots/{lot_id}` (também acessível em `/ws/lots/{lot_id}`)
 
 ## 6. Como testar a detecção de adulteração no PostgreSQL

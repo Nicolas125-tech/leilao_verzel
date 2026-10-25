@@ -7,8 +7,6 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.crypto import verify_receipt_signature
-from app.core.database import get_db
-from app.main import app
 from app.models.base import Base, utc_now
 from app.models.lot import Bid, Lot, WinningCertificate
 from app.models.user import User
@@ -147,39 +145,6 @@ async def test_seed_seven_day_window_and_reset_demo_data(db_session: AsyncSessio
     refreshed_102 = refreshed_res.scalar_one()
     assert refreshed_102.status == "LIVE"
     assert refreshed_102.bid_count == 0
-
-
-@pytest.mark.asyncio
-async def test_demo_reset_endpoint_restores_seed_state(db_session: AsyncSession):
-    await run_seed(db_session)
-
-    await db_session.execute(
-        update(Bid).where(Bid.sequence_number == 2).values(amount_cents=999999)
-    )
-    await db_session.commit()
-
-    async def _override_get_db():
-        yield db_session
-
-    app.dependency_overrides[get_db] = _override_get_db
-    try:
-        transport = httpx.ASGITransport(app=app)
-        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-            resp = await client.post("/api/v1/demo/reset")
-            assert resp.status_code == 200
-            payload = resp.json()
-            assert payload == {
-                "status": "ok",
-                "message": "Demonstração restaurada com sucesso.",
-            }
-    finally:
-        app.dependency_overrides.clear()
-
-    lot_103_res = await db_session.execute(select(Lot).where(Lot.lot_number == 103))
-    lot_103 = lot_103_res.scalar_one()
-    audit = await audit_lot_bid_chain(db_session, lot_103.id)
-    assert audit.is_chain_valid is True
-    assert audit.total_bids == 3
 
 
 @pytest.mark.asyncio

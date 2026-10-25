@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { SEED_ACCOUNTS, useAuth } from "../context/AuthContext.tsx";
 import { useTheme } from "../context/ThemeContext.tsx";
 import { useWallet } from "../context/WalletContext.tsx";
-import { demoApi } from "../services/api.ts";
 import { formatBrlCents } from "../utils/formatters.ts";
 
 export const Header: React.FC = () => {
@@ -15,8 +14,6 @@ export const Header: React.FC = () => {
 
   const [isQuickDepositing, setIsQuickDepositing] = useState(false);
   const [isSwitchingProfile, setIsSwitchingProfile] = useState(false);
-  const [isResettingDemo, setIsResettingDemo] = useState(false);
-  const [resetFeedback, setResetFeedback] = useState<string | null>(null);
 
   const handleQuickDeposit = async () => {
     if (isQuickDepositing) return;
@@ -41,28 +38,6 @@ export const Header: React.FC = () => {
       }
     } finally {
       setIsSwitchingProfile(false);
-    }
-  };
-
-  const handleResetDemo = async () => {
-    if (isResettingDemo) return;
-    setIsResettingDemo(true);
-    setResetFeedback(null);
-    try {
-      const res = await demoApi.reset();
-      if (user) {
-        const preset = SEED_ACCOUNTS.find((a) => a.email === user.email);
-        if (preset) {
-          await quickSeedLogin(preset);
-        }
-      }
-      setResetFeedback(res.message);
-      window.setTimeout(() => {
-        window.location.reload();
-      }, 600);
-    } catch (err) {
-      console.warn("Falha ao restaurar lotes de demonstração:", err);
-      setIsResettingDemo(false);
     }
   };
 
@@ -102,22 +77,6 @@ export const Header: React.FC = () => {
                 </button>
               );
             })}
-            <button
-              type="button"
-              disabled={isResettingDemo}
-              onClick={() => void handleResetDemo()}
-              className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-2.5 py-0.5 text-xs font-medium text-paper-text dark:text-charcoal-text transition-colors hover:border-primary disabled:opacity-50"
-            >
-              {isResettingDemo ? "Restaurando..." : "Restaurar Lotes de Teste"}
-            </button>
-            {resetFeedback && (
-              <span
-                role="status"
-                className="text-xs font-semibold text-status-winning"
-              >
-                {resetFeedback}
-              </span>
-            )}
           </div>
 
           <div className="flex items-center gap-3">
