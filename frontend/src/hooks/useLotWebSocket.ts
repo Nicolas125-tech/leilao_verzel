@@ -48,6 +48,12 @@ export interface UseLotWebSocketResult {
   reloadLot: () => Promise<void>;
 }
 
+const calculateBackoffWithJitter = (retryCount: number): number => {
+  const base = Math.min(1000 * Math.pow(1.5, retryCount), 8000);
+  const jitter = Math.floor(Math.random() * 350);
+  return base + jitter;
+};
+
 export function useLotWebSocket(lotId: string | undefined): UseLotWebSocketResult {
   const { refreshWallet } = useWallet();
 
@@ -59,13 +65,14 @@ export function useLotWebSocket(lotId: string | undefined): UseLotWebSocketResul
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<number | null>(null);
-  const attemptRef = useRef<number>(0);
-  const unmountedRef = useRef<boolean>(false);
+  const retryCountRef = useRef<number>(0);
+  const isMountedRef = useRef<boolean>(true);
 
   const reloadLot = useCallback(async () => {
     if (!lotId) return;
     try {
       const fresh = await lotsApi.getById(lotId);
+      if (!isMountedRef.current) return;
       setLotData(fresh);
       const sortedBids = [...(fresh.bids || [])].sort(
         (a, b) => b.sequence_number - a.sequence_number,
@@ -73,6 +80,7 @@ export function useLotWebSocket(lotId: string | undefined): UseLotWebSocketResul
       setBidsHistory(sortedBids);
       setError(null);
     } catch (err) {
+      if (!isMountedRef.current) return;
       setError(
         err instanceof Error
           ? err.message
@@ -87,112 +95,121 @@ export function useLotWebSocket(lotId: string | undefined): UseLotWebSocketResul
 
   useEffect(() => {
     if (!lotId) return;
-    unmountedRef.current = false;
+    isMountedRef.current = true;
 
-    const connectWs = () => {
-      if (unmountedRef.current) return;
+    const establishConnection = () => {
+      if (!isMountedRef.current) return;
 
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${protocol}//${window.location.host}/api/v1/ws/lots/${lotId}`;
+      const endpoint = `${protocol}//${window.location.host}/api/v1/ws/lots/${lotId}`;
 
       setConnectionStatus(
-        attemptRef.current === 0 ? "CONNECTING" : "RECONNECTING",
+        retryCountRef.current === 0 ? "CONNECTING" : "RECONNECTING",
       );
 
-      const socket = new WebSocket(wsUrl);
+      const socket = new WebSocket(endpoint);
       wsRef.current = socket;
 
       socket.onopen = () => {
-        if (unmountedRef.current) return;
-        attemptRef.current = 0;
+        if (!isMountedRef.current) return;
+        retryCountRef.current = 0;
         setConnectionStatus("CONNECTED");
       };
 
-      socket.onmessage = (event) => {
-        if (unmountedRef.current) return;
+      socket.onmessage = (event: MessageEvent) => {
+        if (!isMountedRef.current) return;
         try {
           const payload = JSON.parse(event.data) as WsEventPayload;
 
-          if (payload.event === "NEW_BID") {
-            const incomingBid = payload.bid;
-            if (incomingBid) {
-              setBidsHistory((prev) => {
-                const exists = prev.some((b) => b.id === incomingBid.id);
-                if (exists) return prev;
-                return [incomingBid, ...prev].sort(
-                  (a, b) => b.sequence_number - a.sequence_number,
-                );
+          switch (payload.event) {
+            case "NEW_BID": {
+              const incomingBid = payload.bid;
+              if (incomingBid) {
+                setBidsHistory((prev) => {
+                  const alreadyRegistered = prev.some((b) => b.id === incomingBid.id);
+                  if (alreadyRegistered) return prev;
+                  return [incomingBid, ...prev].sort(
+                    (a, b) => b.sequence_number - a.sequence_number,
+                  );
+                });
+              }
+
+              setLotData((prev) => {
+                if (!prev) return prev;
+                return {
+                  ...prev,
+                  status: "LIVE",
+                  current_bid_cents:
+                    payload.current_bid_cents ??
+                    incomingBid?.amount_cents ??
+                    prev.current_bid_cents,
+                  bid_count:
+                    payload.bid_count ??
+                    incomingBid?.sequence_number ??
+                    prev.bid_count + 1,
+                  leader_user_id:
+                    payload.leader_user_id ??
+                    incomingBid?.user_id ??
+                    prev.leader_user_id,
+                  leader_masked_name:
+                    payload.leader_masked_name ??
+                    incomingBid?.bidder_masked_name ??
+                    prev.leader_masked_name,
+                  end_time: payload.lot_end_time ?? prev.end_time,
+                  extension_count:
+                    payload.extension_count ?? prev.extension_count,
+                  head_hash:
+                    payload.current_hash ??
+                    incomingBid?.current_hash ??
+                    prev.head_hash,
+                };
               });
+
+              void refreshWallet();
+              break;
             }
 
-            setLotData((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                status: "LIVE",
-                current_bid_cents:
-                  payload.current_bid_cents ??
-                  incomingBid?.amount_cents ??
-                  prev.current_bid_cents,
-                bid_count:
-                  payload.bid_count ??
-                  incomingBid?.sequence_number ??
-                  prev.bid_count + 1,
-                leader_user_id:
-                  payload.leader_user_id ??
-                  incomingBid?.user_id ??
-                  prev.leader_user_id,
-                leader_masked_name:
-                  payload.leader_masked_name ??
-                  incomingBid?.bidder_masked_name ??
-                  prev.leader_masked_name,
-                end_time: payload.lot_end_time ?? prev.end_time,
-                extension_count:
-                  payload.extension_count ?? prev.extension_count,
-                head_hash:
-                  payload.current_hash ??
-                  incomingBid?.current_hash ??
-                  prev.head_hash,
-              };
-            });
+            case "LOT_SETTLED": {
+              setLotData((prev) => {
+                if (!prev) return prev;
+                return {
+                  ...prev,
+                  status: "ENDED",
+                  settled_at:
+                    payload.certificate?.settled_at ?? new Date().toISOString(),
+                  certificate: payload.certificate ?? prev.certificate,
+                };
+              });
+              void refreshWallet();
+              break;
+            }
 
-            void refreshWallet();
-          } else if (payload.event === "LOT_SETTLED") {
-            setLotData((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                status: "ENDED",
-                settled_at:
-                  payload.certificate?.settled_at ?? new Date().toISOString(),
-                certificate: payload.certificate ?? prev.certificate,
-              };
-            });
-            void refreshWallet();
-          } else if (payload.event === "LOT_CANCELLED") {
-            setLotData((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                status: "CANCELLED",
-                cancelled_at: new Date().toISOString(),
-              };
-            });
-            void refreshWallet();
+            case "LOT_CANCELLED": {
+              setLotData((prev) => {
+                if (!prev) return prev;
+                return {
+                  ...prev,
+                  status: "CANCELLED",
+                  cancelled_at: new Date().toISOString(),
+                };
+              });
+              void refreshWallet();
+              break;
+            }
           }
-        } catch (err) {
-          console.warn("Falha ao processar evento WebSocket do lote:", err);
+        } catch (parseError) {
+          console.warn("Falha ao decodificar frame do pregão:", parseError);
         }
       };
 
       socket.onclose = () => {
-        if (unmountedRef.current) return;
+        if (!isMountedRef.current) return;
         setConnectionStatus("DISCONNECTED");
-        attemptRef.current += 1;
-        const backoffMs = Math.min(1000 * 2 ** (attemptRef.current - 1), 10000);
+        retryCountRef.current += 1;
+        const delay = calculateBackoffWithJitter(retryCountRef.current);
         reconnectTimerRef.current = window.setTimeout(() => {
-          connectWs();
-        }, backoffMs);
+          establishConnection();
+        }, delay);
       };
 
       socket.onerror = () => {
@@ -200,10 +217,10 @@ export function useLotWebSocket(lotId: string | undefined): UseLotWebSocketResul
       };
     };
 
-    connectWs();
+    establishConnection();
 
     return () => {
-      unmountedRef.current = true;
+      isMountedRef.current = false;
       if (reconnectTimerRef.current !== null) {
         window.clearTimeout(reconnectTimerRef.current);
       }

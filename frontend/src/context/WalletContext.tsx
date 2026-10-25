@@ -25,7 +25,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
   const { user } = useAuth();
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
-  const [isLoadingWallet, setIsLoadingWallet] = useState<boolean>(false);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
   const refreshWallet = useCallback(async () => {
     if (!user || user.role !== "BIDDER") {
@@ -34,7 +34,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
       return;
     }
 
-    setIsLoadingWallet(true);
+    setIsSyncing(true);
     try {
       const [walletData, txData] = await Promise.all([
         walletApi.getMe(),
@@ -43,9 +43,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
       setWallet(walletData);
       setTransactions(txData);
     } catch (err) {
-      console.warn("Não foi possível atualizar a carteira do licitante:", err);
+      console.warn("Sincronização de saldo indisponível:", err);
     } finally {
-      setIsLoadingWallet(false);
+      setIsSyncing(false);
     }
   }, [user]);
 
@@ -56,8 +56,12 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
   const deposit = async (amountCents: number): Promise<Wallet> => {
     const updated = await walletApi.deposit(amountCents);
     setWallet(updated);
-    const txData = await walletApi.listTransactions();
-    setTransactions(txData);
+    try {
+      const txData = await walletApi.listTransactions();
+      setTransactions(txData);
+    } catch {
+      // noop
+    }
     return updated;
   };
 
@@ -66,7 +70,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         wallet,
         transactions,
-        isLoadingWallet,
+        isLoadingWallet: isSyncing,
         refreshWallet,
         deposit,
       }}
