@@ -14,6 +14,7 @@ export const Header: React.FC = () => {
 
   const [isQuickDepositing, setIsQuickDepositing] = useState(false);
   const [isSwitchingProfile, setIsSwitchingProfile] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   const handleQuickDeposit = async () => {
     if (isQuickDepositing) return;
@@ -29,6 +30,7 @@ export const Header: React.FC = () => {
     const preset = SEED_ACCOUNTS.find((a) => a.email === email);
     if (!preset) return;
     setIsSwitchingProfile(true);
+    setProfileError(null);
     try {
       const logged = await quickSeedLogin(preset);
       if (logged.role === "AUCTIONEER" && location.pathname === "/wallet") {
@@ -36,6 +38,10 @@ export const Header: React.FC = () => {
       } else if (logged.role === "BIDDER" && location.pathname === "/auctioneer") {
         navigate("/");
       }
+    } catch (err) {
+      setProfileError(
+        err instanceof Error ? err.message : "Falha ao trocar de perfil.",
+      );
     } finally {
       setIsSwitchingProfile(false);
     }
@@ -77,6 +83,11 @@ export const Header: React.FC = () => {
                 </button>
               );
             })}
+            {profileError && (
+              <span role="alert" className="text-xs font-semibold text-status-outbid">
+                {profileError}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-3">

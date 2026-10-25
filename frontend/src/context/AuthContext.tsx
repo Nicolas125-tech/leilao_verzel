@@ -108,19 +108,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return res.user;
   };
 
-  const quickSeedLogin = async (preset: SeedAccountPreset): Promise<User> => {
-    try {
-      return await login(preset.email, preset.password);
-    } catch {
-      // Caso o banco tenha acabado de subir sem seed manual, cria a conta sob demanda
-      return await register(
-        preset.label,
-        preset.email,
-        preset.password,
-        preset.role,
-      );
-    }
-  };
+  const quickSeedLogin = (preset: SeedAccountPreset): Promise<User> =>
+    login(preset.email, preset.password);
 
   const logout = () => {
     setStoredToken(null);
