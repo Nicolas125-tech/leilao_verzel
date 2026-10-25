@@ -18,6 +18,7 @@ node_modules/
 dist/
 dist-ssr/
 *.local
+*.tsbuildinfo
 
 # Environment
 .env
@@ -37,3 +38,12 @@ yarn-error.log*
 .idea/
 .DS_Store
 Thumbs.db
+
+# Local workflows & scratch
+.agents/
+.gemini/
+.impeccable/
+.scratch/
+scratch/
+AGENTS.md
+docs/agents/
