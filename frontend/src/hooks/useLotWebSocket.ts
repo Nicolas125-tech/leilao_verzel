@@ -106,8 +106,11 @@ export function useLotWebSocket(lotId: string | undefined): UseLotWebSocketResul
         const normalizedWs = customWsUrl.replace(/^https:\/\//, "wss://").replace(/^http:\/\//, "ws://");
         endpoint = `${normalizedWs}/api/v1/ws/lots/${lotId}`;
       } else {
-        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        endpoint = `${protocol}//${window.location.host}/api/v1/ws/lots/${lotId}`;
+        const isProd = window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1";
+        const wsBase = isProd
+          ? "wss://leilao-verzel.onrender.com"
+          : `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}`;
+        endpoint = `${wsBase}/api/v1/ws/lots/${lotId}`;
       }
 
       setConnectionStatus(
