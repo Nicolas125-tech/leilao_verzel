@@ -60,7 +60,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
       const txData = await walletApi.listTransactions();
       setTransactions(txData);
     } catch {
-      // noop
+      return updated;
     }
     return updated;
   };
