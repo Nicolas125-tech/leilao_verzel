@@ -11,6 +11,7 @@ import type { User, UserRole } from "../types/api.ts";
 export interface SeedAccountPreset {
   label: string;
   roleLabel: string;
+  maskedName: string;
   email: string;
   password: string;
   role: UserRole;
@@ -21,6 +22,7 @@ export const SEED_ACCOUNTS: SeedAccountPreset[] = [
   {
     label: "Helena Curadora",
     roleLabel: "LEILOEIRA",
+    maskedName: "(H***a C.)",
     email: "curador@verzel.com.br",
     password: "Verzel2026!",
     role: "AUCTIONEER",
@@ -29,6 +31,7 @@ export const SEED_ACCOUNTS: SeedAccountPreset[] = [
   {
     label: "Nicolas Brito",
     roleLabel: "LICITANTE 1",
+    maskedName: "(N***s B.)",
     email: "nicolas@verzel.com.br",
     password: "Verzel2026!",
     role: "BIDDER",
@@ -37,6 +40,7 @@ export const SEED_ACCOUNTS: SeedAccountPreset[] = [
   {
     label: "Marina Silva",
     roleLabel: "LICITANTE 2",
+    maskedName: "(M***a S.)",
     email: "marina@verzel.com.br",
     password: "Verzel2026!",
     role: "BIDDER",

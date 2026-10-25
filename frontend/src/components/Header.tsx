@@ -79,7 +79,7 @@ export const Header: React.FC = () => {
                       : "border-paper-border bg-paper-surface text-paper-text hover:border-paper-text dark:border-charcoal-border dark:bg-charcoal-surface dark:text-charcoal-text"
                   }`}
                 >
-                  {preset.roleLabel}: {preset.label.split(" ")[0]}
+                  {preset.roleLabel}: {preset.maskedName}
                 </button>
               );
             })}
