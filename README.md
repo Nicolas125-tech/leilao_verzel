@@ -135,7 +135,7 @@ npm test
 
 ## 8. Uso de inteligência artificial no projeto
 
-Neste projeto, utilizei Claude, ChatGPT e Cursor para acelerar a escrita de código repetitivo, concentrando o suporte dos modelos na geração de estruturas básicas, massa de testes e tipagens. As decisões de arquitetura, consistência transacional e regras de negócio permaneceram sob controle manual direto.
+Neste projeto, utilizei a IA para acelerar a escrita de código repetitivo, concentrando o suporte dos modelos na geração de estruturas básicas, massa de testes e tipagens. As decisões de arquitetura, consistência transacional e regras de negócio permaneceram sob controle manual direto.
 
 ### Onde a IA acelerou o desenvolvimento
 - Estruturação inicial de schemas Pydantic v2, DTOs e tipagens em TypeScript alinhados às entidades do banco e aos contratos de API.
