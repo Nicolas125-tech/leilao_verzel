@@ -341,3 +341,33 @@ async def test_websocket_lot_events_broadcast(
             assert msg2["event"] == "LOT_SETTLED"
             assert msg2["lot_id"] == lot_id
             assert msg2["certificate"]["receipt_code"].startswith("ARP-")
+
+
+
+@pytest.mark.asyncio
+async def test_settle_expired_lots_sweep(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    from app.services.settlement import settle_expired_lots
+
+    auctioneer = await _register_and_fund(client, "Helena Leiloeira", "helena2@verzel.com.br", "AUCTIONEER")
+    bidder = await _register_and_fund(client, "Nicolas Brito", "nicolas2@verzel.com.br", "BIDDER", 500000)
+
+    lot = await _create_live_lot(client, auctioneer["access_token"], title="Obra Expirada")
+    lot_id = lot["id"]
+
+    await client.post(
+        f"/api/v1/lots/{lot_id}/bids",
+        headers={"Authorization": f"Bearer {bidder['access_token']}"},
+        json={"amount_cents": 120000},
+    )
+
+    await _expire_lot_in_db(db_session, lot_id)
+
+    settled_count = await settle_expired_lots(db_session)
+    assert settled_count == 1
+
+    updated_lot = (await db_session.execute(select(Lot).where(Lot.id == UUID(lot_id)))).scalar_one()
+    assert updated_lot.status == "ENDED"
+    assert updated_lot.settled_at is not None

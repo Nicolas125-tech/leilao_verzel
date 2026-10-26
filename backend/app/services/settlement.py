@@ -331,3 +331,23 @@ async def get_auctioneer_dashboard(
         active_lots_count=active_lots_count,
         lots=lot_responses,
     )
+
+
+
+async def settle_expired_lots(db: AsyncSession) -> int:
+    now_utc = utc_now()
+    stmt = (
+        select(Lot)
+        .where(
+            Lot.status == "LIVE",
+            Lot.end_time <= now_utc,
+        )
+        .with_for_update(skip_locked=True)
+    )
+    res = await db.execute(stmt)
+    due_lots = list(res.scalars().all())
+    processed_count = 0
+    for lot in due_lots:
+        await settle_lot(db, lot)
+        processed_count += 1
+    return processed_count

@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 import logging
 import time
@@ -10,17 +11,42 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.router import api_router
 from app.core.config import settings
-from app.core.database import get_db
+from app.core.database import AsyncSessionLocal, get_db
+from app.services.settlement import settle_expired_lots
 from app.services.websocket import ws_manager
 
 logger = logging.getLogger("verzel.auction.api")
 
 
+async def settlement_background_worker(interval_seconds: int = 15):
+    logger.info("Worker autônomo de liquidação em background iniciado (ciclo: %ds)", interval_seconds)
+    while True:
+        try:
+            await asyncio.sleep(interval_seconds)
+            async with AsyncSessionLocal() as session:
+                settled_count = await settle_expired_lots(session)
+                if settled_count > 0:
+                    logger.info("Liquidação em background finalizou %d lote(s) vencido(s)", settled_count)
+        except asyncio.CancelledError:
+            logger.info("Worker de liquidação em background encerrado")
+            break
+        except Exception as exc:
+            logger.error("Falha no ciclo do worker autônomo de liquidação: %s", exc)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Iniciando motor de pregão Verzel no ambiente: %s", settings.ENVIRONMENT)
-    yield
-    logger.info("Encerrando serviços da Casa de Leilões Verzel")
+    worker_task = asyncio.create_task(settlement_background_worker(interval_seconds=15))
+    try:
+        yield
+    finally:
+        worker_task.cancel()
+        try:
+            await worker_task
+        except asyncio.CancelledError:
+            pass
+        logger.info("Encerrando serviços da Casa de Leilões Verzel")
 
 
 app = FastAPI(
