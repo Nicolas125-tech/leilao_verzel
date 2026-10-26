@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import require_auctioneer, require_bidder
 from app.core.database import get_db
+from app.core.rate_limit import rate_limiter
 from app.models.user import User
 from app.schemas.audit import AuditChainResponse
 from app.schemas.bid import BidCreateRequest, BidResponse
@@ -61,6 +62,12 @@ async def submit_bid(
     current_user: User = Depends(require_bidder),
     db: AsyncSession = Depends(get_db),
 ):
+    rate_limiter.check(
+        key=f"bids:{current_user.id}",
+        max_requests=30,
+        window_seconds=60,
+        detail="Limite de lances excedido (máximo de 30 por minuto). Aguarde antes de enviar uma nova oferta.",
+    )
     bid = await place_bid(db=db, bidder=current_user, lot_id=lot_id, payload=payload)
     return BidResponse.model_validate(bid)
 
