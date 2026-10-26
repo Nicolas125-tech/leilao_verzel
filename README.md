@@ -1,5 +1,8 @@
 # Casa de Leilões Verzel
 
+- **Aplicação no ar (Frontend):** https://leilao-verzel.vercel.app
+- **API em produção (Backend Docs):** https://leilao-verzel.onrender.com/docs
+
 Sistema web para pregão online de obras de arte em tempo real, integrado à API pública do Cleveland Museum of Art Open Access. A aplicação controla concorrência de lances no banco de dados, reserva saldo comprometido de forma atômica, aplica prorrogação anti-sniping nos minutos finais, liquida o lote no encerramento e expõe auditoria criptográfica pública por cadeia de hashes.
 
 ## 1. Arquitetura e stack
@@ -130,24 +133,19 @@ cd frontend
 npm test
 ```
 
-## 8. Decisões de engenharia e metodologia técnica
+## 8. Uso de inteligência artificial no projeto
 
-Pontos centrais da arquitetura e decisões de projeto adotadas na entrega:
+Neste projeto, utilizei Claude, ChatGPT e Cursor para acelerar a escrita de código repetitivo, concentrando o suporte dos modelos na geração de estruturas básicas, massa de testes e tipagens. As decisões de arquitetura, consistência transacional e regras de negócio permaneceram sob controle manual direto.
 
-1. **Resolução de instabilidade e resiliência da API externa:**
-   A integração com acervo de arte utiliza a API pública do Cleveland Museum of Art (Open Access), implementando timeout estrito de 4 segundos e fallback local em memória. Ao criar um lote, os metadados são desnormalizados e persistidos na tabela `lots`, conferindo autonomia total à vitrine, sala de pregão e auditoria mesmo se a API externa estiver fora do ar.
+### Onde a IA acelerou o desenvolvimento
+- Estruturação inicial de schemas Pydantic v2, DTOs e tipagens em TypeScript alinhados às entidades do banco e aos contratos de API.
+- Criação das fixtures do Pytest (usando `aiosqlite`) e casos de borda para os 47 testes unitários do backend, além dos testes de formatação no frontend.
+- Prototipação dos blocos visuais e classes utilitárias em Tailwind CSS para os temas claro e escuro.
 
-2. **Controle rigoroso de concorrência e integridade de saldo:**
-   A homologação de lances utiliza transações com `SELECT ... FOR UPDATE` adquiridos em ordem determinística crescente de identificador (`user_id`), eliminando deadlocks (cenários AB-BA). A caução do líder superado é liberada imediatamente (`BID_RELEASE`), e o saldo do novo líder é bloqueado (`BID_HOLD`), respeitando o livro-razão financeiro.
-
-3. **Lógica de pregão e anti-sniping cumulativo:**
-   O término do lote é prorrogado adicionando 120 segundos ao término vigente (`lot.end_time += timedelta(seconds=120)`) sempre que um lance válido entra nos últimos dois minutos, preservando segundos residuais e evitando o reset indevido do relógio.
-
-4. **Liquidação sob demanda (Lazy Evaluation) com travas de linha:**
-   A liquidação é executada atomicamente no momento da consulta (`sync_lot_temporal_state`) antes de leituras ou novos lances. Essa abordagem elimina loops vazios de polling a cada segundo, poupando CPU e conexões com o banco de dados em instâncias compartilhadas na nuvem (como Render), com garantia de estado consistente.
-
-5. **Resiliência e estabilidade em tempo real:**
-   O cliente WebSocket implementa reconexão automática com backoff exponencial somado a jitter aleatório, prevenindo tempestades de requisições simultâneas em oscilações de rede.
-
-6. **Modularização e cobertura de testes:**
-   Frontend estruturado em componentes desacoplados de domínio (controle de lances, feed de auditoria, catálogo e faturamento) e suíte completa com 47 testes no backend (Pytest com isolamento assíncrono) e testes unitários no frontend.
+### Falhas do modelo e correções aplicadas
+- Concorrência e deadlocks: ao gerar o fluxo de lances, a IA sugeriu comandos `UPDATE` sem isolamento transacional, o que gerava condições de corrida com saldo negativo e lances sobrepostos. A solução foi reescrever a rotina usando `SELECT ... FOR UPDATE` no PostgreSQL e ordenar os IDs das carteiras (`involved_user_ids = sorted(...)`), evitando deadlocks clássicos de concorrência mútua (disputa AB-BA).
+- Resiliência na API externa: a API do Art Institute of Chicago retornava erros HTTP 403 por bloqueios da Cloudflare durante testes automatizados. Como a IA sugeriu apenas subir o timeout, migrei a integração para o Cleveland Museum of Art (Open Access) e criei uma contingência local em memória com vetores SVG caso o serviço fique instável.
+- Cálculo de extensão anti-sniping: a IA definiu a prorrogação resetando o prazo para o horário atual mais 120 segundos. Como a regra exigia extensão cumulativa, ajustei o cálculo para somar 120 segundos ao término que já estava vigente (`lot.end_time += 120s`), preservando os segundos residuais.
+- Encerramento de lotes: para evitar um worker contínuo em background consumindo recursos no plano gratuito do Render, optei por liquidação sob demanda (*lazy settlement*). O fechamento é processado de forma atômica no momento em que o lote é consultado ou recebe um novo lance.
+- Resiliência em WebSockets: a rotina sugerida não tratava quedas de rede. Foi implementada reconexão no cliente com recuo exponencial (*exponential backoff*) e *jitter* aleatório para evitar sobrecarga simultânea (*thundering herd*) no servidor.
+- Integridade da cadeia criptográfica: a validação da cadeia de hashes precisou ser ajustada para detectar não apenas alterações nos lances, mas também remoções no meio ou no topo da fila, comparando o elo final com o `head_hash` e o `bid_count` gravados no lote.
