@@ -8,8 +8,10 @@ interface LotPublishFormProps {
   onStartingBidInputChange: (v: string) => void;
   minIncrementInput: string;
   onMinIncrementInputChange: (v: string) => void;
-  windowPreset: "live_30m" | "live_2m" | "scheduled_1h";
-  onWindowPresetChange: (v: "live_30m" | "live_2m" | "scheduled_1h") => void;
+  startTimeInput: string;
+  onStartTimeInputChange: (v: string) => void;
+  endTimeInput: string;
+  onEndTimeInputChange: (v: string) => void;
   onSubmit: (e: React.FormEvent) => Promise<void>;
   isSubmitting: boolean;
 }
@@ -20,8 +22,10 @@ export const LotPublishForm: React.FC<LotPublishFormProps> = ({
   onStartingBidInputChange,
   minIncrementInput,
   onMinIncrementInputChange,
-  windowPreset,
-  onWindowPresetChange,
+  startTimeInput,
+  onStartTimeInputChange,
+  endTimeInput,
+  onEndTimeInputChange,
   onSubmit,
   isSubmitting,
 }) => {
@@ -29,7 +33,7 @@ export const LotPublishForm: React.FC<LotPublishFormProps> = ({
     <section className="lg:col-span-5">
       <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-6">
         <h2 className="font-sans text-lg font-semibold text-paper-text dark:text-charcoal-text">
-          Publicar novo lote
+          {selectedArtwork ? `Lote: ${selectedArtwork.title}` : "Publicar novo lote"}
         </h2>
 
         {selectedArtwork ? (
@@ -60,7 +64,7 @@ export const LotPublishForm: React.FC<LotPublishFormProps> = ({
                   required
                   value={startingBidInput}
                   onChange={(e) => onStartingBidInputChange(e.target.value)}
-                  className="mt-1 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3 font-mono text-sm tabular-nums"
+                  className="mt-1 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3 font-mono text-sm tabular-nums text-paper-text dark:text-charcoal-text focus:outline-none focus:border-gold"
                 />
               </div>
               <div>
@@ -72,42 +76,44 @@ export const LotPublishForm: React.FC<LotPublishFormProps> = ({
                   required
                   value={minIncrementInput}
                   onChange={(e) => onMinIncrementInputChange(e.target.value)}
-                  className="mt-1 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3 font-mono text-sm tabular-nums"
+                  className="mt-1 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3 font-mono text-sm tabular-nums text-paper-text dark:text-charcoal-text focus:outline-none focus:border-gold"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
-                Duração do lote
-              </label>
-              <select
-                value={windowPreset}
-                onChange={(e) =>
-                  onWindowPresetChange(
-                    e.target.value as "live_30m" | "live_2m" | "scheduled_1h",
-                  )
-                }
-                className="mt-1 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3 text-sm"
-              >
-                <option value="live_30m">
-                  Iniciar ao vivo agora (duração: 30 minutos)
-                </option>
-                <option value="live_2m">
-                  Iniciar nos últimos 105s (para testar prorrogação +2 min)
-                </option>
-                <option value="scheduled_1h">
-                  Agendar início para daqui a 1 hora
-                </option>
-              </select>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                  Início
+                </label>
+                <input
+                  type="datetime-local"
+                  required
+                  value={startTimeInput}
+                  onChange={(e) => onStartTimeInputChange(e.target.value)}
+                  className="mt-1 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3 text-sm text-paper-text dark:text-charcoal-text focus:outline-none focus:border-gold"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                  Fim
+                </label>
+                <input
+                  type="datetime-local"
+                  required
+                  value={endTimeInput}
+                  onChange={(e) => onEndTimeInputChange(e.target.value)}
+                  className="mt-1 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3 text-sm text-paper-text dark:text-charcoal-text focus:outline-none focus:border-gold"
+                />
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded-sm border border-primary bg-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+              className="w-full rounded-sm border border-gold bg-gold px-5 py-3 text-sm font-semibold text-charcoal-bg transition-colors hover:brightness-105 disabled:opacity-50"
             >
-              {isSubmitting ? "Publicando..." : "Publicar lote"}
+              {isSubmitting ? "Criando lote..." : "Criar lote"}
             </button>
           </form>
         ) : (

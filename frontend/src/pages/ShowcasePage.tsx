@@ -4,9 +4,10 @@ import { ArtworkFrame } from "../components/ArtworkFrame.tsx";
 import { CountdownBadge } from "../components/CountdownBadge.tsx";
 import { lotsApi } from "../services/api.ts";
 import type { Lot, LotStatus } from "../types/api.ts";
-import { formatBrlCents } from "../utils/formatters.ts";
+import { formatBrlCents, parseBrlToCents } from "../utils/formatters.ts";
 
 type FilterOption = "ALL" | "LIVE" | "SCHEDULED" | "ENDED";
+type SortOption = "ending_soon" | "highest_price" | "lowest_price" | "most_bids";
 
 const FILTER_TABS: { value: FilterOption; label: string }[] = [
   { value: "ALL", label: "Todos" },
@@ -19,6 +20,9 @@ export const ShowcasePage: React.FC = () => {
   const [lots, setLots] = useState<Lot[]>([]);
   const [statusFilter, setStatusFilter] = useState<FilterOption>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [sortBy, setSortBy] = useState<SortOption>("ending_soon");
+  const [minPriceInput, setMinPriceInput] = useState<string>("");
+  const [maxPriceInput, setMaxPriceInput] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -46,6 +50,40 @@ export const ShowcasePage: React.FC = () => {
     }, 150);
     return () => window.clearTimeout(timer);
   }, [loadLots]);
+
+  const minPriceCents = minPriceInput.trim() ? parseBrlToCents(minPriceInput) : 0;
+  const maxPriceCents = maxPriceInput.trim() ? parseBrlToCents(maxPriceInput) : 0;
+
+  const displayedLots = lots
+    .filter((lot) => {
+      const activePrice =
+        lot.current_bid_cents !== null
+          ? lot.current_bid_cents
+          : lot.starting_bid_cents;
+      if (minPriceCents > 0 && activePrice < minPriceCents) {
+        return false;
+      }
+      if (maxPriceCents > 0 && activePrice > maxPriceCents) {
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      const priceA = a.current_bid_cents ?? a.starting_bid_cents;
+      const priceB = b.current_bid_cents ?? b.starting_bid_cents;
+
+      switch (sortBy) {
+        case "highest_price":
+          return priceB - priceA;
+        case "lowest_price":
+          return priceA - priceB;
+        case "most_bids":
+          return b.bid_count - a.bid_count;
+        case "ending_soon":
+        default:
+          return new Date(a.end_time).getTime() - new Date(b.end_time).getTime();
+      }
+    });
 
   const statusBadge = (status: LotStatus) => {
     switch (status) {
@@ -116,6 +154,64 @@ export const ShowcasePage: React.FC = () => {
             />
           </div>
         </div>
+
+        <div className="mt-5 flex flex-wrap items-end gap-3 border-t border-paper-border/60 dark:border-charcoal-border/60 pt-4">
+          <div>
+            <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext mb-1">
+              Ordenar por
+            </label>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              className="h-[38px] rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-3 text-xs text-paper-text dark:text-charcoal-text focus:outline-none focus:border-gold"
+            >
+              <option value="ending_soon">Termina primeiro</option>
+              <option value="highest_price">Maior preço</option>
+              <option value="lowest_price">Menor preço</option>
+              <option value="most_bids">Mais lances</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext mb-1">
+              Preço de (R$)
+            </label>
+            <input
+              type="text"
+              value={minPriceInput}
+              onChange={(e) => setMinPriceInput(e.target.value)}
+              placeholder="0,00"
+              className="h-[38px] w-28 sm:w-32 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-3 font-mono text-xs text-paper-text dark:text-charcoal-text placeholder:text-paper-subtext dark:placeholder:text-charcoal-subtext focus:outline-none focus:border-gold"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext mb-1">
+              até (R$)
+            </label>
+            <input
+              type="text"
+              value={maxPriceInput}
+              onChange={(e) => setMaxPriceInput(e.target.value)}
+              placeholder="sem limite"
+              className="h-[38px] w-28 sm:w-32 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-3 font-mono text-xs text-paper-text dark:text-charcoal-text placeholder:text-paper-subtext dark:placeholder:text-charcoal-subtext focus:outline-none focus:border-gold"
+            />
+          </div>
+
+          {(minPriceInput || maxPriceInput || sortBy !== "ending_soon") && (
+            <button
+              type="button"
+              onClick={() => {
+                setMinPriceInput("");
+                setMaxPriceInput("");
+                setSortBy("ending_soon");
+              }}
+              className="h-[38px] px-3 text-xs text-paper-subtext hover:text-paper-text dark:text-charcoal-subtext dark:hover:text-charcoal-text underline"
+            >
+              Limpar filtros
+            </button>
+          )}
+        </div>
       </div>
 
       {errorMsg && (
@@ -136,18 +232,18 @@ export const ShowcasePage: React.FC = () => {
             />
           ))}
         </div>
-      ) : lots.length === 0 ? (
+      ) : displayedLots.length === 0 ? (
         <div className="mt-8 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-10 text-center">
           <h2 className="font-sans text-lg font-semibold text-paper-text dark:text-charcoal-text">
             Nenhum lote encontrado
           </h2>
           <p className="mt-2 text-sm text-paper-subtext dark:text-charcoal-subtext">
-            Altere o filtro de status ou limpe o termo de busca para ver todo o acervo disponível.
+            Altere o filtro de status ou os parâmetros de preço para ver todo o acervo disponível.
           </p>
         </div>
       ) : (
         <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {lots.map((lot) => {
+          {displayedLots.map((lot) => {
             const activePriceCents =
               lot.current_bid_cents !== null
                 ? lot.current_bid_cents

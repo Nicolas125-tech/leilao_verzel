@@ -12,6 +12,11 @@ import { parseBrlToCents } from "../utils/formatters.ts";
 
 type AuctioneerTab = "management" | "catalog";
 
+function formatLocalDateTime(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 export const AuctioneerDashboardPage: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<AuctioneerTab>("management");
@@ -24,9 +29,16 @@ export const AuctioneerDashboardPage: React.FC = () => {
   const [isLoadingCatalog, setIsLoadingCatalog] = useState<boolean>(false);
   const [selectedArtwork, setSelectedArtwork] = useState<CatalogItem | null>(null);
 
-  const [startingBidInput, setStartingBidInput] = useState<string>("1800,00");
-  const [minIncrementInput, setMinIncrementInput] = useState<string>("150,00");
-  const [windowPreset, setWindowPreset] = useState<"live_30m" | "live_2m" | "scheduled_1h">("live_30m");
+  const [startingBidInput, setStartingBidInput] = useState<string>("1000,00");
+  const [minIncrementInput, setMinIncrementInput] = useState<string>("50,00");
+  const [startTimeInput, setStartTimeInput] = useState<string>(() => {
+    return formatLocalDateTime(new Date());
+  });
+  const [endTimeInput, setEndTimeInput] = useState<string>(() => {
+    const nextDay = new Date();
+    nextDay.setDate(nextDay.getDate() + 1);
+    return formatLocalDateTime(nextDay);
+  });
   const [isSubmittingLot, setIsSubmittingLot] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
@@ -131,18 +143,22 @@ export const AuctioneerDashboardPage: React.FC = () => {
       return;
     }
 
-    const now = new Date();
-    let startTime: Date;
-    let endTime: Date;
-    if (windowPreset === "live_30m") {
-      startTime = new Date(now.getTime() - 60 * 1000);
-      endTime = new Date(now.getTime() + 30 * 60 * 1000);
-    } else if (windowPreset === "live_2m") {
-      startTime = new Date(now.getTime() - 60 * 1000);
-      endTime = new Date(now.getTime() + 105 * 1000);
-    } else {
-      startTime = new Date(now.getTime() + 60 * 60 * 1000);
-      endTime = new Date(now.getTime() + 4 * 60 * 60 * 1000);
+    const startDate = new Date(startTimeInput);
+    const endDate = new Date(endTimeInput);
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+      setFeedback({
+        type: "error",
+        message: "Informe datas válidas de início e término.",
+      });
+      return;
+    }
+
+    if (endDate.getTime() <= startDate.getTime()) {
+      setFeedback({
+        type: "error",
+        message: "A data de encerramento deve ser posterior à data de início.",
+      });
+      return;
     }
 
     setIsSubmittingLot(true);
@@ -158,8 +174,8 @@ export const AuctioneerDashboardPage: React.FC = () => {
         attributes_json: selectedArtwork.attributes,
         starting_bid_cents: startingBidCents,
         min_increment_cents: minIncrementCents,
-        start_time: startTime.toISOString(),
-        end_time: endTime.toISOString(),
+        start_time: startDate.toISOString(),
+        end_time: endDate.toISOString(),
       });
       setFeedback({
         type: "success",
@@ -257,8 +273,10 @@ export const AuctioneerDashboardPage: React.FC = () => {
             onStartingBidInputChange={setStartingBidInput}
             minIncrementInput={minIncrementInput}
             onMinIncrementInputChange={setMinIncrementInput}
-            windowPreset={windowPreset}
-            onWindowPresetChange={setWindowPreset}
+            startTimeInput={startTimeInput}
+            onStartTimeInputChange={setStartTimeInput}
+            endTimeInput={endTimeInput}
+            onEndTimeInputChange={setEndTimeInput}
             onSubmit={handlePublishLot}
             isSubmitting={isSubmittingLot}
           />
