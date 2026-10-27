@@ -99,11 +99,11 @@ export const AuctioneerDashboardPage: React.FC = () => {
   if (!user || user.role !== "AUCTIONEER") {
     return (
       <main className="mx-auto max-w-[1280px] px-4 py-12 sm:px-6">
-        <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-8">
-          <h1 className="font-sans text-xl font-semibold text-paper-text dark:text-charcoal-text">
+        <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-8 shadow-card">
+          <h1 className="font-serif text-2xl font-bold tracking-tight text-paper-text dark:text-charcoal-text">
             Acesso exclusivo ao leiloeiro
           </h1>
-          <p className="mt-2 text-sm text-paper-subtext dark:text-charcoal-subtext">
+          <p className="mt-2 font-serif italic text-sm text-paper-subtext dark:text-charcoal-subtext">
             Selecione o perfil de leiloeira (Helena Curadora) na barra superior para gerenciar lotes e publicar obras.
           </p>
         </div>
@@ -198,10 +198,10 @@ export const AuctioneerDashboardPage: React.FC = () => {
     <main className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6">
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-paper-border dark:border-charcoal-border pb-6">
         <div>
-          <h1 className="font-sans text-2xl font-semibold tracking-tight text-paper-text dark:text-charcoal-text sm:text-3xl">
+          <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-paper-text dark:text-charcoal-text">
             Painel do Leiloeiro
           </h1>
-          <p className="mt-1.5 text-sm text-paper-subtext dark:text-charcoal-subtext">
+          <p className="mt-1.5 font-serif italic text-sm text-paper-subtext dark:text-charcoal-subtext">
             Acompanhe os lotes publicados, o faturamento recebido e cadastre novas obras.
           </p>
         </div>
@@ -212,10 +212,10 @@ export const AuctioneerDashboardPage: React.FC = () => {
             role="tab"
             aria-selected={activeTab === "management"}
             onClick={() => setActiveTab("management")}
-            className={`rounded-sm border px-4 py-2 text-xs font-medium transition-colors ${
+            className={`rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-wider transition-all duration-150 ${
               activeTab === "management"
-                ? "border-paper-text bg-paper-text text-paper-surface dark:border-charcoal-text dark:bg-charcoal-text dark:text-charcoal-bg"
-                : "border-paper-border bg-paper-surface text-paper-subtext dark:border-charcoal-border dark:bg-charcoal-surface dark:text-charcoal-subtext"
+                ? "border-primary bg-primary text-white shadow-sm dark:border-gold dark:bg-gold dark:text-charcoal-bg"
+                : "border-paper-border bg-paper-surface text-paper-subtext hover:border-paper-text hover:text-paper-text dark:border-charcoal-border dark:bg-charcoal-surface dark:text-charcoal-subtext dark:hover:text-charcoal-text"
             }`}
           >
             Lotes e Faturamento
@@ -225,10 +225,10 @@ export const AuctioneerDashboardPage: React.FC = () => {
             role="tab"
             aria-selected={activeTab === "catalog"}
             onClick={() => setActiveTab("catalog")}
-            className={`rounded-sm border px-4 py-2 text-xs font-medium transition-colors ${
+            className={`rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-wider transition-all duration-150 ${
               activeTab === "catalog"
-                ? "border-primary bg-primary text-white"
-                : "border-paper-border bg-paper-surface text-paper-subtext dark:border-charcoal-border dark:bg-charcoal-surface dark:text-charcoal-subtext"
+                ? "border-primary bg-primary text-white shadow-sm dark:border-gold dark:bg-gold dark:text-charcoal-bg"
+                : "border-paper-border bg-paper-surface text-paper-subtext hover:border-paper-text hover:text-paper-text dark:border-charcoal-border dark:bg-charcoal-surface dark:text-charcoal-subtext dark:hover:text-charcoal-text"
             }`}
           >
             Catalogar Nova Obra

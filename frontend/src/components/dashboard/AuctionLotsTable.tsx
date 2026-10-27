@@ -33,8 +33,8 @@ export const AuctionLotsTable: React.FC<AuctionLotsTableProps> = ({
     <div className="mt-6">
       {dashboard && (
         <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-5">
-            <span className="text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+          <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-5 shadow-card">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
               Faturamento total recebido
             </span>
             <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-status-winning">
@@ -42,8 +42,8 @@ export const AuctionLotsTable: React.FC<AuctionLotsTableProps> = ({
             </p>
           </div>
 
-          <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-5">
-            <span className="text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+          <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-5 shadow-card">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
               Lotes liquidados com vencedor
             </span>
             <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-paper-text dark:text-charcoal-text">
@@ -51,8 +51,8 @@ export const AuctionLotsTable: React.FC<AuctionLotsTableProps> = ({
             </p>
           </div>
 
-          <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-5">
-            <span className="text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+          <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-5 shadow-card">
+            <span className="text-[11px] font-medium uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
               Lotes ativos (ao vivo ou agendados)
             </span>
             <p className="mt-2 font-mono text-2xl font-bold tabular-nums text-paper-text dark:text-charcoal-text">
@@ -62,9 +62,9 @@ export const AuctionLotsTable: React.FC<AuctionLotsTableProps> = ({
         </section>
       )}
 
-      <section className="mt-6 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface">
+      <section className="mt-6 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface shadow-card">
         <div className="border-b border-paper-border dark:border-charcoal-border px-6 py-4">
-          <h2 className="font-sans text-lg font-semibold text-paper-text dark:text-charcoal-text">
+          <h2 className="font-serif text-xl font-bold tracking-tight text-paper-text dark:text-charcoal-text">
             Lotes publicados
           </h2>
         </div>
@@ -74,14 +74,14 @@ export const AuctionLotsTable: React.FC<AuctionLotsTableProps> = ({
             Carregando lotes...
           </div>
         ) : !dashboard || dashboard.lots.length === 0 ? (
-          <div className="p-6 text-sm text-paper-subtext dark:text-charcoal-subtext">
+          <div className="p-6 font-serif italic text-sm text-paper-subtext dark:text-charcoal-subtext">
             Nenhum lote publicado ainda. Use a aba Catalogar Nova Obra.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="border-b border-paper-border dark:border-charcoal-border bg-paper-muted/50 dark:bg-charcoal-muted/50 text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                <tr className="border-b border-paper-border dark:border-charcoal-border bg-paper-muted/50 dark:bg-charcoal-muted/50 text-[11px] uppercase tracking-wider font-medium text-paper-subtext dark:text-charcoal-subtext">
                   <th className="px-5 py-3">Lote</th>
                   <th className="px-5 py-3">Obra / Artista</th>
                   <th className="px-5 py-3">Status</th>
@@ -95,7 +95,7 @@ export const AuctionLotsTable: React.FC<AuctionLotsTableProps> = ({
                 {dashboard.lots.map((lot) => (
                   <tr
                     key={lot.id}
-                    className="border-b border-paper-border dark:border-charcoal-border last:border-b-0"
+                    className="border-b border-paper-border dark:border-charcoal-border last:border-b-0 hover:bg-paper-muted/30 dark:hover:bg-charcoal-muted/30 transition-colors"
                   >
                     <td className="px-5 py-3.5 font-mono text-xs font-semibold tabular-nums">
                       #{lot.lot_number}
@@ -103,11 +103,11 @@ export const AuctionLotsTable: React.FC<AuctionLotsTableProps> = ({
                     <td className="px-5 py-3.5">
                       <Link
                         to={`/lots/${lot.id}`}
-                        className="font-sans text-sm font-semibold hover:underline"
+                        className="font-serif text-sm font-bold text-paper-text dark:text-charcoal-text hover:text-primary dark:hover:text-gold transition-colors"
                       >
                         {lot.title}
                       </Link>
-                      <span className="block text-xs text-paper-subtext dark:text-charcoal-subtext">
+                      <span className="block font-serif italic text-xs text-paper-subtext dark:text-charcoal-subtext">
                         {lot.artist}
                       </span>
                     </td>
@@ -117,34 +117,39 @@ export const AuctionLotsTable: React.FC<AuctionLotsTableProps> = ({
                     <td className="px-5 py-3.5 text-right font-mono text-xs tabular-nums">
                       {lot.bid_count}
                     </td>
-                    <td className="px-5 py-3.5 text-right font-mono text-xs font-semibold tabular-nums">
+                    <td className="px-5 py-3.5 text-right font-mono text-xs font-semibold tabular-nums text-primary dark:text-gold">
                       {formatBrlCents(
-                        lot.current_bid_cents ?? lot.starting_bid_cents,
+                        lot.current_bid_cents !== null
+                          ? lot.current_bid_cents
+                          : lot.starting_bid_cents,
                       )}
                     </td>
-                    <td className="px-5 py-3.5 font-mono text-xs">
-                      {lot.leader_masked_name || "Sem lances"}
+                    <td className="px-5 py-3.5 font-mono text-xs text-paper-subtext dark:text-charcoal-subtext">
+                      {lot.leader_masked_name || "—"}
                     </td>
                     <td className="px-5 py-3.5 text-right">
-                      <div className="inline-flex items-center gap-2">
+                      <div className="flex items-center justify-end gap-2">
                         {lot.certificate && (
                           <Link
                             to={`/receipts/${lot.certificate.receipt_code}`}
-                            className="rounded-sm border border-gold px-2.5 py-1 text-xs font-medium text-gold hover:bg-gold/10"
+                            className="rounded-sm border border-gold/70 dark:border-gold bg-gold/10 px-2.5 py-1 text-xs font-medium text-gold hover:bg-gold/20 transition-colors"
                           >
-                            Ver comprovante
+                            Comprovante
                           </Link>
                         )}
-                        {(lot.status === "LIVE" ||
-                          lot.status === "SCHEDULED") && (
+                        <Link
+                          to={`/lots/${lot.id}`}
+                          className="rounded-sm border border-paper-border dark:border-charcoal-border px-2.5 py-1 text-xs font-medium text-paper-text dark:text-charcoal-text hover:border-paper-text"
+                        >
+                          Ver
+                        </Link>
+                        {lot.status !== "CANCELLED" && lot.status !== "ENDED" && (
                           <button
                             type="button"
-                            onClick={() =>
-                              void onCancelLot(lot.id, lot.lot_number)
-                            }
-                            className="rounded-sm border border-status-outbid px-2.5 py-1 text-xs font-medium text-status-outbid hover:bg-status-outbid hover:text-white"
+                            onClick={() => void onCancelLot(lot.id, lot.lot_number)}
+                            className="rounded-sm border border-status-outbid/40 bg-status-outbid/10 px-2.5 py-1 text-xs font-medium text-status-outbid hover:bg-status-outbid hover:text-white transition-colors"
                           >
-                            Cancelar lote
+                            Cancelar
                           </button>
                         )}
                       </div>

@@ -34,12 +34,12 @@ export const ArtworkCatalogPicker: React.FC<ArtworkCatalogPickerProps> = ({
           value={searchQuery}
           onChange={(e) => onSearchQueryChange(e.target.value)}
           placeholder="Pesquisar no Cleveland Museum of Art (ex: Monet, Picasso, Van Gogh, Rembrandt)..."
-          className="h-[42px] flex-1 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-3.5 text-sm"
+          className="h-[42px] flex-1 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-3.5 text-xs text-paper-text dark:text-charcoal-text placeholder:text-paper-subtext focus:border-gold focus:outline-none"
         />
         <button
           type="submit"
           disabled={isLoading}
-          className="h-[42px] rounded-sm border border-paper-text dark:border-charcoal-text bg-paper-text dark:bg-charcoal-text px-4 text-xs font-semibold text-paper-surface dark:text-charcoal-bg"
+          className="h-[42px] rounded-sm border border-primary bg-primary px-4 text-xs font-semibold uppercase tracking-wider text-white hover:bg-primary-hover disabled:opacity-50 dark:border-gold dark:bg-gold dark:text-charcoal-bg dark:hover:bg-gold-hover"
         >
           {isLoading ? "Buscando..." : "Buscar acervo"}
         </button>
@@ -53,10 +53,10 @@ export const ArtworkCatalogPicker: React.FC<ArtworkCatalogPickerProps> = ({
               key={item.external_id}
               type="button"
               onClick={() => onSelectItem(item)}
-              className={`rounded-sm border p-4 text-left transition-colors ${
+              className={`rounded-sm border p-4 text-left transition-all ${
                 isSelected
-                  ? "border-primary bg-paper-surface dark:bg-charcoal-surface"
-                  : "border-paper-border dark:border-charcoal-border bg-paper-surface/70 dark:bg-charcoal-surface/70 hover:border-paper-text"
+                  ? "border-primary bg-paper-surface shadow-frame dark:border-gold dark:bg-charcoal-surface"
+                  : "border-paper-border dark:border-charcoal-border bg-paper-surface/80 dark:bg-charcoal-surface/80 hover:border-paper-text shadow-card"
               }`}
             >
               <ArtworkFrame
@@ -69,16 +69,16 @@ export const ArtworkCatalogPicker: React.FC<ArtworkCatalogPickerProps> = ({
                 <span className="font-mono text-[10px] text-paper-subtext dark:text-charcoal-subtext">
                   ID #{item.external_id}
                 </span>
-                <span className="text-[10px] font-medium text-gold">
+                <span className="text-[10px] font-medium text-gold uppercase tracking-wider">
                   {item.source === "local_fallback"
                     ? "Acervo local"
-                    : "Cleveland Museum of Art"}
+                    : "Cleveland Museum"}
                 </span>
               </div>
-              <h3 className="mt-1 font-sans text-base font-semibold text-paper-text dark:text-charcoal-text">
+              <h3 className="mt-1 font-serif text-base font-bold text-paper-text dark:text-charcoal-text leading-snug">
                 {item.title}
               </h3>
-              <p className="text-xs text-paper-subtext dark:text-charcoal-subtext">
+              <p className="font-serif italic text-xs text-paper-subtext dark:text-charcoal-subtext">
                 {item.artist} ({item.date_display})
               </p>
             </button>

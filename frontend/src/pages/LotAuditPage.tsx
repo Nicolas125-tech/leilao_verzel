@@ -47,10 +47,10 @@ export const LotAuditPage: React.FC = () => {
               </Link>
             )}
           </div>
-          <h1 className="mt-2 font-sans text-2xl font-semibold tracking-tight text-paper-text dark:text-charcoal-text sm:text-3xl">
+          <h1 className="mt-2 font-serif text-3xl sm:text-4xl font-bold tracking-tight text-paper-text dark:text-charcoal-text">
             Auditoria da Cadeia de Lances
           </h1>
-          <p className="mt-1 max-w-[72ch] text-sm text-paper-subtext dark:text-charcoal-subtext">
+          <p className="mt-1 max-w-[72ch] font-serif italic text-sm text-paper-subtext dark:text-charcoal-subtext">
             Recalcula cada hash desde o bloco GENESIS diretamente no banco de dados para confirmar que nenhum lance foi alterado ou excluído.
           </p>
         </div>
@@ -59,7 +59,7 @@ export const LotAuditPage: React.FC = () => {
           type="button"
           disabled={isLoading}
           onClick={() => void runVerification()}
-          className="rounded-sm border border-primary bg-primary px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+          className="rounded-sm border border-primary bg-primary px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white transition-colors hover:bg-primary-hover disabled:opacity-50 dark:border-gold dark:bg-gold dark:text-charcoal-bg dark:hover:bg-gold-hover"
         >
           {isLoading ? "Verificando..." : "Reexecutar auditoria"}
         </button>
@@ -77,7 +77,7 @@ export const LotAuditPage: React.FC = () => {
       {audit && (
         <div className="mt-6 space-y-6">
           <section
-            className={`rounded-sm border p-6 ${
+            className={`rounded-sm border p-6 shadow-card ${
               audit.is_chain_valid
                 ? "border-status-winning bg-status-winning/10"
                 : "border-status-outbid bg-status-outbid/10"
@@ -86,7 +86,7 @@ export const LotAuditPage: React.FC = () => {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <h2
-                  className={`text-sm font-semibold ${
+                  className={`text-sm font-semibold uppercase tracking-wider ${
                     audit.is_chain_valid
                       ? "text-status-winning"
                       : "text-status-outbid"
@@ -96,7 +96,7 @@ export const LotAuditPage: React.FC = () => {
                     ? "Histórico íntegro: cadeia de lances verificada"
                     : `Adulteração detectada no banco de dados (sequência #${audit.broken_at_sequence ?? "?"})`}
                 </h2>
-                <p className="mt-1 font-sans text-lg font-semibold text-paper-text dark:text-charcoal-text">
+                <p className="mt-1 font-serif text-xl font-bold text-paper-text dark:text-charcoal-text">
                   Lote #{audit.lot_number}: {audit.title}
                 </p>
               </div>
@@ -126,13 +126,13 @@ export const LotAuditPage: React.FC = () => {
           </section>
 
           <section className="space-y-4">
-            <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-4 font-mono text-xs">
+            <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-4 font-mono text-xs shadow-card">
               <span className="font-semibold text-gold">Bloco #0 (Raiz):</span>{" "}
               <span className="text-paper-text dark:text-charcoal-text">GENESIS</span>
             </div>
 
             {audit.nodes.length === 0 ? (
-              <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-6 text-sm text-paper-subtext dark:text-charcoal-subtext">
+              <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-6 font-serif italic text-sm text-paper-subtext dark:text-charcoal-subtext shadow-card">
                 Este lote ainda não recebeu lances. O hash inicial permanece em GENESIS.
               </div>
             ) : (
@@ -144,7 +144,7 @@ export const LotAuditPage: React.FC = () => {
                 return (
                   <article
                     key={node.bid_id}
-                    className={`rounded-sm border p-5 ${
+                    className={`rounded-sm border p-5 shadow-card ${
                       node.is_valid
                         ? "border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface"
                         : "border-status-outbid bg-status-outbid/5"
@@ -164,13 +164,13 @@ export const LotAuditPage: React.FC = () => {
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <span className="font-mono text-sm font-bold tabular-nums">
+                        <span className="font-mono text-sm font-bold tabular-nums text-primary dark:text-gold">
                           {formatBrlCents(node.amount_cents)}
                         </span>
                         <span
-                          className={`rounded-sm border px-2 py-0.5 text-[11px] font-semibold ${
+                          className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${
                             node.is_valid
-                              ? "border-status-winning text-status-winning"
+                              ? "border-status-winning bg-status-winning/10 text-status-winning"
                               : "border-status-outbid bg-status-outbid text-white"
                           }`}
                         >
