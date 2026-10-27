@@ -68,19 +68,21 @@ export const ArtworkFrame: React.FC<ArtworkFrameProps> = ({
 
   return (
     <div
-      className={`passe-partout relative flex items-center justify-center overflow-hidden rounded-sm ${aspectClassName}`}
+      className={`museum-frame group relative flex items-center justify-center overflow-hidden rounded-sm transition-all duration-300 ${aspectClassName}`}
     >
-      <img
-        src={finalSrc}
-        alt={`${title} - ${artist}`}
-        loading="lazy"
-        onError={() => {
-          if (!fallbackTriggered) {
-            setFallbackTriggered(true);
-          }
-        }}
-        className="max-h-full max-w-full object-contain transition-opacity duration-200"
-      />
+      <div className="relative flex h-full w-full items-center justify-center bg-paper-muted/60 dark:bg-charcoal-muted/60 p-2 shadow-inner">
+        <img
+          src={finalSrc}
+          alt={`${title} - ${artist}`}
+          loading="lazy"
+          onError={() => {
+            if (!fallbackTriggered) {
+              setFallbackTriggered(true);
+            }
+          }}
+          className="max-h-full max-w-full object-contain drop-shadow-sm transition-transform duration-300 group-hover:scale-[1.02]"
+        />
+      </div>
     </div>
   );
 };

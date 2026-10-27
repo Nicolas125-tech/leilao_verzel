@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { VerzelEmblem } from "./VerzelEmblem.tsx";
 import { SEED_ACCOUNTS, useAuth } from "../context/AuthContext.tsx";
 import { useTheme } from "../context/ThemeContext.tsx";
 import { useWallet } from "../context/WalletContext.tsx";
@@ -52,19 +53,19 @@ export const Header: React.FC = () => {
       path === "/"
         ? location.pathname === "/"
         : location.pathname.startsWith(path);
-    return `px-3 py-1.5 text-sm font-medium transition-colors rounded-sm border ${
+    return `px-3.5 py-1.5 text-xs font-medium uppercase tracking-wider transition-colors rounded-sm border ${
       isActive
-        ? "border-paper-text bg-paper-text text-paper-surface dark:border-charcoal-text dark:bg-charcoal-text dark:text-charcoal-bg"
-        : "border-transparent text-paper-subtext hover:text-paper-text dark:text-charcoal-subtext dark:hover:text-charcoal-text"
+        ? "border-primary bg-primary text-white dark:border-gold dark:bg-gold/15 dark:text-gold"
+        : "border-transparent text-paper-subtext hover:text-paper-text hover:border-paper-border dark:text-charcoal-subtext dark:hover:text-charcoal-text dark:hover:border-charcoal-border"
     }`;
   };
 
   return (
     <header className="border-b border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface">
-      <div className="border-b border-paper-border dark:border-charcoal-border bg-paper-muted/70 dark:bg-charcoal-muted/70">
-        <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3 px-4 py-2 sm:px-6">
+      <div className="border-b border-paper-border dark:border-charcoal-border bg-paper-muted/60 dark:bg-charcoal-muted/60">
+        <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3 px-4 py-1.5 sm:px-6">
           <div className="flex flex-wrap items-center gap-2 text-xs text-paper-subtext dark:text-charcoal-subtext">
-            <span className="font-medium">Troca rápida de perfil:</span>
+            <span className="font-serif italic text-paper-subtext dark:text-charcoal-subtext">Alternar licitante:</span>
             {SEED_ACCOUNTS.map((preset) => {
               const isCurrent = user?.email === preset.email;
               return (
@@ -73,9 +74,9 @@ export const Header: React.FC = () => {
                   type="button"
                   disabled={isSwitchingProfile}
                   onClick={() => void handleProfileSwitch(preset.email)}
-                  className={`rounded-sm border px-2 py-0.5 text-xs font-medium transition-colors ${
+                  className={`rounded-sm border px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
                     isCurrent
-                      ? "border-primary bg-primary text-white"
+                      ? "border-primary bg-primary text-white dark:border-gold dark:bg-gold dark:text-charcoal-bg"
                       : "border-paper-border bg-paper-surface text-paper-text hover:border-paper-text dark:border-charcoal-border dark:bg-charcoal-surface dark:text-charcoal-text"
                   }`}
                 >
@@ -97,7 +98,7 @@ export const Header: React.FC = () => {
               className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-2.5 py-1 text-xs font-medium text-paper-text dark:text-charcoal-text hover:border-paper-text dark:hover:border-charcoal-text"
               aria-label="Alternar tema claro ou escuro"
             >
-              Tema: {theme === "light" ? "Claro" : "Escuro"}
+              {theme === "light" ? "Modo Escuro" : "Modo Claro"}
             </button>
 
             {user ? (
@@ -116,26 +117,33 @@ export const Header: React.FC = () => {
             ) : (
               <Link
                 to="/login"
-                className="text-xs font-medium underline text-primary hover:text-primary-hover"
+                className="text-xs font-medium uppercase tracking-wider text-primary hover:underline dark:text-gold"
               >
-                Entrar
+                Cadastre-se / Entrar
               </Link>
             )}
           </div>
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
+      <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-8">
           <Link
             to="/"
-            className="flex items-center gap-2.5 font-sans text-xl font-semibold tracking-tight text-paper-text dark:text-charcoal-text"
+            className="group flex items-center gap-3.5 transition-opacity hover:opacity-90"
           >
-            <img src="/logo.svg" alt="Emblema Verzel" className="h-7 w-7 rounded-sm shadow-sm" />
-            <span>Casa de Leilões Verzel</span>
+            <VerzelEmblem className="h-20 w-20 sm:h-24 sm:w-24 transition-transform duration-200 group-hover:scale-105" />
+            <div className="flex flex-col">
+              <span className="font-display text-2xl sm:text-3xl font-bold tracking-wider text-paper-text dark:text-charcoal-text uppercase leading-none">
+                Casa de Leilões Verzel
+              </span>
+              <span className="font-serif text-xs sm:text-sm tracking-widest text-gold-muted dark:text-gold uppercase italic mt-1.5">
+                Obras Que Atravessam o Tempo
+              </span>
+            </div>
           </Link>
 
-          <nav className="flex flex-wrap items-center gap-1" aria-label="Navegação principal">
+          <nav className="flex flex-wrap items-center gap-1.5" aria-label="Navegação principal">
             <Link to="/" className={navLinkClass("/")}>
               Vitrine de Lotes
             </Link>
@@ -158,9 +166,9 @@ export const Header: React.FC = () => {
         </div>
 
         {user?.role === "BIDDER" && wallet && (
-          <div className="flex flex-wrap items-center gap-3 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3.5 py-2">
+          <div className="flex flex-wrap items-center gap-3 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-muted/30 dark:bg-charcoal-muted/30 px-3.5 py-2 shadow-card">
             <div className="border-r border-paper-border dark:border-charcoal-border pr-3">
-              <span className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+              <span className="block text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
                 Total
               </span>
               <span className="font-mono text-xs font-semibold tabular-nums text-paper-text dark:text-charcoal-text">
@@ -169,7 +177,7 @@ export const Header: React.FC = () => {
             </div>
 
             <div className="border-r border-paper-border dark:border-charcoal-border pr-3">
-              <span className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+              <span className="block text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
                 Comprometido
               </span>
               <span className="font-mono text-xs font-semibold tabular-nums text-status-warning">
@@ -178,7 +186,7 @@ export const Header: React.FC = () => {
             </div>
 
             <div className="pr-1">
-              <span className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+              <span className="block text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
                 Disponível
               </span>
               <span className="font-mono text-sm font-bold tabular-nums text-status-winning">
@@ -191,7 +199,7 @@ export const Header: React.FC = () => {
               disabled={isQuickDepositing}
               onClick={() => void handleQuickDeposit()}
               title="Depositar R$ 1.000,00 na carteira"
-              className="rounded-sm border border-primary bg-primary px-2.5 py-1.5 font-sans text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50 tabular-nums"
+              className="rounded-sm border border-primary bg-primary px-3 py-1.5 font-sans text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50 tabular-nums dark:border-gold dark:bg-gold dark:text-charcoal-bg dark:hover:bg-gold-hover"
             >
               {isQuickDepositing ? "Aportando..." : "+ R$ 1.000"}
             </button>
