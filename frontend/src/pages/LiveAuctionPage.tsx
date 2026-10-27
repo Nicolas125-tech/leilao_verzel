@@ -40,15 +40,15 @@ export const LiveAuctionPage: React.FC = () => {
       <main className="mx-auto max-w-[1280px] px-4 py-12 sm:px-6">
         <div
           role="alert"
-          className="rounded-sm border border-status-outbid bg-status-outbid/10 p-6 text-status-outbid"
+          className="rounded-sm border border-status-outbid bg-status-outbid/10 p-6 text-status-outbid shadow-card"
         >
-          <h1 className="font-sans text-xl font-semibold">
+          <h1 className="font-serif text-2xl font-bold">
             Lote indisponível
           </h1>
           <p className="mt-2 text-sm">{error}</p>
           <Link
             to="/"
-            className="mt-4 inline-block text-xs font-medium underline"
+            className="mt-4 inline-block text-xs font-medium uppercase tracking-wider underline"
           >
             Voltar para a vitrine
           </Link>
@@ -60,7 +60,7 @@ export const LiveAuctionPage: React.FC = () => {
   if (!lotData) {
     return (
       <main className="mx-auto max-w-[1280px] px-4 py-12 sm:px-6">
-        <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-8 text-sm text-paper-subtext dark:text-charcoal-subtext">
+        <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-8 text-sm text-paper-subtext dark:text-charcoal-subtext shadow-card">
           Carregando lote...
         </div>
       </main>
@@ -114,9 +114,9 @@ export const LiveAuctionPage: React.FC = () => {
         <div className="flex items-center gap-3">
           <Link
             to="/"
-            className="text-xs font-medium underline text-paper-subtext hover:text-paper-text dark:text-charcoal-subtext dark:hover:text-charcoal-text"
+            className="text-xs font-medium uppercase tracking-wider underline text-paper-subtext hover:text-paper-text dark:text-charcoal-subtext dark:hover:text-charcoal-text"
           >
-            Voltar para a vitrine
+            ← Voltar para a vitrine
           </Link>
           <span className="text-xs text-paper-subtext dark:text-charcoal-subtext">
             /
@@ -128,7 +128,7 @@ export const LiveAuctionPage: React.FC = () => {
 
         <div className="flex flex-wrap items-center gap-3">
           <span
-            className={`rounded-sm border px-2.5 py-1 text-[11px] font-medium ${
+            className={`rounded-full border px-3 py-1 text-[11px] font-medium uppercase tracking-wider ${
               connectionStatus === "CONNECTED"
                 ? "border-status-winning/50 bg-status-winning/10 text-status-winning"
                 : "border-status-warning/50 bg-status-warning/10 text-status-warning"
@@ -138,7 +138,7 @@ export const LiveAuctionPage: React.FC = () => {
           </span>
           <Link
             to={`/lots/${lotData.id}/audit`}
-            className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-3 py-1 text-xs font-medium hover:border-paper-text dark:hover:border-charcoal-text"
+            className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-3 py-1 text-xs font-medium uppercase tracking-wider hover:border-paper-text dark:hover:border-charcoal-text"
           >
             Auditoria
           </Link>

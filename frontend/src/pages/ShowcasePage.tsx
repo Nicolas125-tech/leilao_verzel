@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArtworkFrame } from "../components/ArtworkFrame.tsx";
 import { CountdownBadge } from "../components/CountdownBadge.tsx";
+import { VerzelEmblem } from "../components/VerzelEmblem.tsx";
 import { lotsApi } from "../services/api.ts";
 import type { Lot, LotStatus } from "../types/api.ts";
 import { formatBrlCents, parseBrlToCents } from "../utils/formatters.ts";
@@ -89,19 +90,19 @@ export const ShowcasePage: React.FC = () => {
     switch (status) {
       case "LIVE":
         return (
-          <span className="rounded-sm border border-primary bg-primary px-2 py-0.5 text-[11px] font-semibold text-white">
+          <span className="rounded-full border border-primary bg-primary px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white shadow-sm dark:border-gold dark:bg-gold dark:text-charcoal-bg">
             Ao vivo
           </span>
         );
       case "SCHEDULED":
         return (
-          <span className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-muted dark:bg-charcoal-muted px-2 py-0.5 text-[11px] font-medium text-paper-text dark:text-charcoal-text">
+          <span className="rounded-full border border-paper-border dark:border-charcoal-border bg-paper-muted dark:bg-charcoal-muted px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-paper-text dark:text-charcoal-text">
             Agendado
           </span>
         );
       case "ENDED":
         return (
-          <span className="rounded-sm border border-gold/60 bg-gold/10 px-2 py-0.5 text-[11px] font-medium text-gold">
+          <span className="rounded-full border border-gold/60 bg-gold/10 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-gold">
             Encerrado
           </span>
         );
@@ -113,10 +114,10 @@ export const ShowcasePage: React.FC = () => {
   return (
     <main className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6">
       <div className="border-b border-paper-border dark:border-charcoal-border pb-6">
-        <h1 className="font-sans text-2xl font-semibold tracking-tight text-paper-text dark:text-charcoal-text sm:text-3xl">
+        <h1 className="font-serif text-3xl font-bold tracking-tight text-paper-text dark:text-charcoal-text">
           Lotes em Leilão
         </h1>
-        <p className="mt-1.5 text-sm text-paper-subtext dark:text-charcoal-subtext">
+        <p className="mt-1 font-serif italic text-sm text-paper-subtext dark:text-charcoal-subtext">
           Acompanhe os lotes abertos e dê o seu lance em tempo real.
         </p>
 
@@ -131,9 +132,9 @@ export const ShowcasePage: React.FC = () => {
                   role="tab"
                   aria-selected={active}
                   onClick={() => setStatusFilter(tab.value)}
-                  className={`rounded-sm border px-3.5 py-2 text-xs font-medium transition-colors ${
+                  className={`rounded-full border px-3.5 py-1.5 text-xs font-medium uppercase tracking-wider transition-all duration-150 ${
                     active
-                      ? "border-paper-text bg-paper-text text-paper-surface dark:border-charcoal-text dark:bg-charcoal-text dark:text-charcoal-bg"
+                      ? "border-primary bg-primary text-white shadow-sm dark:border-gold dark:bg-gold dark:text-charcoal-bg"
                       : "border-paper-border bg-paper-surface text-paper-subtext hover:border-paper-text hover:text-paper-text dark:border-charcoal-border dark:bg-charcoal-surface dark:text-charcoal-subtext dark:hover:text-charcoal-text"
                   }`}
                 >
@@ -143,21 +144,26 @@ export const ShowcasePage: React.FC = () => {
             })}
           </div>
 
-          <div className="flex w-full items-center gap-2 sm:w-80">
+          <div className="relative w-full sm:w-80">
+            <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-paper-subtext dark:text-charcoal-subtext">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </span>
             <input
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar por obra, artista ou técnica..."
               aria-label="Buscar lotes por obra, artista ou técnica"
-              className="h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-3.5 text-sm text-paper-text dark:text-charcoal-text placeholder:text-paper-subtext dark:placeholder:text-charcoal-subtext"
+              className="h-[40px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface pl-9 pr-3.5 text-xs text-paper-text dark:text-charcoal-text placeholder:text-paper-subtext dark:placeholder:text-charcoal-subtext focus:border-gold focus:outline-none"
             />
           </div>
         </div>
 
         <div className="mt-5 flex flex-wrap items-end gap-3 border-t border-paper-border/60 dark:border-charcoal-border/60 pt-4">
           <div>
-            <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext mb-1">
+            <label className="block text-xs font-medium uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext mb-1">
               Ordenar por
             </label>
             <select
@@ -173,7 +179,7 @@ export const ShowcasePage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext mb-1">
+            <label className="block text-xs font-medium uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext mb-1">
               Preço de (R$)
             </label>
             <input
@@ -186,7 +192,7 @@ export const ShowcasePage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext mb-1">
+            <label className="block text-xs font-medium uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext mb-1">
               até (R$)
             </label>
             <input
@@ -228,16 +234,16 @@ export const ShowcasePage: React.FC = () => {
           {[1, 2, 3].map((n) => (
             <div
               key={n}
-              className="h-[440px] rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-5 opacity-60"
+              className="h-[460px] rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-5 opacity-60"
             />
           ))}
         </div>
       ) : displayedLots.length === 0 ? (
-        <div className="mt-8 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-10 text-center">
-          <h2 className="font-sans text-lg font-semibold text-paper-text dark:text-charcoal-text">
+        <div className="mt-8 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-12 text-center">
+          <h2 className="font-serif text-xl font-semibold text-paper-text dark:text-charcoal-text">
             Nenhum lote encontrado
           </h2>
-          <p className="mt-2 text-sm text-paper-subtext dark:text-charcoal-subtext">
+          <p className="mt-2 font-serif italic text-sm text-paper-subtext dark:text-charcoal-subtext">
             Altere o filtro de status ou os parâmetros de preço para ver todo o acervo disponível.
           </p>
         </div>
@@ -254,11 +260,11 @@ export const ShowcasePage: React.FC = () => {
             return (
               <article
                 key={lot.id}
-                className="flex flex-col justify-between rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-5"
+                className="flex flex-col justify-between rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-5 shadow-card transition-shadow hover:shadow-frame"
               >
                 <div>
                   <div className="mb-3 flex items-center justify-between gap-2">
-                    <span className="font-mono text-xs font-medium text-paper-subtext dark:text-charcoal-subtext tabular-nums">
+                    <span className="font-mono text-xs font-medium uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext tabular-nums">
                       Lote #{lot.lot_number}
                     </span>
                     {statusBadge(lot.status)}
@@ -274,12 +280,12 @@ export const ShowcasePage: React.FC = () => {
                   </Link>
 
                   <div className="mt-4">
-                    <h2 className="font-sans text-lg font-semibold tracking-tight text-paper-text dark:text-charcoal-text">
-                      <Link to={`/lots/${lot.id}`} className="hover:underline">
+                    <h2 className="font-serif text-lg font-bold tracking-tight text-paper-text dark:text-charcoal-text leading-snug">
+                      <Link to={`/lots/${lot.id}`} className="hover:text-primary dark:hover:text-gold transition-colors">
                         {lot.title}
                       </Link>
                     </h2>
-                    <p className="mt-1 text-sm text-paper-subtext dark:text-charcoal-subtext">
+                    <p className="mt-1 font-serif italic text-sm text-paper-subtext dark:text-charcoal-subtext">
                       {lot.artist} ({lot.date_display})
                     </p>
                     <p className="mt-0.5 text-xs text-paper-subtext dark:text-charcoal-subtext">
@@ -291,16 +297,16 @@ export const ShowcasePage: React.FC = () => {
                 <div className="mt-5 border-t border-paper-border dark:border-charcoal-border pt-4">
                   <div className="flex items-baseline justify-between gap-2">
                     <div>
-                      <span className="block text-[11px] text-paper-subtext dark:text-charcoal-subtext">
+                      <span className="block text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
                         {priceLabel} ({lot.bid_count} {lot.bid_count === 1 ? "lance" : "lances"})
                       </span>
-                      <span className="font-mono text-lg font-bold tabular-nums text-paper-text dark:text-charcoal-text">
+                      <span className="font-mono text-xl font-bold tabular-nums text-primary dark:text-gold">
                         {formatBrlCents(activePriceCents)}
                       </span>
                     </div>
 
                     <div className="text-right">
-                      <span className="block text-[11px] text-paper-subtext dark:text-charcoal-subtext">
+                      <span className="block text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
                         Cronômetro
                       </span>
                       <CountdownBadge
@@ -327,9 +333,9 @@ export const ShowcasePage: React.FC = () => {
                   <div className="mt-4 flex items-center justify-between gap-2">
                     <Link
                       to={`/lots/${lot.id}`}
-                      className="flex-1 rounded-sm border border-primary bg-primary px-3 py-2 text-center text-xs font-semibold text-white transition-colors hover:bg-primary-hover"
+                      className="flex-1 rounded-sm border border-primary bg-primary px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider text-white transition-colors hover:bg-primary-hover dark:border-gold dark:bg-gold dark:text-charcoal-bg dark:hover:bg-gold-hover"
                     >
-                      {lot.status === "LIVE" ? "Dar lance" : "Ver lote"}
+                      {lot.status === "LIVE" ? "Dar lance →" : "Ver lote →"}
                     </Link>
                     <Link
                       to={`/lots/${lot.id}/audit`}
@@ -344,6 +350,16 @@ export const ShowcasePage: React.FC = () => {
           })}
         </div>
       )}
+
+      <div className="mt-16 border-t border-paper-border dark:border-charcoal-border pt-8 pb-4 text-center">
+        <div className="inline-flex items-center gap-3 text-xs uppercase tracking-widest text-gold-muted dark:text-gold">
+          <VerzelEmblem className="h-6 w-6" />
+          <span className="font-serif italic text-sm lowercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
+            Arte é um investimento que atravessa gerações
+          </span>
+          <VerzelEmblem className="h-6 w-6" />
+        </div>
+      </div>
     </main>
   );
 };

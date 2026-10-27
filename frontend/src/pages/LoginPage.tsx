@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { VerzelEmblem } from "../components/VerzelEmblem.tsx";
 import { SEED_ACCOUNTS, useAuth, type SeedAccountPreset } from "../context/AuthContext.tsx";
 import type { UserRole } from "../types/api.ts";
 
@@ -52,11 +53,14 @@ export const LoginPage: React.FC = () => {
   return (
     <main className="mx-auto max-w-[960px] px-4 py-10 sm:px-6">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
-        <section className="md:col-span-5 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-6">
-          <h1 className="font-sans text-xl font-semibold text-paper-text dark:text-charcoal-text">
-            Contas de demonstração
-          </h1>
-          <p className="mt-2 text-sm text-paper-subtext dark:text-charcoal-subtext">
+        <section className="md:col-span-5 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-6 shadow-card">
+          <div className="flex items-center gap-3">
+            <VerzelEmblem className="h-10 w-10 sm:h-12 sm:w-12" />
+            <h1 className="font-serif text-2xl font-bold tracking-tight text-paper-text dark:text-charcoal-text">
+              Contas de demonstração
+            </h1>
+          </div>
+          <p className="mt-2 font-serif italic text-sm text-paper-subtext dark:text-charcoal-subtext">
             Entre com 1 clique em qualquer perfil pré-configurado para testar lances, carteira ou painel do leiloeiro.
           </p>
 
@@ -67,10 +71,10 @@ export const LoginPage: React.FC = () => {
                 type="button"
                 disabled={isSubmitting}
                 onClick={() => void handleSeedClick(preset)}
-                className="flex w-full items-center justify-between rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-4 py-3 text-left transition-colors hover:border-primary"
+                className="flex w-full items-center justify-between rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-4 py-3 text-left transition-colors hover:border-primary dark:hover:border-gold"
               >
                 <div>
-                  <span className="block text-[11px] font-semibold uppercase tracking-wider text-primary">
+                  <span className="block text-[11px] font-semibold uppercase tracking-wider text-primary dark:text-gold">
                     {preset.roleLabel}
                   </span>
                   <span className="mt-0.5 block font-medium text-paper-text dark:text-charcoal-text">
@@ -80,23 +84,23 @@ export const LoginPage: React.FC = () => {
                     {preset.email}
                   </span>
                 </div>
-                <span className="text-xs font-semibold text-paper-text dark:text-charcoal-text">
-                  Entrar
+                <span className="text-xs font-semibold uppercase tracking-wider text-primary dark:text-gold">
+                  Entrar →
                 </span>
               </button>
             ))}
           </div>
         </section>
 
-        <section className="md:col-span-7 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-6">
+        <section className="md:col-span-7 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-6 shadow-card">
           <div className="flex border-b border-paper-border dark:border-charcoal-border pb-4 gap-2">
             <button
               type="button"
               onClick={() => setMode("login")}
-              className={`rounded-sm border px-4 py-1.5 text-xs font-medium ${
+              className={`rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-wider transition-all ${
                 mode === "login"
-                  ? "border-paper-text bg-paper-text text-paper-surface dark:border-charcoal-text dark:bg-charcoal-text dark:text-charcoal-bg"
-                  : "border-paper-border text-paper-subtext dark:border-charcoal-border dark:text-charcoal-subtext"
+                  ? "border-primary bg-primary text-white shadow-sm dark:border-gold dark:bg-gold dark:text-charcoal-bg"
+                  : "border-paper-border bg-paper-surface text-paper-subtext hover:border-paper-text dark:border-charcoal-border dark:bg-charcoal-surface dark:text-charcoal-subtext"
               }`}
             >
               Entrar com e-mail
@@ -104,10 +108,10 @@ export const LoginPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setMode("register")}
-              className={`rounded-sm border px-4 py-1.5 text-xs font-medium ${
+              className={`rounded-full border px-4 py-1.5 text-xs font-medium uppercase tracking-wider transition-all ${
                 mode === "register"
-                  ? "border-paper-text bg-paper-text text-paper-surface dark:border-charcoal-text dark:bg-charcoal-text dark:text-charcoal-bg"
-                  : "border-paper-border text-paper-subtext dark:border-charcoal-border dark:text-charcoal-subtext"
+                  ? "border-primary bg-primary text-white shadow-sm dark:border-gold dark:bg-gold dark:text-charcoal-bg"
+                  : "border-paper-border bg-paper-surface text-paper-subtext hover:border-paper-text dark:border-charcoal-border dark:bg-charcoal-surface dark:text-charcoal-subtext"
               }`}
             >
               Criar conta
@@ -126,7 +130,7 @@ export const LoginPage: React.FC = () => {
           <form onSubmit={(e) => void handleSubmit(e)} className="mt-5 space-y-4">
             {mode === "register" && (
               <div>
-                <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                <label className="block text-xs font-medium uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
                   Nome completo (exibido de forma mascarada em público)
                 </label>
                 <input
@@ -135,13 +139,13 @@ export const LoginPage: React.FC = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ex: Carlos Eduardo"
-                  className="mt-1.5 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3.5 text-sm"
+                  className="mt-1.5 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3.5 text-sm focus:border-gold focus:outline-none"
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+              <label className="block text-xs font-medium uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
                 E-mail
               </label>
               <input
@@ -150,12 +154,12 @@ export const LoginPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="nicolas@verzel.com.br"
-                className="mt-1.5 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3.5 text-sm"
+                className="mt-1.5 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3.5 text-sm focus:border-gold focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+              <label className="block text-xs font-medium uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
                 Senha
               </label>
               <input
@@ -165,19 +169,19 @@ export const LoginPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Mínimo de 6 caracteres"
-                className="mt-1.5 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3.5 text-sm"
+                className="mt-1.5 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3.5 text-sm focus:border-gold focus:outline-none"
               />
             </div>
 
             {mode === "register" && (
               <div>
-                <label className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                <label className="block text-xs font-medium uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
                   Tipo de conta
                 </label>
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as UserRole)}
-                  className="mt-1.5 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3.5 text-sm"
+                  className="mt-1.5 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3.5 text-sm focus:border-gold focus:outline-none"
                 >
                   <option value="BIDDER">Licitante (Comprador)</option>
                   <option value="AUCTIONEER">Leiloeiro (Publicador de lotes)</option>
@@ -188,12 +192,12 @@ export const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded-sm border border-primary bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+              className="w-full rounded-sm border border-primary bg-primary px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-white transition-colors hover:bg-primary-hover disabled:opacity-50 dark:border-gold dark:bg-gold dark:text-charcoal-bg dark:hover:bg-gold-hover"
             >
               {isSubmitting
                 ? "Processando..."
                 : mode === "login"
-                  ? "Entrar"
+                  ? "Entrar no sistema"
                   : "Criar conta"}
             </button>
           </form>
