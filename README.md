@@ -1,5 +1,7 @@
 # Casa de Leilões Verzel
 
+[![CI Pipeline](https://github.com/Nicolas125-tech/leilao_verzel/actions/workflows/ci.yml/badge.svg)](https://github.com/Nicolas125-tech/leilao_verzel/actions/workflows/ci.yml)
+
 - **Aplicação no ar (Frontend):** https://leilao-verzel.vercel.app
 - **API em produção (Backend Docs):** https://leilao-verzel.onrender.com/docs
 
