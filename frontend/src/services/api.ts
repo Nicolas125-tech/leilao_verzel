@@ -116,8 +116,18 @@ export const walletApi = {
 };
 
 export const catalogApi = {
-  search(query?: string): Promise<CatalogItem[]> {
-    const qs = query?.trim() ? `?q=${encodeURIComponent(query.trim())}` : "";
+  search(query?: string, skip: number = 0, limit: number = 8): Promise<CatalogItem[]> {
+    const params = new URLSearchParams();
+    if (query?.trim()) {
+      params.set("q", query.trim());
+    }
+    if (skip > 0) {
+      params.set("skip", String(skip));
+    }
+    if (limit > 0) {
+      params.set("limit", String(limit));
+    }
+    const qs = params.toString() ? `?${params.toString()}` : "";
     return apiRequest<CatalogItem[]>(`/catalog${qs}`);
   },
 };

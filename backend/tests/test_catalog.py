@@ -146,3 +146,23 @@ async def test_catalog_http_error_triggers_local_fallback(client: httpx.AsyncCli
 async def test_catalog_public_access(client: httpx.AsyncClient):
     resp = await client.get("/api/v1/catalog")
     assert resp.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_catalog_pagination_support(client: httpx.AsyncClient):
+    with patch(
+        "app.services.catalog.fetch_external_artworks",
+        new_callable=AsyncMock,
+    ) as mock_fetch:
+        mock_fetch.side_effect = httpx.TimeoutException("Timeout")
+        resp_page_1 = await client.get("/api/v1/catalog?skip=0&limit=2")
+        assert resp_page_1.status_code == 200
+        items_1 = resp_page_1.json()
+        assert len(items_1) == 2
+
+        resp_page_2 = await client.get("/api/v1/catalog?skip=2&limit=2")
+        assert resp_page_2.status_code == 200
+        items_2 = resp_page_2.json()
+        assert len(items_2) == 2
+
+        assert items_1[0]["external_id"] != items_2[0]["external_id"]

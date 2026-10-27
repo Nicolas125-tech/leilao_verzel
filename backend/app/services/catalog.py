@@ -101,11 +101,16 @@ LOCAL_FALLBACK_ARTWORKS: list[dict[str, Any]] = [
 ]
 
 
-async def fetch_external_artworks(query: str | None = None) -> list[dict[str, Any]]:
+async def fetch_external_artworks(
+    query: str | None = None,
+    skip: int = 0,
+    limit: int = 12,
+) -> list[dict[str, Any]]:
     params = {
         "q": query.strip() if query and query.strip() else "painting",
         "has_image": 1,
-        "limit": 12,
+        "limit": limit,
+        "skip": skip,
     }
 
     url = settings.CLEVELAND_ART_API_BASE_URL
@@ -164,9 +169,13 @@ async def fetch_external_artworks(query: str | None = None) -> list[dict[str, An
     return results
 
 
-async def search_catalog(query: str | None = None) -> list[dict[str, Any]]:
+async def search_catalog(
+    query: str | None = None,
+    skip: int = 0,
+    limit: int = 12,
+) -> list[dict[str, Any]]:
     try:
-        artworks = await fetch_external_artworks(query)
+        artworks = await fetch_external_artworks(query, skip=skip, limit=limit)
         if artworks:
             return artworks
     except (httpx.HTTPError, httpx.TimeoutException) as exc:
@@ -182,6 +191,6 @@ async def search_catalog(query: str | None = None) -> list[dict[str, Any]]:
             or q_clean in item.get("attributes", {}).get("department", "").lower()
         ]
         if matched:
-            return matched
+            return matched[skip : skip + limit]
 
-    return LOCAL_FALLBACK_ARTWORKS
+    return LOCAL_FALLBACK_ARTWORKS[skip : skip + limit]
