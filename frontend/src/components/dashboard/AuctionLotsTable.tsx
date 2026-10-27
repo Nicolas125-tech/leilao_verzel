@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { AuctioneerDashboard, LotStatus } from "../../types/api.ts";
 import { formatBrlCents } from "../../utils/formatters.ts";
@@ -29,6 +29,39 @@ export const AuctionLotsTable: React.FC<AuctionLotsTableProps> = ({
   isLoading,
   onCancelLot,
 }) => {
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [searchFilter, setSearchFilter] = useState<string>("");
+
+  const counts = useMemo(() => {
+    const lots = dashboard?.lots ?? [];
+    return {
+      all: lots.length,
+      live: lots.filter((l) => l.status === "LIVE").length,
+      scheduled: lots.filter((l) => l.status === "SCHEDULED").length,
+      ended: lots.filter((l) => l.status === "ENDED").length,
+      cancelled: lots.filter((l) => l.status === "CANCELLED").length,
+    };
+  }, [dashboard?.lots]);
+
+  const filteredLots = useMemo(() => {
+    if (!dashboard?.lots) return [];
+    return dashboard.lots.filter((lot) => {
+      if (statusFilter !== "ALL" && lot.status !== statusFilter) {
+        return false;
+      }
+      if (searchFilter.trim()) {
+        const q = searchFilter.toLowerCase();
+        const matchesNum = String(lot.lot_number).includes(q);
+        const matchesTitle = lot.title.toLowerCase().includes(q);
+        const matchesArtist = lot.artist.toLowerCase().includes(q);
+        if (!matchesNum && !matchesTitle && !matchesArtist) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [dashboard?.lots, statusFilter, searchFilter]);
+
   return (
     <div className="mt-6">
       {dashboard && (
@@ -63,10 +96,48 @@ export const AuctionLotsTable: React.FC<AuctionLotsTableProps> = ({
       )}
 
       <section className="mt-6 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface shadow-card">
-        <div className="border-b border-paper-border dark:border-charcoal-border px-6 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-paper-border dark:border-charcoal-border px-6 py-4">
           <h2 className="font-serif text-xl font-bold tracking-tight text-paper-text dark:text-charcoal-text">
             Lotes publicados
           </h2>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="search"
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              placeholder="Filtrar por título, artista ou lote #..."
+              className="h-[34px] w-60 sm:w-72 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3 text-xs text-paper-text dark:text-charcoal-text placeholder:text-paper-subtext focus:border-gold focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div className="border-b border-paper-border dark:border-charcoal-border bg-paper-muted/20 dark:bg-charcoal-muted/20 px-6 py-2.5">
+          <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Filtrar lotes por status">
+            {[
+              { key: "ALL", label: `Todos (${counts.all})` },
+              { key: "LIVE", label: `Ao vivo (${counts.live})` },
+              { key: "SCHEDULED", label: `Agendados (${counts.scheduled})` },
+              { key: "ENDED", label: `Encerrados (${counts.ended})` },
+              { key: "CANCELLED", label: `Cancelados (${counts.cancelled})` },
+            ].map((tab) => {
+              const isActive = statusFilter === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setStatusFilter(tab.key)}
+                  className={`rounded-full border px-3 py-0.5 text-[11px] font-medium uppercase tracking-wider transition-all ${
+                    isActive
+                      ? "border-primary bg-primary text-white shadow-sm dark:border-gold dark:bg-gold dark:text-charcoal-bg"
+                      : "border-paper-border bg-paper-surface text-paper-subtext hover:border-paper-text hover:text-paper-text dark:border-charcoal-border dark:bg-charcoal-surface dark:text-charcoal-subtext dark:hover:text-charcoal-text"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {isLoading ? (
@@ -76,6 +147,10 @@ export const AuctionLotsTable: React.FC<AuctionLotsTableProps> = ({
         ) : !dashboard || dashboard.lots.length === 0 ? (
           <div className="p-6 font-serif italic text-sm text-paper-subtext dark:text-charcoal-subtext">
             Nenhum lote publicado ainda. Use a aba Catalogar Nova Obra.
+          </div>
+        ) : filteredLots.length === 0 ? (
+          <div className="p-6 font-serif italic text-sm text-paper-subtext dark:text-charcoal-subtext">
+            Nenhum lote corresponde aos filtros selecionados.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -92,7 +167,7 @@ export const AuctionLotsTable: React.FC<AuctionLotsTableProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {dashboard.lots.map((lot) => (
+                {filteredLots.map((lot) => (
                   <tr
                     key={lot.id}
                     className="border-b border-paper-border dark:border-charcoal-border last:border-b-0 hover:bg-paper-muted/30 dark:hover:bg-charcoal-muted/30 transition-colors"
@@ -111,8 +186,10 @@ export const AuctionLotsTable: React.FC<AuctionLotsTableProps> = ({
                         {lot.artist}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-xs font-medium">
-                      {formatStatusPt(lot.status)}
+                    <td className="px-5 py-3.5">
+                      <span className="font-mono text-xs uppercase tracking-wider">
+                        {formatStatusPt(lot.status)}
+                      </span>
                     </td>
                     <td className="px-5 py-3.5 text-right font-mono text-xs tabular-nums">
                       {lot.bid_count}

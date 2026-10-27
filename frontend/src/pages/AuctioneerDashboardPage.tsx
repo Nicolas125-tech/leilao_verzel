@@ -28,6 +28,8 @@ export const AuctioneerDashboardPage: React.FC = () => {
   const [catalogItems, setCatalogItems] = useState<CatalogItem[]>([]);
   const [isLoadingCatalog, setIsLoadingCatalog] = useState<boolean>(false);
   const [selectedArtwork, setSelectedArtwork] = useState<CatalogItem | null>(null);
+  const [catalogPage, setCatalogPage] = useState<number>(1);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
 
   const [startingBidInput, setStartingBidInput] = useState<string>("1000,00");
   const [minIncrementInput, setMinIncrementInput] = useState<string>("50,00");
@@ -65,12 +67,14 @@ export const AuctioneerDashboardPage: React.FC = () => {
   }, [user]);
 
   const loadCatalog = useCallback(
-    async (q?: string) => {
+    async (q?: string, page: number = 1) => {
       setIsLoadingCatalog(true);
       try {
-        const items = await catalogApi.search(q);
+        const skip = (page - 1) * 8;
+        const items = await catalogApi.search(q, skip, 8);
         setCatalogItems(items);
-        if (items.length > 0 && !selectedArtwork) {
+        setCatalogPage(page);
+        if (items.length > 0 && (!selectedArtwork || page !== 1)) {
           setSelectedArtwork(items[0]);
         }
       } catch (err) {
@@ -86,13 +90,23 @@ export const AuctioneerDashboardPage: React.FC = () => {
     [selectedArtwork],
   );
 
+  const handlePageChange = (newPage: number) => {
+    void loadCatalog(catalogQuery, newPage);
+  };
+
+  const handleSelectCategory = (categoryId: string, queryText: string) => {
+    setActiveCategory(categoryId);
+    setCatalogQuery(queryText);
+    void loadCatalog(queryText, 1);
+  };
+
   useEffect(() => {
     void loadDashboard();
   }, [loadDashboard]);
 
   useEffect(() => {
     if (activeTab === "catalog" && catalogItems.length === 0) {
-      void loadCatalog();
+      void loadCatalog("", 1);
     }
   }, [activeTab, catalogItems.length, loadCatalog]);
 
@@ -263,8 +277,12 @@ export const AuctioneerDashboardPage: React.FC = () => {
             onSelectItem={setSelectedArtwork}
             searchQuery={catalogQuery}
             onSearchQueryChange={setCatalogQuery}
-            onSearch={loadCatalog}
+            onSearch={(q) => loadCatalog(q, 1)}
             isLoading={isLoadingCatalog}
+            page={catalogPage}
+            onPageChange={handlePageChange}
+            activeCategory={activeCategory}
+            onSelectCategory={handleSelectCategory}
           />
 
           <LotPublishForm
