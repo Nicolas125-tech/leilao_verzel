@@ -26,16 +26,11 @@ def compute_bid_hash(
     previous_hash: str,
     secret: str | None = None,
 ) -> str:
-    key = (secret or settings.HMAC_SECRET_KEY).encode("utf-8")
     canonical_payload = (
         f"{str(lot_id)}|{sequence_number}|{bidder_masked_name}|"
         f"{amount_cents}|{created_at_iso}|{previous_hash}"
     )
-    return hmac.new(
-        key,
-        canonical_payload.encode("utf-8"),
-        hashlib.sha256,
-    ).hexdigest()
+    return hashlib.sha256(canonical_payload.encode("utf-8")).hexdigest()
 
 
 def verify_bid_chain(

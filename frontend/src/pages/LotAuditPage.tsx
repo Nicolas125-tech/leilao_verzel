@@ -2,6 +2,10 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { lotsApi } from "../services/api.ts";
 import type { AuditChain } from "../types/api.ts";
+import {
+  verifyChainInBrowser,
+  type ClientVerificationResult,
+} from "../utils/chainVerification.ts";
 import { formatBrlCents } from "../utils/formatters.ts";
 
 export const LotAuditPage: React.FC = () => {
@@ -10,10 +14,15 @@ export const LotAuditPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const [isVerifyingBrowser, setIsVerifyingBrowser] = useState<boolean>(false);
+  const [clientResult, setClientResult] =
+    useState<ClientVerificationResult | null>(null);
+
   const runVerification = useCallback(async () => {
     if (!id) return;
     setIsLoading(true);
     setErrorMsg(null);
+    setClientResult(null);
     try {
       const data = await lotsApi.getAuditChain(id);
       setAudit(data);
@@ -31,6 +40,31 @@ export const LotAuditPage: React.FC = () => {
   useEffect(() => {
     void runVerification();
   }, [runVerification]);
+
+  const handleBrowserVerification = async () => {
+    if (!audit) return;
+    setIsVerifyingBrowser(true);
+    try {
+      const res = await verifyChainInBrowser(
+        audit.lot_id,
+        audit.head_hash,
+        audit.nodes,
+      );
+      setClientResult(res);
+    } catch (err) {
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : "Falha ao processar verificação local via WebCrypto.",
+      );
+    } finally {
+      setIsVerifyingBrowser(false);
+    }
+  };
+
+  const clientDetailMap = new Map(
+    clientResult?.details.map((d) => [d.sequenceNumber, d]) ?? [],
+  );
 
   return (
     <main className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6">
@@ -55,14 +89,27 @@ export const LotAuditPage: React.FC = () => {
           </p>
         </div>
 
-        <button
-          type="button"
-          disabled={isLoading}
-          onClick={() => void runVerification()}
-          className="rounded-sm border border-primary bg-primary px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white transition-colors hover:bg-primary-hover disabled:opacity-50 dark:border-gold dark:bg-gold dark:text-charcoal-bg dark:hover:bg-gold-hover"
-        >
-          {isLoading ? "Verificando..." : "Reexecutar auditoria"}
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            disabled={isLoading || isVerifyingBrowser || !audit}
+            onClick={() => void handleBrowserVerification()}
+            className="rounded-sm border border-gold bg-gold/15 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-gold hover:bg-gold/25 transition-colors disabled:opacity-50"
+          >
+            {isVerifyingBrowser
+              ? "Calculando WebCrypto..."
+              : "Verificar Integridade no Navegador (Zero Trust / WebCrypto)"}
+          </button>
+
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={() => void runVerification()}
+            className="rounded-sm border border-primary bg-primary px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white transition-colors hover:bg-primary-hover disabled:opacity-50 dark:border-gold dark:bg-gold dark:text-charcoal-bg dark:hover:bg-gold-hover"
+          >
+            {isLoading ? "Verificando..." : "Reexecutar auditoria"}
+          </button>
+        </div>
       </div>
 
       {errorMsg && (
@@ -72,6 +119,43 @@ export const LotAuditPage: React.FC = () => {
         >
           {errorMsg}
         </div>
+      )}
+
+      {clientResult && (
+        <section
+          className={`mt-6 rounded-sm border p-4 shadow-card transition-all ${
+            clientResult.isValid
+              ? "border-emerald-600/50 bg-emerald-950/20 text-emerald-300"
+              : "border-status-outbid bg-status-outbid/10 text-status-outbid"
+          }`}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span
+                className={`inline-block h-3 w-3 rounded-full ${
+                  clientResult.isValid
+                    ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+                    : "bg-status-outbid"
+                }`}
+              />
+              <div>
+                <h3 className="font-semibold text-sm tracking-wide">
+                  {clientResult.isValid
+                    ? "Cadeia recalculada matematicamente no seu dispositivo. 0 adulterações detectadas."
+                    : `Inconsistência matemática detectada no cliente: ${clientResult.tamperedCount} adulteração(ões).`}
+                </h3>
+                <p className="mt-0.5 font-mono text-[11px] text-paper-subtext dark:text-charcoal-subtext">
+                  Mecanismo Zero Trust (WebCrypto API - SHA-256 nativo do navegador) · Verificação independente sem confiar no servidor
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 font-mono text-xs text-paper-subtext dark:text-charcoal-subtext">
+              <span>Elos auditados: <strong>{clientResult.totalVerified}</strong></span>
+              <span>Tempo: <strong>{clientResult.durationMs}ms</strong></span>
+            </div>
+          </div>
+        </section>
       )}
 
       {audit && (
@@ -140,6 +224,7 @@ export const LotAuditPage: React.FC = () => {
                 const hashMismatch = node.stored_hash !== node.recalculated_hash;
                 const prevMismatch =
                   node.previous_hash !== node.expected_previous_hash;
+                const clientNode = clientDetailMap.get(node.sequence_number);
 
                 return (
                   <article
@@ -164,6 +249,19 @@ export const LotAuditPage: React.FC = () => {
                       </div>
 
                       <div className="flex items-center gap-3">
+                        {clientNode && (
+                          <span
+                            className={`rounded-full border px-2.5 py-0.5 text-[10px] font-mono uppercase tracking-wider ${
+                              clientNode.isHashMatch && clientNode.isLinkMatch
+                                ? "border-emerald-600/40 bg-emerald-950/30 text-emerald-400"
+                                : "border-status-outbid bg-status-outbid/20 text-status-outbid font-bold"
+                            }`}
+                          >
+                            {clientNode.isHashMatch && clientNode.isLinkMatch
+                              ? "WebCrypto SHA-256: OK"
+                              : "WebCrypto: Divergente"}
+                          </span>
+                        )}
                         <span className="font-mono text-sm font-bold tabular-nums text-primary dark:text-gold">
                           {formatBrlCents(node.amount_cents)}
                         </span>
@@ -212,8 +310,13 @@ export const LotAuditPage: React.FC = () => {
                               : "text-status-winning"
                           }`}
                         >
-                          Calculado: {node.recalculated_hash}
+                          Servidor: {node.recalculated_hash}
                         </p>
+                        {clientNode && (
+                          <p className="mt-1 break-all font-mono text-emerald-400">
+                            Navegador: {clientNode.computedHash}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </article>
