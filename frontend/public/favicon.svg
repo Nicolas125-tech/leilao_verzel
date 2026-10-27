@@ -1,21 +1,43 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
-  <defs>
-    <linearGradient id="vGold" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#E5C158"/>
-      <stop offset="100%" stop-color="#A27D3E"/>
-    </linearGradient>
-    <linearGradient id="vRed" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#B22222"/>
-      <stop offset="100%" stop-color="#7B1113"/>
-    </linearGradient>
-  </defs>
-  <rect width="32" height="32" rx="7" fill="#18181B"/>
-  <rect x="2" y="2" width="28" height="28" rx="5" fill="url(#vRed)" stroke="url(#vGold)" stroke-width="1.2"/>
-  <rect x="4.5" y="4.5" width="23" height="23" rx="3.5" fill="#121214" stroke="url(#vGold)" stroke-width="0.8" opacity="0.6"/>
-  <g transform="translate(16, 16) rotate(-38)">
-    <rect x="-1" y="-8.5" width="2" height="15" rx="1" fill="#FAF9F6"/>
-    <rect x="-4.5" y="-12.5" width="9" height="4.5" rx="1" fill="url(#vGold)"/>
-    <rect x="-1" y="-12.5" width="2" height="4.5" fill="url(#vRed)"/>
-    <path d="M -4.5 9 L 4.5 9" stroke="url(#vGold)" stroke-width="1.5" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <style>
+    .petal { stroke: #681417; }
+    .facet-c1-1 { fill: #A32428; }
+    .facet-c1-2 { fill: #BD2C31; }
+    .facet-c1-3 { fill: #520E11; }
+    .facet-c2-1 { fill: #F5EAD4; }
+    .facet-c2-2 { fill: #D4AF37; }
+    .facet-c2-3 { fill: #8A6C38; }
+    .gem-border { stroke: #2E0709; }
+
+    @media (prefers-color-scheme: dark) {
+      .petal { stroke: #C5A059; }
+      .facet-c1-1 { fill: #C5A059; }
+      .facet-c1-2 { fill: #DFB86C; }
+      .facet-c1-3 { fill: #7D5B25; }
+      .facet-c2-1 { fill: #FFF3D6; }
+      .facet-c2-2 { fill: #E5C158; }
+      .facet-c2-3 { fill: #851B1F; }
+      .gem-border { stroke: #15120F; }
+    }
+  </style>
+
+  <g class="petal" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 50 12 C 39 27 36 46 47 62 C 48.5 64 50 65.5 50 67 C 50 65.5 51.5 64 53 62 C 64 46 61 27 50 12 Z" />
+    <path d="M 26 31 C 23 45 32 60 46 67 C 39 53 35.5 39 26 31 Z" />
+    <path d="M 74 31 C 77 45 68 60 54 67 C 61 53 64.5 39 74 31 Z" />
+    <path d="M 10 58 C 24 51 38 56 48 68 C 34 84 21 78 10 58 Z" />
+    <path d="M 90 58 C 76 51 62 56 52 68 C 66 84 79 78 90 58 Z" />
+    <path d="M 10 58 C 23 82 77 82 90 58" />
+    <path d="M 50 69 L 50 83" />
+  </g>
+
+  <g class="gem-border" stroke-width="1.4" stroke-linejoin="round">
+    <polygon points="44.06,55.47 25.76,66.09 44.06,33.4" class="facet-c1-1" />
+    <polygon points="44.06,55.47 62.36,66.09 44.06,33.4" class="facet-c1-2" />
+    <polygon points="62.36,66.09 44.06,55.47 25.76,66.09" class="facet-c1-3" />
+
+    <polygon points="65.04,53.37 47.52,53.32 74.24,37.57" class="facet-c2-1" />
+    <polygon points="65.04,53.37 73.71,68.6 74.24,37.57" class="facet-c2-2" />
+    <polygon points="73.71,68.6 65.04,53.37 47.52,53.32" class="facet-c2-3" />
   </g>
 </svg>
