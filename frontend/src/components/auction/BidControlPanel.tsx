@@ -133,20 +133,30 @@ export const BidControlPanel: React.FC<BidControlPanelProps> = ({
       </div>
 
       {user?.role === "BIDDER" && (
-        <div className="mt-5">
+        <div className="mt-5" role="status" aria-live="polite">
           {isLeader ? (
-            <div className="rounded-sm border border-status-winning bg-status-winning/10 px-4 py-3 text-xs font-medium text-status-winning">
-              {lot.status === "ENDED"
-                ? "Você arrematou este lote."
-                : `Seu lance é o líder no momento (${formatBrlCents(lot.current_bid_cents)} retidos no saldo comprometido).`}
+            <div className="rounded-sm border border-status-winning bg-status-winning/15 px-4 py-3 text-xs font-semibold text-status-winning">
+              <span className="block uppercase tracking-wider font-bold">
+                ✓ VOCÊ ESTÁ GANHANDO
+              </span>
+              <span className="mt-1 block font-normal">
+                {lot.status === "ENDED"
+                  ? "Você arrematou este lote."
+                  : `Seu lance é o líder no momento (${formatBrlCents(lot.current_bid_cents)} retidos no saldo comprometido).`}
+              </span>
             </div>
           ) : isOutbid ? (
-            <div className="rounded-sm border border-status-outbid bg-status-outbid/10 px-4 py-3 text-xs font-medium text-status-outbid">
-              Seu lance foi superado. O valor reservado já voltou para o seu saldo disponível.
+            <div className="rounded-sm border border-status-warning bg-status-warning/15 px-4 py-3 text-xs font-semibold text-status-warning">
+              <span className="block uppercase tracking-wider font-bold">
+                ⚠ VOCÊ FOI SUPERADO! Dê um novo lance
+              </span>
+              <span className="mt-1 block font-normal">
+                O valor reservado anteriormente já voltou para o seu saldo disponível.
+              </span>
             </div>
           ) : (
             <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-4 py-3 text-xs text-paper-subtext dark:text-charcoal-subtext">
-              Você ainda não deu lances neste lote. Próximo lance mínimo:{" "}
+              Você ainda não deu lances neste lote. Lance mínimo necessário:{" "}
               <strong className="font-mono tabular-nums text-paper-text dark:text-charcoal-text">
                 {formatBrlCents(minRequiredCents)}
               </strong>
@@ -221,7 +231,7 @@ export const BidControlPanel: React.FC<BidControlPanelProps> = ({
                     type="button"
                     disabled={isSubmittingBid}
                     onClick={() => void onSubmitBid(q.cents)}
-                    className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-2 py-2 text-center transition-colors hover:border-primary disabled:opacity-50"
+                    className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-2 py-2 text-center transition-colors motion-reduce:transition-none hover:border-primary disabled:opacity-50"
                   >
                     <span className="block text-[10px] text-paper-subtext dark:text-charcoal-subtext">
                       {q.label}
@@ -245,7 +255,7 @@ export const BidControlPanel: React.FC<BidControlPanelProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmittingBid}
-                  className="h-[42px] rounded-sm border border-primary bg-primary px-5 text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+                  className="h-[42px] rounded-sm border border-primary bg-primary px-5 text-xs font-semibold text-white transition-colors motion-reduce:transition-none hover:bg-primary-hover disabled:opacity-50"
                 >
                   {isSubmittingBid ? "Enviando..." : "Dar lance"}
                 </button>

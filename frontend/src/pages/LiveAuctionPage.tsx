@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { Volume2, VolumeX } from "lucide-react";
 import { BidControlPanel } from "../components/auction/BidControlPanel.tsx";
 import { BidHistoryFeed } from "../components/auction/BidHistoryFeed.tsx";
 import { LotArtworkDetails } from "../components/auction/LotArtworkDetails.tsx";
 import { useAuth } from "../context/AuthContext.tsx";
 import { useWallet } from "../context/WalletContext.tsx";
+import { useAuctionAudio } from "../hooks/useAuctionAudio.ts";
 import { useLotWebSocket } from "../hooks/useLotWebSocket.ts";
 import { lotsApi } from "../services/api.ts";
 import { formatBrlCents } from "../utils/formatters.ts";
@@ -15,6 +17,8 @@ export const LiveAuctionPage: React.FC = () => {
   const { wallet, refreshWallet } = useWallet();
   const { lotData, bidsHistory, connectionStatus, error, reloadLot } =
     useLotWebSocket(id);
+  const { isMuted, toggleMute, playBidSound, playGavelSound } =
+    useAuctionAudio();
 
   const [customBidInput, setCustomBidInput] = useState<string>("");
   const [isSubmittingBid, setIsSubmittingBid] = useState<boolean>(false);
@@ -22,6 +26,9 @@ export const LiveAuctionPage: React.FC = () => {
     type: "success" | "error";
     message: string;
   } | null>(null);
+
+  const prevBidCountRef = useRef<number | null>(null);
+  const prevStatusRef = useRef<string | null>(null);
 
   const minRequiredCents = lotData
     ? lotData.current_bid_cents !== null
@@ -34,6 +41,26 @@ export const LiveAuctionPage: React.FC = () => {
       setCustomBidInput((minRequiredCents / 100).toFixed(2).replace(".", ","));
     }
   }, [minRequiredCents]);
+
+  useEffect(() => {
+    if (!lotData) return;
+
+    if (
+      prevBidCountRef.current !== null &&
+      lotData.bid_count > prevBidCountRef.current
+    ) {
+      playBidSound();
+    }
+    if (
+      prevStatusRef.current === "LIVE" &&
+      lotData.status === "ENDED"
+    ) {
+      playGavelSound();
+    }
+
+    prevBidCountRef.current = lotData.bid_count;
+    prevStatusRef.current = lotData.status;
+  }, [lotData, playBidSound, playGavelSound]);
 
   if (error && !lotData) {
     return (
@@ -126,7 +153,22 @@ export const LiveAuctionPage: React.FC = () => {
           </span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+          <button
+            type="button"
+            onClick={toggleMute}
+            aria-label="Ativar/desativar som dos lances"
+            aria-pressed={isMuted}
+            className="inline-flex items-center gap-1.5 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-2.5 py-1 text-xs font-medium text-paper-text dark:text-charcoal-text hover:border-paper-text dark:hover:border-charcoal-text transition-colors motion-reduce:transition-none"
+          >
+            {isMuted ? (
+              <VolumeX className="h-3.5 w-3.5 text-paper-subtext dark:text-charcoal-subtext" />
+            ) : (
+              <Volume2 className="h-3.5 w-3.5 text-primary dark:text-gold" />
+            )}
+            <span>{isMuted ? "Som desativado" : "Som ativo"}</span>
+          </button>
+
           <span
             className={`rounded-full border px-3 py-1 text-[11px] font-medium uppercase tracking-wider ${
               connectionStatus === "CONNECTED"

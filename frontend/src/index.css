@@ -39,9 +39,9 @@
 
   html.dark input:focus-visible,
   html.dark select:focus-visible,
-  html.dark textarea:focus-visible,
-  html.dark button:focus-visible,
-  html.dark a:focus-visible {
+  textarea:focus-visible,
+  button:focus-visible,
+  a:focus-visible {
     outline: 2px solid #B08D57;
     outline-offset: 2px;
   }
@@ -99,4 +99,15 @@ html.dark ::-webkit-scrollbar-thumb {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #B08D57;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
