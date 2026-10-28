@@ -13,7 +13,7 @@ from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal, get_db
 from app.services.settlement import settle_expired_lots
-from app.services.websocket import ws_manager
+from app.services.websocket import router as ws_router, ws_manager
 
 logger = logging.getLogger("verzel.auction.api")
 
@@ -77,6 +77,7 @@ async def track_response_latency(request: Request, call_next):
 
 
 app.include_router(api_router)
+app.include_router(ws_router)
 
 
 @app.websocket("/ws/lots/{lot_id}")

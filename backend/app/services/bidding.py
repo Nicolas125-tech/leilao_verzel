@@ -183,6 +183,7 @@ async def place_bid(
     )
     db.add(new_bid)
 
+    previous_leader_id = lot.leader_user_id
     lot.status = "LIVE"
     lot.current_bid_cents = payload.amount_cents
     lot.leader_user_id = bidder.id
@@ -215,5 +216,26 @@ async def place_bid(
         "current_hash": lot.head_hash,
     }
     await ws_manager.broadcast_new_bid(lot.id, bid_payload, lot_summary)
+
+    if extension_triggered:
+        await ws_manager.broadcast_lot_extended(
+            lot_id=lot.id,
+            new_end_time=format_utc_iso(lot.end_time),
+            extension_count=lot.extension_count,
+        )
+
+    if previous_leader_id and previous_leader_id != bidder.id:
+        formatted_amount = f"{payload.amount_cents / 100:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
+        outbid_notification = {
+            "type": "NOTIFICATION",
+            "event": "OUTBID",
+            "lot_id": str(lot.id),
+            "lot_number": lot.lot_number,
+            "artwork_title": lot.title,
+            "new_highest_bid_cents": payload.amount_cents,
+            "message": f"Seu lance no Lote {lot.lot_number} ({lot.title}) foi superado por R$ {formatted_amount}!",
+            "action_url": f"/lots/{lot.id}",
+        }
+        await ws_manager.send_user_notification(previous_leader_id, outbid_notification)
 
     return new_bid
