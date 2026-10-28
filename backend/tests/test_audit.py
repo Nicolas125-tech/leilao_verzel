@@ -6,6 +6,7 @@ import pytest_asyncio
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from app.core.crypto import GENESIS_HASH
 from app.core.database import get_db
 from app.main import app
 from app.models.base import Base
@@ -116,7 +117,7 @@ async def test_audit_empty_lot(client: httpx.AsyncClient):
     assert audit["lot_id"] == lot_id
     assert audit["is_chain_valid"] is True
     assert audit["total_bids"] == 0
-    assert audit["head_hash"] == "GENESIS"
+    assert audit["head_hash"] == GENESIS_HASH
     assert audit["broken_at_sequence"] is None
     assert audit["nodes"] == []
 
@@ -158,7 +159,7 @@ async def test_audit_valid_bid_chain(client: httpx.AsyncClient):
     assert audit["broken_at_sequence"] is None
     assert len(audit["nodes"]) == 3
     assert audit["nodes"][0]["sequence_number"] == 1
-    assert audit["nodes"][0]["previous_hash"] == "GENESIS"
+    assert audit["nodes"][0]["previous_hash"] == GENESIS_HASH
     assert audit["nodes"][0]["is_valid"] is True
     assert audit["nodes"][2]["sequence_number"] == 3
     assert audit["nodes"][2]["stored_hash"] == last_bid_hash

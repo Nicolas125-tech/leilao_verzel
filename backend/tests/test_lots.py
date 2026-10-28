@@ -4,6 +4,7 @@ import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from app.core.crypto import GENESIS_HASH
 from app.core.database import get_db
 from app.main import app
 from app.models.base import Base
@@ -105,7 +106,7 @@ async def test_auctioneer_can_create_lot_and_persist_full_artwork_snapshot(clien
     assert lot["min_increment_cents"] == 10000
     assert lot["current_bid_cents"] is None
     assert lot["bid_count"] == 0
-    assert lot["head_hash"] == "GENESIS"
+    assert lot["head_hash"] == GENESIS_HASH
     assert lot["status"] == "LIVE"
     assert lot["attributes_json"]["place_of_origin"] == "France"
 

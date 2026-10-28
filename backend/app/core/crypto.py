@@ -6,7 +6,7 @@ from uuid import UUID
 
 from app.core.config import settings
 
-GENESIS_HASH = "GENESIS"
+GENESIS_HASH = "0" * 64
 
 
 def format_utc_iso(dt: datetime) -> str:
@@ -17,6 +17,30 @@ def format_utc_iso(dt: datetime) -> str:
     return dt.isoformat()
 
 
+def generate_bidder_pseudonym(user_id: UUID | str, secret: str | None = None) -> str:
+    key = (secret or settings.HMAC_SECRET_KEY).encode("utf-8")
+    short_hash = (
+        hmac.new(key, str(user_id).encode("utf-8"), hashlib.sha256)
+        .hexdigest()[:10]
+        .upper()
+    )
+    return f"LICITANTE-{short_hash}"
+
+
+def canonical_bid_payload(
+    lot_id: str | UUID,
+    sequence_number: int,
+    pseudonym: str,
+    amount_cents: int,
+    created_at_iso: str,
+    previous_hash: str,
+) -> str:
+    return (
+        f"{str(lot_id)}|{sequence_number}|{pseudonym}|"
+        f"{amount_cents}|{created_at_iso}|{previous_hash}"
+    )
+
+
 def compute_bid_hash(
     lot_id: str | UUID,
     sequence_number: int,
@@ -24,18 +48,37 @@ def compute_bid_hash(
     amount_cents: int,
     created_at_iso: str,
     previous_hash: str,
+) -> str:
+    payload = canonical_bid_payload(
+        lot_id=lot_id,
+        sequence_number=sequence_number,
+        pseudonym=bidder_masked_name,
+        amount_cents=amount_cents,
+        created_at_iso=created_at_iso,
+        previous_hash=previous_hash,
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def compute_node_signature(
+    lot_id: str | UUID,
+    sequence_number: int,
+    pseudonym: str,
+    amount_cents: int,
+    created_at_iso: str,
+    previous_hash: str,
     secret: str | None = None,
 ) -> str:
     key = (secret or settings.HMAC_SECRET_KEY).encode("utf-8")
-    canonical_payload = (
-        f"{str(lot_id)}|{sequence_number}|{bidder_masked_name}|"
-        f"{amount_cents}|{created_at_iso}|{previous_hash}"
+    payload = canonical_bid_payload(
+        lot_id=lot_id,
+        sequence_number=sequence_number,
+        pseudonym=pseudonym,
+        amount_cents=amount_cents,
+        created_at_iso=created_at_iso,
+        previous_hash=previous_hash,
     )
-    return hmac.new(
-        key,
-        canonical_payload.encode("utf-8"),
-        hashlib.sha256,
-    ).hexdigest()
+    return hmac.new(key, payload.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
 def verify_bid_chain(
@@ -52,9 +95,12 @@ def verify_bid_chain(
         if expected_count == 0 and expected_head_hash == GENESIS_HASH:
             return True, {
                 "is_valid": True,
+                "is_intact": True,
                 "broken_at_sequence": None,
+                "tampered_at_sequence": None,
                 "reason": None,
                 "anomalies": [],
+                "nodes": [],
             }
         error_msg = (
             f"Lote sem lances possui estado inconsistente: contagem esperada {expected_count}, "
@@ -62,9 +108,12 @@ def verify_bid_chain(
         )
         return False, {
             "is_valid": False,
+            "is_intact": False,
             "broken_at_sequence": 0,
+            "tampered_at_sequence": 0,
             "reason": error_msg,
             "anomalies": [error_msg],
+            "nodes": [],
         }
 
     if len(bids) != expected_count:
@@ -79,11 +128,13 @@ def verify_bid_chain(
 
     expected_seq = 1
     expected_prev = GENESIS_HASH
+    evaluated_nodes: list[dict[str, Any]] = []
 
     for idx, bid in enumerate(bids):
         seq = bid.get("sequence_number")
         stored_curr = bid.get("current_hash")
         stored_prev = bid.get("previous_hash")
+        pseudonym = bid.get("bidder_pseudonym") or bid.get("bidder_masked_name", "")
 
         if seq != expected_seq:
             msg = f"Quebra de sequência no registro {idx + 1}: esperado #{expected_seq}, encontrado #{seq}"
@@ -105,11 +156,10 @@ def verify_bid_chain(
         recalculated = compute_bid_hash(
             lot_id=bid["lot_id"],
             sequence_number=seq,
-            bidder_masked_name=bid["bidder_masked_name"],
+            bidder_masked_name=pseudonym,
             amount_cents=bid["amount_cents"],
             created_at_iso=bid["created_at_iso"],
-            previous_hash=stored_prev,
-            secret=secret,
+            previous_hash=expected_prev,
         )
 
         if stored_curr != recalculated:
@@ -122,7 +172,38 @@ def verify_bid_chain(
                 broken_at = seq
                 reason = msg
 
-        expected_prev = stored_curr
+        node_sig = compute_node_signature(
+            lot_id=bid["lot_id"],
+            sequence_number=seq,
+            pseudonym=pseudonym,
+            amount_cents=bid["amount_cents"],
+            created_at_iso=bid["created_at_iso"],
+            previous_hash=expected_prev,
+            secret=secret,
+        )
+
+        evaluated_nodes.append(
+            {
+                "sequence_number": seq,
+                "bid_id": bid.get("id"),
+                "bidder_masked_name": pseudonym,
+                "bidder_pseudonym": pseudonym,
+                "amount_cents": bid["amount_cents"],
+                "created_at_iso": bid["created_at_iso"],
+                "previous_hash": stored_prev,
+                "expected_previous_hash": expected_prev,
+                "stored_hash": stored_curr,
+                "recalculated_hash": recalculated,
+                "node_signature": node_sig,
+                "direct_valid": (
+                    seq == expected_seq
+                    and stored_prev == expected_prev
+                    and stored_curr == recalculated
+                ),
+            }
+        )
+
+        expected_prev = recalculated
         expected_seq += 1
 
     last_bid_hash = bids[-1].get("current_hash")
@@ -136,12 +217,23 @@ def verify_bid_chain(
             broken_at = len(bids)
             reason = msg
 
+    for node in evaluated_nodes:
+        is_node_valid = bool(
+            node.pop("direct_valid")
+            and (broken_at is None or node["sequence_number"] < broken_at)
+        )
+        node["is_valid"] = is_node_valid
+        node["status"] = "valid" if is_node_valid else "invalid"
+
     is_valid = len(anomalies) == 0
     return is_valid, {
         "is_valid": is_valid,
+        "is_intact": is_valid,
         "broken_at_sequence": broken_at,
+        "tampered_at_sequence": broken_at,
         "reason": reason,
         "anomalies": anomalies,
+        "nodes": evaluated_nodes,
     }
 
 

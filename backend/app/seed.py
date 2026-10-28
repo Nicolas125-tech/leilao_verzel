@@ -9,10 +9,12 @@ import httpx
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.crypto import (
     GENESIS_HASH,
     compute_bid_hash,
     format_utc_iso,
+    generate_bidder_pseudonym,
     generate_receipt_signature,
 )
 from app.core.database import AsyncSessionLocal, engine
@@ -230,12 +232,15 @@ async def run_seed(db: AsyncSession) -> None:
         head_hash=GENESIS_HASH,
     )
 
+    nicolas_pseudo = generate_bidder_pseudonym(nicolas.id, settings.HMAC_SECRET_KEY)
+    marina_pseudo = generate_bidder_pseudonym(marina.id, settings.HMAC_SECRET_KEY)
+
     lot_live_disputed_id = uuid.uuid4()
     b1_time = now - timedelta(minutes=25)
     b1_hash = compute_bid_hash(
         lot_id=lot_live_disputed_id,
         sequence_number=1,
-        bidder_masked_name=nicolas.masked_name,
+        bidder_masked_name=nicolas_pseudo,
         amount_cents=200000,
         created_at_iso=format_utc_iso(b1_time),
         previous_hash=GENESIS_HASH,
@@ -244,7 +249,7 @@ async def run_seed(db: AsyncSession) -> None:
     b2_hash = compute_bid_hash(
         lot_id=lot_live_disputed_id,
         sequence_number=2,
-        bidder_masked_name=marina.masked_name,
+        bidder_masked_name=marina_pseudo,
         amount_cents=240000,
         created_at_iso=format_utc_iso(b2_time),
         previous_hash=b1_hash,
@@ -253,7 +258,7 @@ async def run_seed(db: AsyncSession) -> None:
     b3_hash = compute_bid_hash(
         lot_id=lot_live_disputed_id,
         sequence_number=3,
-        bidder_masked_name=nicolas.masked_name,
+        bidder_masked_name=nicolas_pseudo,
         amount_cents=280000,
         created_at_iso=format_utc_iso(b3_time),
         previous_hash=b2_hash,
@@ -283,7 +288,7 @@ async def run_seed(db: AsyncSession) -> None:
     s1_hash = compute_bid_hash(
         lot_id=lot_settled_id,
         sequence_number=1,
-        bidder_masked_name=marina.masked_name,
+        bidder_masked_name=marina_pseudo,
         amount_cents=260000,
         created_at_iso=format_utc_iso(s1_time),
         previous_hash=GENESIS_HASH,
@@ -292,7 +297,7 @@ async def run_seed(db: AsyncSession) -> None:
     s2_hash = compute_bid_hash(
         lot_id=lot_settled_id,
         sequence_number=2,
-        bidder_masked_name=nicolas.masked_name,
+        bidder_masked_name=nicolas_pseudo,
         amount_cents=320000,
         created_at_iso=format_utc_iso(s2_time),
         previous_hash=s1_hash,

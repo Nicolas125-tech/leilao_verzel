@@ -7,7 +7,8 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.crypto import compute_bid_hash, format_utc_iso
+from app.core.config import settings
+from app.core.crypto import compute_bid_hash, format_utc_iso, generate_bidder_pseudonym
 from app.models.base import utc_now
 from app.models.lot import Bid, Lot
 from app.models.user import User
@@ -184,11 +185,15 @@ async def place_bid(
         previous_hash = lot.head_hash
         bid_created_at = utc_now()
         created_at_iso = format_utc_iso(bid_created_at)
+        bidder_pseudonym = generate_bidder_pseudonym(
+            bidder.id,
+            settings.HMAC_SECRET_KEY,
+        )
 
         current_hash = compute_bid_hash(
             lot_id=lot.id,
             sequence_number=sequence_number,
-            bidder_masked_name=bidder.masked_name,
+            bidder_masked_name=bidder_pseudonym,
             amount_cents=payload.amount_cents,
             created_at_iso=created_at_iso,
             previous_hash=previous_hash,

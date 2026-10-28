@@ -4,6 +4,7 @@ import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from app.core.crypto import GENESIS_HASH
 from app.core.database import get_db
 from app.main import app
 from app.models.base import Base
@@ -117,7 +118,7 @@ async def test_first_bid_acceptance_and_hash_chain(client: httpx.AsyncClient):
     bid = bid_resp.json()
 
     assert bid["sequence_number"] == 1
-    assert bid["previous_hash"] == "GENESIS"
+    assert bid["previous_hash"] == GENESIS_HASH
     assert len(bid["current_hash"]) == 64
     assert bid["amount_cents"] == 100000
     assert bid["extension_triggered"] is False
