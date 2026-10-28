@@ -54,18 +54,19 @@ export const Header: React.FC = () => {
       path === "/"
         ? location.pathname === "/"
         : location.pathname.startsWith(path);
-    return `px-3.5 py-1.5 text-xs font-medium uppercase tracking-wider transition-colors rounded-sm border shrink-0 whitespace-nowrap ${
+    return `relative inline-flex items-center px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors whitespace-nowrap border-b-2 -mb-[1px] ${
       isActive
-        ? "border-primary bg-primary text-white dark:border-gold dark:bg-gold/15 dark:text-gold"
+        ? "border-primary text-primary bg-paper-surface dark:border-gold dark:text-gold dark:bg-charcoal-surface"
         : "border-transparent text-paper-subtext hover:text-paper-text hover:border-paper-border dark:text-charcoal-subtext dark:hover:text-charcoal-text dark:hover:border-charcoal-border"
     }`;
   };
 
   return (
     <header className="border-b border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface w-full max-w-full">
+      {/* Faixa 1: Utilitários, Perfis de Demonstração e Conta */}
       <div className="border-b border-paper-border dark:border-charcoal-border bg-paper-muted/60 dark:bg-charcoal-muted/60">
         <div className="mx-auto flex max-w-[1280px] flex-col md:flex-row items-stretch md:items-center justify-between gap-2 md:gap-3 px-3 py-1.5 sm:px-6">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs text-paper-subtext dark:text-charcoal-subtext shrink min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-paper-subtext dark:text-charcoal-subtext min-w-0">
             <span className="font-serif italic shrink-0 hidden sm:inline">Alternar licitante:</span>
             <span className="font-serif italic shrink-0 sm:hidden">Licitante:</span>
             {SEED_ACCOUNTS.map((preset) => {
@@ -129,43 +130,26 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-[1280px] flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 px-4 py-2.5 sm:py-3 sm:px-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between lg:justify-start gap-3 sm:gap-6 w-full lg:w-auto">
-          <Link
-            to="/"
-            className="group flex items-center gap-2.5 sm:gap-3.5 transition-opacity hover:opacity-90 shrink-0"
-          >
-            <VerzelEmblem className="h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 transition-transform duration-200 group-hover:scale-105 shrink-0" />
-            <span className="font-display text-xl sm:text-2xl lg:text-3xl font-bold tracking-wider text-paper-text dark:text-charcoal-text uppercase leading-none">
+      {/* Faixa 2: Identidade Editorial (Masthead) + Resumo Financeiro da Carteira */}
+      <div className="mx-auto flex max-w-[1280px] flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 px-4 py-3 sm:py-3.5 sm:px-6">
+        <Link
+          to="/"
+          className="group flex items-center gap-2.5 sm:gap-3.5 transition-opacity hover:opacity-90 shrink-0"
+        >
+          <VerzelEmblem className="h-10 w-10 sm:h-12 sm:w-12 lg:h-13 lg:w-13 transition-transform duration-200 group-hover:scale-105 shrink-0" />
+          <div>
+            <span className="block font-display text-xl sm:text-2xl lg:text-[28px] font-bold tracking-wider text-paper-text dark:text-charcoal-text uppercase leading-none">
               Casa de Leilões Verzel
             </span>
-          </Link>
-
-          <nav className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" aria-label="Navegação principal">
-            <Link to="/" className={navLinkClass("/")}>
-              Vitrine de Lotes
-            </Link>
-            {user?.role === "BIDDER" && (
-              <>
-                <Link to="/wallet" className={navLinkClass("/wallet")}>
-                  Carteira
-                </Link>
-                <Link to="/my-bids" className={navLinkClass("/my-bids")}>
-                  Meus Arremates
-                </Link>
-              </>
-            )}
-            {user?.role === "AUCTIONEER" && (
-              <Link to="/auctioneer" className={navLinkClass("/auctioneer")}>
-                Painel do Leiloeiro
-              </Link>
-            )}
-          </nav>
-        </div>
+            <span className="mt-1 hidden sm:block font-serif italic text-xs text-paper-subtext dark:text-charcoal-subtext">
+              Catálogo Editorial &amp; Pregão de Arte ao Vivo
+            </span>
+          </div>
+        </Link>
 
         {user?.role === "BIDDER" && wallet && (
-          <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2.5 sm:gap-3 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-muted/30 dark:bg-charcoal-muted/30 px-3 py-2 shadow-card w-full sm:w-auto">
-            <div className="border-r border-paper-border dark:border-charcoal-border pr-2.5 sm:pr-3">
+          <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 sm:gap-3.5 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-muted/30 dark:bg-charcoal-muted/30 px-3.5 py-2 w-full lg:w-auto">
+            <div className="border-r border-paper-border dark:border-charcoal-border pr-2.5 sm:pr-3.5">
               <span className="block text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
                 Total
               </span>
@@ -174,7 +158,7 @@ export const Header: React.FC = () => {
               </span>
             </div>
 
-            <div className="border-r border-paper-border dark:border-charcoal-border pr-2.5 sm:pr-3">
+            <div className="border-r border-paper-border dark:border-charcoal-border pr-2.5 sm:pr-3.5">
               <span className="block text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
                 Comprometido
               </span>
@@ -197,12 +181,48 @@ export const Header: React.FC = () => {
               disabled={isQuickDepositing}
               onClick={() => void handleQuickDeposit()}
               title="Depositar R$ 1.000,00 na carteira"
-              className="rounded-sm border border-primary bg-primary px-2.5 sm:px-3 py-1 sm:py-1.5 font-sans text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50 tabular-nums dark:border-gold dark:bg-gold dark:text-charcoal-bg dark:hover:bg-gold-hover shrink-0"
+              className="rounded-sm border border-primary bg-primary px-3 py-1.5 font-sans text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50 tabular-nums dark:border-gold dark:bg-gold dark:text-charcoal-bg dark:hover:bg-gold-hover shrink-0"
             >
               {isQuickDepositing ? "Depositando..." : "+ R$ 1.000"}
             </button>
           </div>
         )}
+      </div>
+
+      {/* Faixa 3: Barra de Navegação Editorial Dedicada */}
+      <div className="border-t border-paper-border dark:border-charcoal-border bg-paper-bg/70 dark:bg-charcoal-bg/70">
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6">
+          <nav aria-label="Navegação principal">
+            <ul className="flex flex-wrap items-center gap-1 sm:gap-2">
+              <li>
+                <Link to="/" className={navLinkClass("/")}>
+                  Vitrine de Lotes
+                </Link>
+              </li>
+              {user?.role === "BIDDER" && (
+                <>
+                  <li>
+                    <Link to="/wallet" className={navLinkClass("/wallet")}>
+                      Carteira
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/my-bids" className={navLinkClass("/my-bids")}>
+                      Meus Arremates
+                    </Link>
+                  </li>
+                </>
+              )}
+              {user?.role === "AUCTIONEER" && (
+                <li>
+                  <Link to="/auctioneer" className={navLinkClass("/auctioneer")}>
+                    Painel do Leiloeiro
+                  </Link>
+                </li>
+              )}
+            </ul>
+          </nav>
+        </div>
       </div>
     </header>
   );
