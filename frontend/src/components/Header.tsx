@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { NotificationBell } from "./NotificationBell.tsx";
 import { VerzelEmblem } from "./VerzelEmblem.tsx";
 import { SEED_ACCOUNTS, useAuth } from "../context/AuthContext.tsx";
 import { useTheme } from "../context/ThemeContext.tsx";
@@ -102,7 +103,8 @@ export const Header: React.FC = () => {
             </button>
 
             {user ? (
-              <div className="flex items-center gap-2 text-xs">
+              <div className="flex items-center gap-2.5 text-xs">
+                <NotificationBell />
                 <span className="font-mono font-medium text-paper-text dark:text-charcoal-text">
                   {user.masked_name}
                 </span>
