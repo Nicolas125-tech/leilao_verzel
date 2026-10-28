@@ -201,3 +201,39 @@ class WinningCertificate(Base):
         back_populates="certificate",
         lazy="selectin",
     )
+
+
+class CatalogCache(Base):
+    __tablename__ = "catalog_cache"
+
+    id: Mapped[UUID] = mapped_column(
+        Uuid,
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    cache_key: Mapped[str] = mapped_column(
+        String(255),
+        unique=True,
+        index=True,
+        nullable=False,
+    )
+    query_text: Mapped[str] = mapped_column(
+        String(255),
+        default="",
+        nullable=False,
+    )
+    payload_json: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSON,
+        default=list,
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utc_now,
+        nullable=False,
+    )
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        index=True,
+    )

@@ -13,3 +13,4 @@ class CatalogItem(BaseModel):
     image_url: str
     attributes: dict[str, Any]
     source: str
+    notice: str | None = None

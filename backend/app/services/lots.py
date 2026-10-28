@@ -1,3 +1,4 @@
+import copy
 from datetime import datetime, timezone
 import logging
 from uuid import UUID
@@ -78,16 +79,18 @@ async def create_lot(
     else:
         initial_status = "LIVE"
 
+    snapshot_attributes = copy.deepcopy(dict(payload.attributes_json or {}))
+
     lot = Lot(
         lot_number=next_number,
         auctioneer_id=auctioneer.id,
-        external_artwork_id=payload.external_artwork_id,
-        title=payload.title,
-        artist=payload.artist,
-        date_display=payload.date_display,
-        medium_display=payload.medium_display,
-        image_url=payload.image_url,
-        attributes_json=payload.attributes_json,
+        external_artwork_id=str(payload.external_artwork_id).strip(),
+        title=payload.title.strip(),
+        artist=payload.artist.strip(),
+        date_display=payload.date_display.strip(),
+        medium_display=payload.medium_display.strip(),
+        image_url=payload.image_url.strip(),
+        attributes_json=snapshot_attributes,
         starting_bid_cents=payload.starting_bid_cents,
         min_increment_cents=payload.min_increment_cents,
         current_bid_cents=None,
