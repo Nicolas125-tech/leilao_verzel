@@ -159,6 +159,35 @@ export interface BidderBidsAndWins {
   won_lots: Lot[];
 }
 
+export interface DisputeCounts {
+  in_dispute: number;
+  won: number;
+  lost: number;
+}
+
+export type DisputeStatus = "WINNING" | "OUTBID" | "WON" | "LOST";
+
+export interface DisputeItem {
+  lot_id: string;
+  lot_number: number;
+  artwork_title: string;
+  artwork_artist: string;
+  artwork_image_url: string;
+  user_highest_bid_cents: number;
+  user_bid_count: number;
+  current_bid_cents: number;
+  ends_at_iso: string;
+  time_remaining_formatted: string;
+  status: DisputeStatus | string;
+  leader_pseudonym: string;
+  is_user_winning: boolean;
+}
+
+export interface MyDisputesResponse {
+  counts: DisputeCounts;
+  items: DisputeItem[];
+}
+
 export interface AuctioneerDashboard {
   total_revenue_cents: number;
   settled_with_winner_count: number;

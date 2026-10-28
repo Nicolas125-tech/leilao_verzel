@@ -6,6 +6,7 @@ import type {
   CatalogItem,
   Lot,
   LotCreatePayload,
+  MyDisputesResponse,
   PublicReceipt,
   TokenResponse,
   User,
@@ -171,6 +172,10 @@ export const lotsApi = {
 
   getAuditChain(lotId: string): Promise<AuditChain> {
     return apiRequest<AuditChain>(`/lots/${lotId}/audit`);
+  },
+
+  getMyDisputes(): Promise<MyDisputesResponse> {
+    return apiRequest<MyDisputesResponse>("/lots/my-disputes");
   },
 };
 

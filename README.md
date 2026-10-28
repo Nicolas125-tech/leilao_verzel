@@ -3,7 +3,7 @@
 ![Python](https://img.shields.io/badge/Python-3.12-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Async-green)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-with__for__update-blue)
-![Pytest](https://img.shields.io/badge/Testes-53%20Passing-brightgreen)
+![Pytest](https://img.shields.io/badge/Testes-66%20Passing-brightgreen)
 ![Audit](https://img.shields.io/badge/Audit-SHA256%20Chain-purple)
 
 - Aplicação no ar (Frontend): https://leilao-verzel.vercel.app
@@ -142,7 +142,7 @@ cd frontend
 npm test
 ```
 
-### Matriz de cobertura da suíte (53 testes)
+### Matriz de cobertura da suíte (66 testes automatizados)
 
 | Escopo de responsabilidade | Qtd. de testes | O que é validado na prática |
 | :--- | :---: | :--- |
@@ -153,7 +153,9 @@ npm test
 | Liquidação e assinatura de comprovantes | 6 | Transferência atômica de valores no encerramento, geração de recibo público assinado, consulta pública do comprovante, listagem de arremates e transmissão de eventos via WebSocket. |
 | Resiliência à queda da API externa | 5 | Busca no acervo do Cleveland Museum of Art, fallback automático para obras locais/SVG em caso de timeout ou erro HTTP 500, acesso público e paginação do catálogo. |
 | Ciclo de vida do lote e seeds | 11 | Criação de lote com cópia completa da obra, filtros de busca/status na vitrine, transições de estado (`SCHEDULED`, `LIVE`, `ENDED`, `CANCELLED`), idempotência do seed e reset de dados de demonstração. |
-| **Total** | **53** | **Execução automatizada no GitHub Actions a cada push/PR** |
+| Painel de disputas e agregação em tempo real | 2 | Agregação otimizada no backend (`/api/v1/lots/my-disputes`), classificação de status (`WINNING`, `OUTBID`, `WON`, `LOST`), contadores de abas e proteção de pseudônimo. |
+| Utilitários e interface frontend (Vitest) | 11 | Formatação BRL em centavos, conversão monetária, janela crítica anti-sniping, filtragem de abas de disputas e integridade dos cards. |
+| **Total** | **66** | **55 testes backend (Pytest) + 11 testes frontend (Vitest) executados no GitHub Actions** |
 
 ## 8. Engenharia do projeto e uso transparente de IA
 

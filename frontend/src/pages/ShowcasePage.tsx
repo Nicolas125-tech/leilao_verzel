@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArtworkFrame } from "../components/ArtworkFrame.tsx";
 import { CountdownBadge } from "../components/CountdownBadge.tsx";
+import { UserDisputesSection } from "../components/dashboard/UserDisputesSection.tsx";
 import { VerzelEmblem } from "../components/VerzelEmblem.tsx";
+import { useAuth } from "../context/AuthContext.tsx";
 import { lotsApi } from "../services/api.ts";
 import type { Lot, LotStatus } from "../types/api.ts";
 import { formatBrlCents, parseBrlToCents } from "../utils/formatters.ts";
@@ -18,6 +20,7 @@ const FILTER_TABS: { value: FilterOption; label: string }[] = [
 ];
 
 export const ShowcasePage: React.FC = () => {
+  const { user } = useAuth();
   const [lots, setLots] = useState<Lot[]>([]);
   const [statusFilter, setStatusFilter] = useState<FilterOption>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -112,8 +115,13 @@ export const ShowcasePage: React.FC = () => {
   };
 
   return (
-    <main className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6">
-      <div className="border-b border-paper-border dark:border-charcoal-border pb-6">
+    <main className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 space-y-8">
+      {user && user.role === "BIDDER" && (
+        <UserDisputesSection hideIfEmpty />
+      )}
+
+      <div>
+        <div className="border-b border-paper-border dark:border-charcoal-border pb-6">
         <h1 className="font-serif text-3xl font-bold tracking-tight text-paper-text dark:text-charcoal-text">
           Lotes em Leilão
         </h1>
@@ -350,6 +358,7 @@ export const ShowcasePage: React.FC = () => {
           })}
         </div>
       )}
+      </div>
     </main>
   );
 };

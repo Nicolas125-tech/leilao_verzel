@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArtworkFrame } from "../components/ArtworkFrame.tsx";
+import { UserDisputesSection } from "../components/dashboard/UserDisputesSection.tsx";
 import { useAuth } from "../context/AuthContext.tsx";
 import { settlementApi } from "../services/api.ts";
 import type { BidderBidsAndWins } from "../types/api.ts";
@@ -71,6 +72,12 @@ export const MyBidsPage: React.FC = () => {
           Acompanhe os lotes que você venceu e as disputas de que participou.
         </p>
       </div>
+
+      <UserDisputesSection
+        hideIfEmpty={false}
+        title="Painel de Disputas"
+        subtitle="Gerencie seus lances ativos, lotes arrematados e disputas superadas em tempo real."
+      />
 
       {errorMsg && (
         <div
