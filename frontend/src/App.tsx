@@ -21,7 +21,7 @@ export const App: React.FC = () => {
         <WalletProvider>
           <BrowserRouter>
             <NotificationProvider>
-              <div className="min-h-screen bg-paper-bg text-paper-text dark:bg-charcoal-bg dark:text-charcoal-text">
+              <div className="min-h-screen bg-paper-bg text-paper-text dark:bg-charcoal-bg dark:text-charcoal-text overflow-x-hidden">
                 <Header />
                 <Routes>
                   <Route path="/" element={<ShowcasePage />} />

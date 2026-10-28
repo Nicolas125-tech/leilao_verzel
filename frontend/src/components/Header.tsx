@@ -54,7 +54,7 @@ export const Header: React.FC = () => {
       path === "/"
         ? location.pathname === "/"
         : location.pathname.startsWith(path);
-    return `px-3.5 py-1.5 text-xs font-medium uppercase tracking-wider transition-colors rounded-sm border ${
+    return `px-3.5 py-1.5 text-xs font-medium uppercase tracking-wider transition-colors rounded-sm border shrink-0 whitespace-nowrap ${
       isActive
         ? "border-primary bg-primary text-white dark:border-gold dark:bg-gold/15 dark:text-gold"
         : "border-transparent text-paper-subtext hover:text-paper-text hover:border-paper-border dark:text-charcoal-subtext dark:hover:text-charcoal-text dark:hover:border-charcoal-border"
@@ -62,11 +62,12 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="border-b border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface">
+    <header className="border-b border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface w-full max-w-full">
       <div className="border-b border-paper-border dark:border-charcoal-border bg-paper-muted/60 dark:bg-charcoal-muted/60">
-        <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3 px-4 py-1.5 sm:px-6">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-paper-subtext dark:text-charcoal-subtext">
-            <span className="font-serif italic text-paper-subtext dark:text-charcoal-subtext">Alternar licitante:</span>
+        <div className="mx-auto flex max-w-[1280px] flex-col md:flex-row items-stretch md:items-center justify-between gap-2 md:gap-3 px-3 py-1.5 sm:px-6">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs text-paper-subtext dark:text-charcoal-subtext shrink min-w-0">
+            <span className="font-serif italic shrink-0 hidden sm:inline">Alternar licitante:</span>
+            <span className="font-serif italic shrink-0 sm:hidden">Licitante:</span>
             {SEED_ACCOUNTS.map((preset) => {
               const isCurrent = user?.email === preset.email;
               return (
@@ -75,7 +76,7 @@ export const Header: React.FC = () => {
                   type="button"
                   disabled={isSwitchingProfile}
                   onClick={() => void handleProfileSwitch(preset.email)}
-                  className={`rounded-sm border px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
+                  className={`rounded-sm border px-2 py-0.5 text-[11px] font-medium transition-colors shrink-0 whitespace-nowrap ${
                     isCurrent
                       ? "border-primary bg-primary text-white dark:border-gold dark:bg-gold dark:text-charcoal-bg"
                       : "border-paper-border bg-paper-surface text-paper-text hover:border-paper-text dark:border-charcoal-border dark:bg-charcoal-surface dark:text-charcoal-text"
@@ -86,32 +87,32 @@ export const Header: React.FC = () => {
               );
             })}
             {profileError && (
-              <span role="alert" className="text-xs font-semibold text-status-outbid">
+              <span role="alert" className="text-xs font-semibold text-status-outbid shrink-0">
                 {profileError}
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between md:justify-end gap-2.5 text-xs shrink-0 w-full md:w-auto pt-1 md:pt-0 border-t md:border-t-0 border-paper-border/40 dark:border-charcoal-border/40">
             <button
               type="button"
               onClick={toggleTheme}
-              className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-2.5 py-1 text-xs font-medium text-paper-text dark:text-charcoal-text hover:border-paper-text dark:hover:border-charcoal-text"
+              className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface px-2.5 py-1 text-xs font-medium text-paper-text dark:text-charcoal-text hover:border-paper-text dark:hover:border-charcoal-text shrink-0"
               aria-label="Alternar tema claro ou escuro"
             >
               {theme === "light" ? "Modo Escuro" : "Modo Claro"}
             </button>
 
             {user ? (
-              <div className="flex items-center gap-2.5 text-xs">
+              <div className="flex items-center gap-2 sm:gap-2.5 text-xs shrink-0">
                 <NotificationBell />
-                <span className="font-mono font-medium text-paper-text dark:text-charcoal-text">
+                <span className="font-mono font-medium text-paper-text dark:text-charcoal-text truncate max-w-[110px] sm:max-w-none">
                   {user.masked_name}
                 </span>
                 <button
                   type="button"
                   onClick={logout}
-                  className="underline text-paper-subtext hover:text-paper-text dark:text-charcoal-subtext dark:hover:text-charcoal-text"
+                  className="underline text-paper-subtext hover:text-paper-text dark:text-charcoal-subtext dark:hover:text-charcoal-text shrink-0"
                 >
                   Sair
                 </button>
@@ -119,7 +120,7 @@ export const Header: React.FC = () => {
             ) : (
               <Link
                 to="/login"
-                className="text-xs font-medium uppercase tracking-wider text-primary hover:underline dark:text-gold"
+                className="text-xs font-medium uppercase tracking-wider text-primary hover:underline dark:text-gold shrink-0"
               >
                 Cadastre-se / Entrar
               </Link>
@@ -128,19 +129,19 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <div className="flex items-center gap-8">
+      <div className="mx-auto flex max-w-[1280px] flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 px-4 py-2.5 sm:py-3 sm:px-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between lg:justify-start gap-3 sm:gap-6 w-full lg:w-auto">
           <Link
             to="/"
-            className="group flex items-center gap-3.5 transition-opacity hover:opacity-90"
+            className="group flex items-center gap-2.5 sm:gap-3.5 transition-opacity hover:opacity-90 shrink-0"
           >
-            <VerzelEmblem className="h-12 w-12 sm:h-14 sm:w-14 transition-transform duration-200 group-hover:scale-105" />
-            <span className="font-display text-2xl sm:text-3xl font-bold tracking-wider text-paper-text dark:text-charcoal-text uppercase leading-none">
+            <VerzelEmblem className="h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 transition-transform duration-200 group-hover:scale-105 shrink-0" />
+            <span className="font-display text-xl sm:text-2xl lg:text-3xl font-bold tracking-wider text-paper-text dark:text-charcoal-text uppercase leading-none">
               Casa de Leilões Verzel
             </span>
           </Link>
 
-          <nav className="flex flex-wrap items-center gap-1.5" aria-label="Navegação principal">
+          <nav className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" aria-label="Navegação principal">
             <Link to="/" className={navLinkClass("/")}>
               Vitrine de Lotes
             </Link>
@@ -163,8 +164,8 @@ export const Header: React.FC = () => {
         </div>
 
         {user?.role === "BIDDER" && wallet && (
-          <div className="flex flex-wrap items-center gap-3 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-muted/30 dark:bg-charcoal-muted/30 px-3.5 py-2 shadow-card">
-            <div className="border-r border-paper-border dark:border-charcoal-border pr-3">
+          <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2.5 sm:gap-3 rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-muted/30 dark:bg-charcoal-muted/30 px-3 py-2 shadow-card w-full sm:w-auto">
+            <div className="border-r border-paper-border dark:border-charcoal-border pr-2.5 sm:pr-3">
               <span className="block text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
                 Total
               </span>
@@ -173,7 +174,7 @@ export const Header: React.FC = () => {
               </span>
             </div>
 
-            <div className="border-r border-paper-border dark:border-charcoal-border pr-3">
+            <div className="border-r border-paper-border dark:border-charcoal-border pr-2.5 sm:pr-3">
               <span className="block text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
                 Comprometido
               </span>
@@ -186,7 +187,7 @@ export const Header: React.FC = () => {
               <span className="block text-[10px] uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
                 Disponível
               </span>
-              <span className="font-mono text-sm font-bold tabular-nums text-status-winning">
+              <span className="font-mono text-xs sm:text-sm font-bold tabular-nums text-status-winning">
                 {formatBrlCents(wallet.available_balance_cents)}
               </span>
             </div>
@@ -196,7 +197,7 @@ export const Header: React.FC = () => {
               disabled={isQuickDepositing}
               onClick={() => void handleQuickDeposit()}
               title="Depositar R$ 1.000,00 na carteira"
-              className="rounded-sm border border-primary bg-primary px-3 py-1.5 font-sans text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50 tabular-nums dark:border-gold dark:bg-gold dark:text-charcoal-bg dark:hover:bg-gold-hover"
+              className="rounded-sm border border-primary bg-primary px-2.5 sm:px-3 py-1 sm:py-1.5 font-sans text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50 tabular-nums dark:border-gold dark:bg-gold dark:text-charcoal-bg dark:hover:bg-gold-hover shrink-0"
             >
               {isQuickDepositing ? "Depositando..." : "+ R$ 1.000"}
             </button>

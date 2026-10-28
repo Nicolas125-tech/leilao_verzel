@@ -355,7 +355,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
         <aside
           aria-label="Avisos em tempo real"
           aria-live="polite"
-          className="fixed top-4 right-4 z-50 flex w-full max-w-sm flex-col gap-2.5 pointer-events-none"
+          className="fixed top-4 right-3 left-3 sm:left-auto sm:right-4 z-50 flex sm:w-full sm:max-w-sm flex-col gap-2.5 pointer-events-none"
         >
           {toasts.map((toast) => (
             <div
