@@ -50,7 +50,7 @@ export const LotPublishForm: React.FC<LotPublishFormProps> = ({
                 {selectedArtwork.title}
               </h3>
               <p className="font-serif italic text-xs text-paper-subtext dark:text-charcoal-subtext">
-                {selectedArtwork.artist} ({selectedArtwork.date_display}) — {selectedArtwork.medium_display}
+                {selectedArtwork.artist} ({selectedArtwork.date_display}) · {selectedArtwork.medium_display}
               </p>
             </div>
 

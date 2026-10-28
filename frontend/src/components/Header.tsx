@@ -196,7 +196,7 @@ export const Header: React.FC = () => {
               title="Depositar R$ 1.000,00 na carteira"
               className="rounded-sm border border-primary bg-primary px-3 py-1.5 font-sans text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50 tabular-nums dark:border-gold dark:bg-gold dark:text-charcoal-bg dark:hover:bg-gold-hover"
             >
-              {isQuickDepositing ? "Aportando..." : "+ R$ 1.000"}
+              {isQuickDepositing ? "Depositando..." : "+ R$ 1.000"}
             </button>
           </div>
         )}

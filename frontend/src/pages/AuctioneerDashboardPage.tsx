@@ -115,7 +115,7 @@ export const AuctioneerDashboardPage: React.FC = () => {
       <main className="mx-auto max-w-[1280px] px-4 py-12 sm:px-6">
         <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-8 shadow-card">
           <h1 className="font-serif text-2xl font-bold tracking-tight text-paper-text dark:text-charcoal-text">
-            Acesso exclusivo ao leiloeiro
+            Área restrita ao leiloeiro
           </h1>
           <p className="mt-2 font-serif italic text-sm text-paper-subtext dark:text-charcoal-subtext">
             Selecione o perfil de leiloeira (Helena Curadora) na barra superior para gerenciar lotes e publicar obras.

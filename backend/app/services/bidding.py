@@ -62,7 +62,7 @@ async def place_bid(
     if lot.leader_user_id == bidder.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Você já detém o maior lance neste lote.",
+            detail="Você já tem o maior lance neste lote.",
         )
 
     if lot.current_bid_cents is None:

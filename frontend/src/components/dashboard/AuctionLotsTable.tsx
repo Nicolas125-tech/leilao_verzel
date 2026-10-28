@@ -202,7 +202,7 @@ export const AuctionLotsTable: React.FC<AuctionLotsTableProps> = ({
                       )}
                     </td>
                     <td className="px-5 py-3.5 font-mono text-xs text-paper-subtext dark:text-charcoal-subtext">
-                      {lot.leader_masked_name || "—"}
+                      {lot.leader_masked_name || "Sem lances"}
                     </td>
                     <td className="px-5 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-2">

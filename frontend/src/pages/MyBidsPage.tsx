@@ -52,7 +52,7 @@ export const MyBidsPage: React.FC = () => {
       <main className="mx-auto max-w-[1280px] px-4 py-12 sm:px-6">
         <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-8 shadow-card">
           <h1 className="font-serif text-2xl font-bold tracking-tight text-paper-text dark:text-charcoal-text">
-            Histórico exclusivo para licitantes
+            Área restrita a licitantes
           </h1>
           <p className="mt-2 font-serif italic text-sm text-paper-subtext dark:text-charcoal-subtext">
             Selecione um perfil de licitante no topo da página para ver seus lotes disputados e comprovantes.
@@ -76,7 +76,7 @@ export const MyBidsPage: React.FC = () => {
       <UserDisputesSection
         hideIfEmpty={false}
         title="Painel de Disputas"
-        subtitle="Gerencie seus lances ativos, lotes arrematados e disputas superadas em tempo real."
+        subtitle="Acompanhe seus lances, obras arrematadas e disputas em andamento."
       />
 
       {errorMsg && (

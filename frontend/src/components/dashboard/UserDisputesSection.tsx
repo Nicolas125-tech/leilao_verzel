@@ -92,7 +92,7 @@ interface UserDisputesSectionProps {
 export const UserDisputesSection: React.FC<UserDisputesSectionProps> = ({
   className = "",
   title = "Painel de Disputas do Licitante",
-  subtitle = "Monitore a liderança de seus lances e reaja imediatamente caso seja superado.",
+  subtitle = "Acompanhe seus lances e veja se alguma oferta sua foi superada.",
   hideIfEmpty = false,
 }) => {
   const [data, setData] = useState<MyDisputesResponse | null>(null);

@@ -102,7 +102,7 @@ async def settle_lot(db: AsyncSession, lot: Lot) -> Lot:
             amount_cents=final_amount,
             balance_after_cents=winner_wallet.total_balance_cents,
             committed_after_cents=winner_wallet.committed_balance_cents,
-            description=f"Liquidação definitiva de arremate do Lote #{locked_lot.lot_number}",
+            description=f"Liquidação de arremate do Lote #{locked_lot.lot_number}",
             created_at=utc_now(),
         )
         db.add(debit_tx)

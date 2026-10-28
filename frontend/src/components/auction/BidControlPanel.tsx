@@ -138,7 +138,7 @@ export const BidControlPanel: React.FC<BidControlPanelProps> = ({
             <div className="rounded-sm border border-status-winning bg-status-winning/10 px-4 py-3 text-xs font-medium text-status-winning">
               {lot.status === "ENDED"
                 ? "Você arrematou este lote."
-                : `Você está ganhando (${formatBrlCents(lot.current_bid_cents)} reservados no saldo comprometido).`}
+                : `Seu lance é o líder no momento (${formatBrlCents(lot.current_bid_cents)} retidos no saldo comprometido).`}
             </div>
           ) : isOutbid ? (
             <div className="rounded-sm border border-status-outbid bg-status-outbid/10 px-4 py-3 text-xs font-medium text-status-outbid">

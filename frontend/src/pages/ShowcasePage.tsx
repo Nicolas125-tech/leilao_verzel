@@ -126,7 +126,7 @@ export const ShowcasePage: React.FC = () => {
           Lotes em Leilão
         </h1>
         <p className="mt-1 font-serif italic text-sm text-paper-subtext dark:text-charcoal-subtext">
-          Acompanhe os lotes abertos e dê o seu lance em tempo real.
+          Acompanhe os lotes abertos e participe do pregão.
         </p>
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4">

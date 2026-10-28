@@ -134,7 +134,7 @@ export const LiveAuctionPage: React.FC = () => {
                 : "border-status-warning/50 bg-status-warning/10 text-status-warning"
             }`}
           >
-            {connectionStatus === "CONNECTED" ? "Tempo real ativo" : "Reconectando..."}
+            {connectionStatus === "CONNECTED" ? "Ao vivo" : "Reconectando..."}
           </span>
           <Link
             to={`/lots/${lotData.id}/audit`}
