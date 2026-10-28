@@ -5,11 +5,16 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.crypto import GENESIS_HASH
-from app.models.lot import Lot
+from app.core.crypto import GENESIS_HASH, format_utc_iso
+from app.models.lot import Bid, Lot
 from app.models.user import User
 from app.models.wallet import Wallet, WalletTransaction
-from app.schemas.lot import LotCreateRequest
+from app.schemas.lot import (
+    DisputeCounts,
+    DisputeItem,
+    LotCreateRequest,
+    MyDisputesResponse,
+)
 from app.services.settlement import settle_lot
 from app.services.websocket import ws_manager
 
@@ -223,3 +228,90 @@ async def cancel_lot(db: AsyncSession, auctioneer: User, lot_id: UUID) -> Lot:
 
     await ws_manager.broadcast_lot_cancelled(lot.id)
     return lot
+
+
+async def get_my_disputes(db: AsyncSession, bidder: User) -> MyDisputesResponse:
+    subq = (
+        select(
+            Bid.lot_id.label("lot_id"),
+            func.max(Bid.amount_cents).label("user_highest_bid_cents"),
+            func.count(Bid.id).label("user_bid_count"),
+        )
+        .where(Bid.user_id == bidder.id)
+        .group_by(Bid.lot_id)
+        .subquery()
+    )
+
+    stmt = (
+        select(Lot, subq.c.user_highest_bid_cents, subq.c.user_bid_count)
+        .join(subq, Lot.id == subq.c.lot_id)
+        .order_by(Lot.end_time.desc())
+    )
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    now_utc = datetime.now(timezone.utc)
+    in_dispute_count = 0
+    won_count = 0
+    lost_count = 0
+    items: list[DisputeItem] = []
+
+    for lot, highest_cents, bid_count in rows:
+        synced_lot = await sync_lot_temporal_state(db, lot)
+        end_utc = ensure_utc(synced_lot.end_time)
+        is_user_winning = (synced_lot.leader_user_id == bidder.id)
+
+        if synced_lot.status == "ENDED" or now_utc >= end_utc:
+            time_remaining_formatted = "Encerrado"
+        else:
+            delta_seconds = max(0, int((end_utc - now_utc).total_seconds()))
+            hours = delta_seconds // 3600
+            minutes = (delta_seconds % 3600) // 60
+            seconds = delta_seconds % 60
+            if hours > 0:
+                time_remaining_formatted = f"{hours}h {minutes:02d}m"
+            elif minutes > 0:
+                time_remaining_formatted = f"{minutes}m {seconds:02d}s"
+            else:
+                time_remaining_formatted = f"{seconds}s"
+
+        if synced_lot.status in ("LIVE", "SCHEDULED"):
+            status_str = "WINNING" if is_user_winning else "OUTBID"
+            in_dispute_count += 1
+        elif synced_lot.status == "ENDED":
+            if is_user_winning:
+                status_str = "WON"
+                won_count += 1
+            else:
+                status_str = "LOST"
+                lost_count += 1
+        else:
+            status_str = "CANCELLED"
+            lost_count += 1
+
+        items.append(
+            DisputeItem(
+                lot_id=synced_lot.id,
+                lot_number=synced_lot.lot_number,
+                artwork_title=synced_lot.title,
+                artwork_artist=synced_lot.artist,
+                artwork_image_url=synced_lot.image_url,
+                user_highest_bid_cents=int(highest_cents),
+                user_bid_count=int(bid_count),
+                current_bid_cents=int(synced_lot.current_bid_cents or synced_lot.starting_bid_cents),
+                ends_at_iso=format_utc_iso(synced_lot.end_time),
+                time_remaining_formatted=time_remaining_formatted,
+                status=status_str,
+                leader_pseudonym=synced_lot.leader_masked_name or "",
+                is_user_winning=is_user_winning,
+            )
+        )
+
+    return MyDisputesResponse(
+        counts=DisputeCounts(
+            in_dispute=in_dispute_count,
+            won=won_count,
+            lost=lost_count,
+        ),
+        items=items,
+    )

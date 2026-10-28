@@ -126,3 +126,30 @@ class AuctioneerDashboardResponse(BaseModel):
     settled_with_winner_count: int
     active_lots_count: int
     lots: list[LotResponse]
+
+
+class DisputeCounts(BaseModel):
+    in_dispute: int
+    won: int
+    lost: int
+
+
+class DisputeItem(BaseModel):
+    lot_id: UUID
+    lot_number: int
+    artwork_title: str
+    artwork_artist: str
+    artwork_image_url: str
+    user_highest_bid_cents: int
+    user_bid_count: int
+    current_bid_cents: int
+    ends_at_iso: str
+    time_remaining_formatted: str
+    status: str
+    leader_pseudonym: str
+    is_user_winning: bool
+
+
+class MyDisputesResponse(BaseModel):
+    counts: DisputeCounts
+    items: list[DisputeItem]

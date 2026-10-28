@@ -7,8 +7,10 @@ from app.models.user import User
 from app.schemas.lot import (
     AuctioneerDashboardResponse,
     BidderBidsAndWinsResponse,
+    MyDisputesResponse,
     PublicReceiptResponse,
 )
+from app.services.lots import get_my_disputes
 from app.services.settlement import (
     get_auctioneer_dashboard,
     get_bidder_bids_and_wins,
@@ -32,6 +34,14 @@ async def fetch_my_bids_and_wins(
     db: AsyncSession = Depends(get_db),
 ) -> BidderBidsAndWinsResponse:
     return await get_bidder_bids_and_wins(db=db, bidder=current_user)
+
+
+@router.get("/settlement/my-bids", response_model=MyDisputesResponse)
+async def fetch_my_bids(
+    current_user: User = Depends(require_bidder),
+    db: AsyncSession = Depends(get_db),
+) -> MyDisputesResponse:
+    return await get_my_disputes(db=db, bidder=current_user)
 
 
 @router.get("/auctioneer/dashboard", response_model=AuctioneerDashboardResponse)

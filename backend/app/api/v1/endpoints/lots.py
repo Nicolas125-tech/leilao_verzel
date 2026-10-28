@@ -8,10 +8,16 @@ from app.core.rate_limit import rate_limiter
 from app.models.user import User
 from app.schemas.audit import AuditChainResponse
 from app.schemas.bid import BidCreateRequest, BidResponse
-from app.schemas.lot import LotCreateRequest, LotResponse
+from app.schemas.lot import LotCreateRequest, LotResponse, MyDisputesResponse
 from app.services.audit import audit_lot_bid_chain
 from app.services.bidding import place_bid
-from app.services.lots import cancel_lot, create_lot, get_lot_by_id, list_public_lots
+from app.services.lots import (
+    cancel_lot,
+    create_lot,
+    get_lot_by_id,
+    get_my_disputes,
+    list_public_lots,
+)
 
 router = APIRouter(prefix="/lots", tags=["lots"])
 
@@ -34,6 +40,14 @@ async def get_public_lots(
 ):
     lots = await list_public_lots(db=db, status_filter=status, query_text=q)
     return [LotResponse.model_validate(item) for item in lots]
+
+
+@router.get("/my-disputes", response_model=MyDisputesResponse)
+async def get_current_user_disputes(
+    current_user: User = Depends(require_bidder),
+    db: AsyncSession = Depends(get_db),
+) -> MyDisputesResponse:
+    return await get_my_disputes(db=db, bidder=current_user)
 
 
 @router.get("/{lot_id}", response_model=LotResponse)
