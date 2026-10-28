@@ -132,15 +132,10 @@ export const Header: React.FC = () => {
             to="/"
             className="group flex items-center gap-3.5 transition-opacity hover:opacity-90"
           >
-            <VerzelEmblem className="h-20 w-20 sm:h-24 sm:w-24 transition-transform duration-200 group-hover:scale-105" />
-            <div className="flex flex-col">
-              <span className="font-display text-2xl sm:text-3xl font-bold tracking-wider text-paper-text dark:text-charcoal-text uppercase leading-none">
-                Casa de Leilões Verzel
-              </span>
-              <span className="font-serif text-xs sm:text-sm tracking-widest text-gold-muted dark:text-gold uppercase italic mt-1.5">
-                Obras Que Atravessam o Tempo
-              </span>
-            </div>
+            <VerzelEmblem className="h-12 w-12 sm:h-14 sm:w-14 transition-transform duration-200 group-hover:scale-105" />
+            <span className="font-display text-2xl sm:text-3xl font-bold tracking-wider text-paper-text dark:text-charcoal-text uppercase leading-none">
+              Casa de Leilões Verzel
+            </span>
           </Link>
 
           <nav className="flex flex-wrap items-center gap-1.5" aria-label="Navegação principal">

@@ -350,16 +350,6 @@ export const ShowcasePage: React.FC = () => {
           })}
         </div>
       )}
-
-      <div className="mt-16 border-t border-paper-border dark:border-charcoal-border pt-8 pb-4 text-center">
-        <div className="inline-flex items-center gap-3 text-xs uppercase tracking-widest text-gold-muted dark:text-gold">
-          <VerzelEmblem className="h-6 w-6" />
-          <span className="font-serif italic text-sm lowercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-            Arte é um investimento que atravessa gerações
-          </span>
-          <VerzelEmblem className="h-6 w-6" />
-        </div>
-      </div>
     </main>
   );
 };
