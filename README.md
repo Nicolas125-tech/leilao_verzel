@@ -405,7 +405,7 @@ npm test -- --run
 
 ---
 
-## 10. Onde e como usei IA (Relato transparente para o envio da Verzel)
+## 10. Onde e como usei IA
 
 O documento do desafio pede para contar de forma aberta onde e como usei IA e o que revisei ou ajustei. Como desenvolvedor, encaro assistentes de IA como um par de programação para ganhar velocidade em código repetitivo, mas nunca como piloto automático para decisões de arquitetura, concorrência ou regras financeiras.
 
@@ -437,7 +437,7 @@ Abaixo detalho exatamente o que deleguei para a IA acelerar e onde precisei inte
 
 ---
 
-### Resumo pronto para o formulário de entrega da Verzel ("Onde e como você usou IA")
+### Resumo
 
 > Utilizei IA como ferramenta de produtividade para acelerar o scaffolding inicial de schemas Pydantic, interfaces TypeScript, marcação base de componentes Tailwind e geração dos vetores SVG de fallback das obras de arte.
 >
