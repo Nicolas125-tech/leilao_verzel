@@ -8,6 +8,7 @@ import time
 from typing import Any
 import httpx
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -257,9 +258,17 @@ async def _get_cache_entry(
 ) -> CatalogCache | None:
     if db is None:
         return None
-    stmt = select(CatalogCache).where(CatalogCache.cache_key == cache_key)
-    result = await db.execute(stmt)
-    return result.scalar_one_or_none()
+    try:
+        stmt = select(CatalogCache).where(CatalogCache.cache_key == cache_key)
+        result = await db.execute(stmt)
+        return result.scalar_one_or_none()
+    except SQLAlchemyError as exc:
+        logger.warning("Tabela catalog_cache indisponível na leitura (%s); ignorando cache.", exc)
+        try:
+            await db.rollback()
+        except SQLAlchemyError:
+            pass
+        return None
 
 
 async def _save_cache_entry(
@@ -270,25 +279,32 @@ async def _save_cache_entry(
 ) -> None:
     if db is None:
         return
-    now_utc = datetime.now(timezone.utc)
-    expires_at = now_utc + timedelta(minutes=CACHE_TTL_MINUTES)
-    existing = await _get_cache_entry(db, cache_key)
+    try:
+        now_utc = datetime.now(timezone.utc)
+        expires_at = now_utc + timedelta(minutes=CACHE_TTL_MINUTES)
+        existing = await _get_cache_entry(db, cache_key)
 
-    if existing is not None:
-        existing.payload_json = copy.deepcopy(artworks)
-        existing.created_at = now_utc
-        existing.expires_at = expires_at
-    else:
-        entry = CatalogCache(
-            cache_key=cache_key,
-            query_text=(query or "").strip(),
-            payload_json=copy.deepcopy(artworks),
-            created_at=now_utc,
-            expires_at=expires_at,
-        )
-        db.add(entry)
+        if existing is not None:
+            existing.payload_json = copy.deepcopy(artworks)
+            existing.created_at = now_utc
+            existing.expires_at = expires_at
+        else:
+            entry = CatalogCache(
+                cache_key=cache_key,
+                query_text=(query or "").strip(),
+                payload_json=copy.deepcopy(artworks),
+                created_at=now_utc,
+                expires_at=expires_at,
+            )
+            db.add(entry)
 
-    await db.commit()
+        await db.commit()
+    except SQLAlchemyError as exc:
+        logger.warning("Não foi possível persistir cache em catalog_cache (%s).", exc)
+        try:
+            await db.rollback()
+        except SQLAlchemyError:
+            pass
 
 
 async def search_catalog(

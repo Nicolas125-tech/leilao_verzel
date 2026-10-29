@@ -11,7 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.router import api_router
 from app.core.config import settings
-from app.core.database import AsyncSessionLocal, get_db
+from app.core.database import AsyncSessionLocal, engine, get_db
+from app.models.base import Base
+import app.models.lot  # noqa: F401
+import app.models.user  # noqa: F401
+import app.models.wallet  # noqa: F401
 from app.services.settlement import settle_expired_lots
 from app.services.websocket import router as ws_router, ws_manager
 
@@ -37,6 +41,11 @@ async def settlement_background_worker(interval_seconds: int = 15):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Iniciando motor de pregão Verzel no ambiente: %s", settings.ENVIRONMENT)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    except Exception as exc:
+        logger.warning("Aviso ao sincronizar tabelas no startup: %s", exc)
     worker_task = asyncio.create_task(settlement_background_worker(interval_seconds=15))
     try:
         yield

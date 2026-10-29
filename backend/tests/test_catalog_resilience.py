@@ -308,3 +308,28 @@ async def test_lot_creation_persists_immutable_artwork_snapshot_independent_of_e
         assert detail["image_url"] == "https://openaccess-cdn.clevelandart.org/1958.39/1958.39_web.jpg"
         assert detail["attributes_json"]["place_of_origin"] == "France"
         assert broken_client.get.call_count == 0
+
+
+@pytest.mark.asyncio
+async def test_catalog_search_succeeds_when_catalog_cache_table_is_missing(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    await db_session.execute(text("DROP TABLE catalog_cache"))
+    await db_session.commit()
+
+    ok_response = httpx.Response(
+        200,
+        json=MOCK_CLEVELAND_API_PAYLOAD,
+        request=httpx.Request("GET", "https://openaccess-api.clevelandart.org/api/artworks/"),
+    )
+    mock_http_client = _build_mock_http_client(ok_response)
+
+    with patch("app.services.catalog.httpx.AsyncClient", return_value=mock_http_client):
+        resp = await client.get("/api/v1/catalog?limit=8")
+
+    assert resp.status_code == 200
+    items = resp.json()
+    assert len(items) == 1
+    assert items[0]["external_id"] == "135378"
+
