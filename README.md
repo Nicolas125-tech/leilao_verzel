@@ -65,6 +65,14 @@ Job frontend (Frontend Tests & Build): configura o Node.js 22 com cache baseado 
 3. Entrega contínua (deploy em produção)
 Com o pipeline verde no GitHub Actions, o deploy acontece em duas frentes. Na Vercel, a plataforma detecta a atualização na branch principal, executa o build estático do React/Vite com as regras de roteamento SPA (vercel.json) e publica a interface em [https://leilao-verzel.vercel.app](https://leilao-verzel.vercel.app). No Render, o serviço da API FastAPI é reconstruído, sincroniza as tabelas no PostgreSQL de produção (incluindo a tabela catalog_cache e as constraints financeiras) durante o startup da aplicação e disponibiliza a API e o Swagger em [https://leilao-verzel.onrender.com/docs](https://leilao-verzel.onrender.com/docs)
 
+ ### Identidade Visual e Emblema Autoral (`VerzelEmblem.tsx`)
+
+    Em vez de usar um ícone pronto de biblioteca, desenhei a logo da Casa de Leilões Verzel à mão
+    (`frontend/src/components/VerzelEmblem.tsx`), inspirada nos prismas geométricos da marca original da Verzel. Combinei as facetas triangulares
+    da identidade da empresa com traços clássicos de brasão editorial, adaptando as cores dinamicamente entre os tons de bordô e dourado no modo
+    claro (`#681417` e `#D4AF37`) e ouro envelhecido no modo escuro (`#C5A059`). O mesmo emblema também é usado como selo oficial nos
+    comprovantes públicos de arremate (`/receipts/:code`)
+
 ---
 
 ## 2. Análise completa do Banco de Dados (PostgreSQL)
