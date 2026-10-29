@@ -40,6 +40,31 @@ Quando abri o documento do desafio da Verzel, antes de criar qualquer pasta ou c
 4. **Dependência de API pública de terceiro:** O desafio pede para buscar itens de uma API pública. No começo testei a API do Art Institute of Chicago, mas ela frequentemente devolvia `403 Forbidden` por bloqueio da Cloudflare em IPs de data center (como o Render). Mudei a fonte primária para a API Open Access do **Cleveland Museum of Art** (licença CC0) e desenhei uma proteção em 4 camadas com Circuit Breaker, cache em memória, snapshot imutável salvo no lote e um acervo local em SVG para que o leiloeiro nunca fique travado se a internet ou a API externa cair.
 5. **Histórico à prova de adulteração e LGPD:** O enunciado pergunta diretamente: *"se alguém alterar ou remover um lance direto no banco de dados, o sistema consegue detectar?"*. Uma tabela comum com `created_at` não detecta nada se alguém rodar um `UPDATE` ou `DELETE` manual. Implementei uma cadeia de hashes SHA-256 estilo blockchain para cada lote, partindo de um `GENESIS_HASH = "0" * 64`, somada a uma assinatura HMAC por nó (`node_signature`) e pseudonimização unidirecional do ID do licitante (`LICITANTE-XXXXXXXXXX`). Se um DBA alterar 1 centavo no lance #2 ou apagar uma linha, a cadeia inteira daquele ponto em diante acusa invalidez na hora.
 
+
+Fluxo de trabalho no GitHub, CI/CD e padrão de branches
+Para manter o repositório organizado e evitar que código quebrado chegue em produção, estruturei o fluxo de trabalho com branches de estágio, commits atômicos e integração contínua no GitHub Actions (.github/workflows/ci.yml).
+
+1. Estratégia de branches e commits
+Separei o histórico de desenvolvimento por escopo antes de consolidar o código na linha de produção:
+
+feat/* e fabrica/*: branches de trabalho para isolar funcionalidades específicas, como o motor de lances, a cadeia de auditoria SHA-256, o Circuit Breaker do catálogo e os ajustes de interface.
+
+estagio (staging): branch intermediária de homologação para validar a integração completa entre frontend, backend e banco de dados antes da entrega final.
+
+main: branch principal conectada diretamente aos ambientes de produção na Vercel (Frontend) e no Render (Backend + PostgreSQL).
+
+No histórico de commits, segui o padrão Conventional Commits (feat, fix, refactor, perf, test, docs) com mensagens descritivas em português. Separei alterações de regra de negócio, ajustes visuais de UI/UX e documentação em commits independentes para facilitar o code review e um eventual git revert.
+
+2. Pipeline de integração contínua (GitHub Actions)
+Configurei o workflow .github/workflows/ci.yml (CI Pipeline) para disparar a cada push ou pull_request nas branches main, estagio, staging, fabrica e feat/*. O pipeline roda dois jobs em paralelo em máquinas ubuntu-latest:
+
+Job backend (Backend Tests): sobe um container de serviço real do PostgreSQL 16 (postgres:16-alpine) na porta 5432 e aguarda o healthcheck nativo (pg_isready) antes de iniciar os passos da aplicação. Depois, configura o Python 3.12 com cache de dependências do pip baseado no backend/requirements.txt e injeta as variáveis de ambiente de teste (DATABASE_URL assíncrona com asyncpg, DATABASE_URL_SYNC com psycopg2, JWT_SECRET_KEY e HMAC_SECRET_KEY). Ao final, executa a suíte de testes automatizados (python -m pytest backend/tests -v), que valida concorrência de lances, trava pessimista (SELECT ... FOR UPDATE), anti-sniping, liquidação financeira, resiliência do catálogo externo e detecção de adulteração via SQL direto na cadeia de hashes.
+
+Job frontend (Frontend Tests & Build): configura o Node.js 22 com cache baseado no frontend/package-lock.json e instala os pacotes via npm --prefix frontend ci. Na sequência, roda os testes unitários com Vitest (npm --prefix frontend test) para validar conversões monetárias em centavos, cronômetro regressivo, filtros de disputa e estado das notificações. Por último, faz a checagem estrita de tipos do TypeScript (tsc -b) e o build de produção do Vite (npm --prefix frontend run build) para impedir que quebras de tipagem ou importação cheguem ao deploy.
+
+3. Entrega contínua (deploy em produção)
+Com o pipeline verde no GitHub Actions, o deploy acontece em duas frentes. Na Vercel, a plataforma detecta a atualização na branch principal, executa o build estático do React/Vite com as regras de roteamento SPA (vercel.json) e publica a interface em [https://leilao-verzel.vercel.app](https://leilao-verzel.vercel.app). No Render, o serviço da API FastAPI é reconstruído, sincroniza as tabelas no PostgreSQL de produção (incluindo a tabela catalog_cache e as constraints financeiras) durante o startup da aplicação e disponibiliza a API e o Swagger em [https://leilao-verzel.onrender.com/docs](https://leilao-verzel.onrender.com/docs)
+
 ---
 
 ## 2. Análise completa do Banco de Dados (PostgreSQL)
