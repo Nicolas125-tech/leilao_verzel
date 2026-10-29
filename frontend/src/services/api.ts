@@ -41,6 +41,7 @@ export function setStoredToken(token: string | null): void {
 async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
+  maxRetries: number = 2,
 ): Promise<T> {
   const token = getStoredToken();
   const headers: Record<string, string> = {
@@ -52,26 +53,47 @@ async function apiRequest<T>(
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-  });
-
-  if (!response.ok) {
-    let errorDetail = `Erro HTTP ${response.status}`;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    let response: Response;
     try {
-      const errBody = await response.json();
-      if (typeof errBody?.detail === "string") {
-        errorDetail = errBody.detail;
-      } else if (Array.isArray(errBody?.detail)) {
-        errorDetail = errBody.detail.map((d: { msg?: string }) => d.msg).join("; ");
+      response = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers,
+      });
+    } catch (networkErr) {
+      if (attempt < maxRetries) {
+        await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)));
+        continue;
       }
-    } catch {
+      throw networkErr;
     }
-    throw new Error(errorDetail);
+
+    if (
+      (response.status === 502 || response.status === 503 || response.status === 504) &&
+      attempt < maxRetries
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)));
+      continue;
+    }
+
+    if (!response.ok) {
+      let errorDetail = `Erro HTTP ${response.status}`;
+      try {
+        const errBody = await response.json();
+        if (typeof errBody?.detail === "string") {
+          errorDetail = errBody.detail;
+        } else if (Array.isArray(errBody?.detail)) {
+          errorDetail = errBody.detail.map((d: { msg?: string }) => d.msg).join("; ");
+        }
+      } catch {
+      }
+      throw new Error(errorDetail);
+    }
+
+    return (await response.json()) as T;
   }
 
-  return (await response.json()) as T;
+  throw new Error("Serviço temporariamente indisponível.");
 }
 
 export const authApi = {
@@ -129,7 +151,7 @@ export const catalogApi = {
       params.set("limit", String(limit));
     }
     const qs = params.toString() ? `?${params.toString()}` : "";
-    return apiRequest<CatalogItem[]>(`/catalog${qs}`);
+    return apiRequest<CatalogItem[]>(`/catalog${qs}`, {}, 3);
   },
 };
 

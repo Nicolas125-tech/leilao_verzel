@@ -180,6 +180,7 @@ async def fetch_external_artworks(
         "has_image": 1,
         "limit": limit,
         "skip": skip,
+        "fields": "id,title,creators,creation_date,technique,measurements,culture,department,images",
     }
 
     url = settings.CLEVELAND_ART_API_BASE_URL
@@ -212,15 +213,21 @@ async def fetch_external_artworks(
     results: list[dict[str, Any]] = []
 
     for item in data:
-        images = item.get("images") or {}
-        web_image = images.get("web") or {}
+        if not isinstance(item, dict):
+            continue
+        images = item.get("images")
+        if not isinstance(images, dict):
+            continue
+        web_image = images.get("web")
+        if not isinstance(web_image, dict):
+            continue
         image_url = web_image.get("url")
         if not image_url:
             continue
 
         creators = item.get("creators") or []
-        if creators and isinstance(creators, list):
-            raw_desc = creators[0].get("description") or ""
+        if creators and isinstance(creators, list) and isinstance(creators[0], dict):
+            raw_desc = str(creators[0].get("description") or "")
             artist = re.sub(r"\s*\([^)]*\)", "", raw_desc).strip() or "Artista Desconhecido"
         else:
             artist = "Artista Desconhecido"
@@ -331,7 +338,7 @@ async def search_catalog(
             if artworks:
                 await _save_cache_entry(db, cache_key, query, artworks)
                 return artworks
-        except (httpx.HTTPError, httpx.TimeoutException) as exc:
+        except (httpx.HTTPError, httpx.TimeoutException, ValueError) as exc:
             circuit_breaker.record_failure()
             logger.warning(
                 "Falha ao consultar catálogo externo (circuit=%s), acionando contingência: %s",
