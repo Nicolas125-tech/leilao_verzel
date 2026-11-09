@@ -15,7 +15,21 @@ import type {
   WalletTransaction,
 } from "../types/api.ts";
 
-const RAW_API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/+$/, "") || "";
+function resolveApiBaseUrl(): string {
+  const envUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+  if (envUrl) {
+    return envUrl.replace(/\/+$/, "");
+  }
+  if (typeof window !== "undefined") {
+    const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    if (!isLocalhost) {
+      return "https://leilao-verzel.onrender.com";
+    }
+  }
+  return "";
+}
+
+const RAW_API_URL = resolveApiBaseUrl();
 const API_BASE = `${RAW_API_URL}/api/v1`;
 const TOKEN_STORAGE_KEY = "verzel_token";
 
