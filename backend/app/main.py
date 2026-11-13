@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal, engine, get_db
-from app.models.base import Base
+from app.models.base import Base, utc_now
 import app.models.lot  # noqa: F401
 import app.models.user  # noqa: F401
 import app.models.wallet  # noqa: F401
@@ -105,6 +105,17 @@ async def stream_auction_lot_bids(websocket: WebSocket, lot_id: UUID):
         ws_manager.disconnect(lot_id, websocket)
 
 
+@app.get("/")
+async def root():
+    return {
+        "service": "Casa de Leilões Verzel API",
+        "version": "0.1.0",
+        "status": "online",
+        "docs": "/docs",
+        "health": "/health",
+    }
+
+
 @app.get("/health")
 async def check_auction_system_health(db: AsyncSession = Depends(get_db)):
     database_connected = True
@@ -119,4 +130,5 @@ async def check_auction_system_health(db: AsyncSession = Depends(get_db)):
         "database": "connected" if database_connected else "disconnected",
         "environment": settings.ENVIRONMENT,
         "service": "verzel-auction-api",
+        "timestamp": utc_now().isoformat(),
     }
