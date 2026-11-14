@@ -231,9 +231,19 @@ export const ShowcasePage: React.FC = () => {
       {errorMsg && (
         <div
           role="alert"
-          className="mt-6 rounded-sm border border-status-outbid bg-status-outbid/10 px-4 py-3 text-sm text-status-outbid"
+          className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-status-outbid bg-status-outbid/10 px-4 py-3 text-sm text-status-outbid"
         >
-          {errorMsg}
+          <div className="flex items-center gap-2">
+            <span aria-hidden="true">⚠️</span>
+            <span>{errorMsg}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => void loadLots()}
+            className="rounded-sm border border-status-outbid bg-paper-surface dark:bg-charcoal-surface px-3 py-1 text-xs font-semibold uppercase tracking-wider text-status-outbid hover:bg-status-outbid hover:text-white transition-colors"
+          >
+            Tentar novamente
+          </button>
         </div>
       )}
 
