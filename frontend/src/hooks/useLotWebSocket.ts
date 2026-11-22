@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAuth } from "../context/AuthContext.tsx";
 import { useWallet } from "../context/WalletContext.tsx";
 import { lotsApi } from "../services/api.ts";
 import type { Bid, CertificateSummary, Lot } from "../types/api.ts";
@@ -16,7 +17,6 @@ interface WsNewBidMessage {
   title?: string;
   current_bid_cents?: number;
   bid_count?: number;
-  leader_user_id?: string | null;
   leader_masked_name?: string | null;
   lot_end_time?: string;
   extension_count?: number;
@@ -55,6 +55,7 @@ const calculateBackoffWithJitter = (retryCount: number): number => {
 };
 
 export function useLotWebSocket(lotId: string | undefined): UseLotWebSocketResult {
+  const { user } = useAuth();
   const { refreshWallet } = useWallet();
 
   const [lotData, setLotData] = useState<Lot | null>(null);
@@ -67,6 +68,11 @@ export function useLotWebSocket(lotId: string | undefined): UseLotWebSocketResul
   const reconnectTimerRef = useRef<number | null>(null);
   const retryCountRef = useRef<number>(0);
   const isMountedRef = useRef<boolean>(true);
+  const userRef = useRef(user);
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   const reloadLot = useCallback(async () => {
     if (!lotId) return;
@@ -91,7 +97,7 @@ export function useLotWebSocket(lotId: string | undefined): UseLotWebSocketResul
 
   useEffect(() => {
     void reloadLot();
-  }, [reloadLot]);
+  }, [reloadLot, user?.id]);
 
   useEffect(() => {
     if (!lotId) return;
@@ -134,11 +140,22 @@ export function useLotWebSocket(lotId: string | undefined): UseLotWebSocketResul
           switch (payload.event) {
             case "NEW_BID": {
               const incomingBid = payload.bid;
-              if (incomingBid) {
+              const activeUser = userRef.current;
+              const bidIsOwn = Boolean(
+                activeUser &&
+                  incomingBid &&
+                  (incomingBid.is_own_bid ||
+                    incomingBid.bidder_masked_name === activeUser.masked_name),
+              );
+              const normalizedBid = incomingBid
+                ? { ...incomingBid, is_own_bid: bidIsOwn }
+                : undefined;
+
+              if (normalizedBid) {
                 setBidsHistory((prev) => {
-                  const alreadyRegistered = prev.some((b) => b.id === incomingBid.id);
+                  const alreadyRegistered = prev.some((b) => b.id === normalizedBid.id);
                   if (alreadyRegistered) return prev;
-                  return [incomingBid, ...prev].sort(
+                  return [normalizedBid, ...prev].sort(
                     (a, b) => b.sequence_number - a.sequence_number,
                   );
                 });
@@ -146,31 +163,32 @@ export function useLotWebSocket(lotId: string | undefined): UseLotWebSocketResul
 
               setLotData((prev) => {
                 if (!prev) return prev;
+                const nextLeaderMasked =
+                  payload.leader_masked_name ??
+                  normalizedBid?.bidder_masked_name ??
+                  prev.leader_masked_name;
                 return {
                   ...prev,
                   status: "LIVE",
                   current_bid_cents:
                     payload.current_bid_cents ??
-                    incomingBid?.amount_cents ??
+                    normalizedBid?.amount_cents ??
                     prev.current_bid_cents,
                   bid_count:
                     payload.bid_count ??
-                    incomingBid?.sequence_number ??
+                    normalizedBid?.sequence_number ??
                     prev.bid_count + 1,
-                  leader_user_id:
-                    payload.leader_user_id ??
-                    incomingBid?.user_id ??
-                    prev.leader_user_id,
-                  leader_masked_name:
-                    payload.leader_masked_name ??
-                    incomingBid?.bidder_masked_name ??
-                    prev.leader_masked_name,
+                  leader_masked_name: nextLeaderMasked,
+                  is_user_leading: Boolean(
+                    activeUser && nextLeaderMasked === activeUser.masked_name,
+                  ),
+                  has_user_participated: prev.has_user_participated || bidIsOwn,
                   end_time: payload.lot_end_time ?? prev.end_time,
                   extension_count:
                     payload.extension_count ?? prev.extension_count,
                   head_hash:
                     payload.current_hash ??
-                    incomingBid?.current_hash ??
+                    normalizedBid?.current_hash ??
                     prev.head_hash,
                 };
               });

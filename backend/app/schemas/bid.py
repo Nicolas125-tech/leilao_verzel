@@ -12,7 +12,6 @@ class BidResponse(BaseModel):
 
     id: UUID
     lot_id: UUID
-    user_id: UUID
     bidder_masked_name: str
     sequence_number: int
     amount_cents: int
@@ -20,3 +19,4 @@ class BidResponse(BaseModel):
     current_hash: str
     extension_triggered: bool
     created_at: datetime
+    is_own_bid: bool = False

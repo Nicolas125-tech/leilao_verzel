@@ -18,7 +18,8 @@ from app.models.base import utc_now
 from app.models.lot import Bid, Lot
 from app.models.user import User
 from app.models.wallet import Wallet, WalletTransaction
-from app.schemas.bid import BidCreateRequest, BidResponse
+from app.schemas.bid import BidCreateRequest
+from app.schemas.lot import serialize_bid
 from app.services.audit import build_lot_seal, verify_lot_integrity
 from app.services.lots import ensure_utc, resolve_lot_status
 from app.services.websocket import ws_manager
@@ -255,14 +256,13 @@ async def place_bid(
             bidder.masked_name,
         )
 
-        bid_payload = BidResponse.model_validate(new_bid).model_dump(mode="json")
+        bid_payload = serialize_bid(new_bid, viewer_user_id=None).model_dump(mode="json")
         lot_summary = {
             "lot_id": str(lot.id),
             "lot_number": lot.lot_number,
             "title": lot.title,
             "current_bid_cents": lot.current_bid_cents,
             "bid_count": lot.bid_count,
-            "leader_user_id": str(lot.leader_user_id) if lot.leader_user_id else None,
             "leader_masked_name": lot.leader_masked_name,
             "lot_end_time": format_utc_iso(lot.end_time),
             "extension_count": lot.extension_count,

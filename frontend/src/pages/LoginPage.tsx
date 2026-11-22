@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { VerzelEmblem } from "../components/VerzelEmblem.tsx";
 import { SEED_ACCOUNTS, useAuth, type SeedAccountPreset } from "../context/AuthContext.tsx";
-import type { UserRole } from "../types/api.ts";
 
 export const LoginPage: React.FC = () => {
   const { login, register, quickSeedLogin } = useAuth();
@@ -12,7 +11,6 @@ export const LoginPage: React.FC = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("BIDDER");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -24,7 +22,7 @@ export const LoginPage: React.FC = () => {
       const loggedUser =
         mode === "login"
           ? await login(email, password)
-          : await register(name, email, password, role);
+          : await register(name, email, password);
       navigate(loggedUser.role === "AUCTIONEER" ? "/auctioneer" : "/");
     } catch (err) {
       setErrorMsg(
@@ -172,22 +170,6 @@ export const LoginPage: React.FC = () => {
                 className="mt-1.5 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3.5 text-sm focus:border-gold focus:outline-none"
               />
             </div>
-
-            {mode === "register" && (
-              <div>
-                <label className="block text-xs font-medium uppercase tracking-wider text-paper-subtext dark:text-charcoal-subtext">
-                  Tipo de conta
-                </label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as UserRole)}
-                  className="mt-1.5 h-[42px] w-full rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-3.5 text-sm focus:border-gold focus:outline-none"
-                >
-                  <option value="BIDDER">Licitante (Comprador)</option>
-                  <option value="AUCTIONEER">Leiloeiro (Publicador de lotes)</option>
-                </select>
-              </div>
-            )}
 
             <button
               type="submit"

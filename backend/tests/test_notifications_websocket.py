@@ -12,6 +12,7 @@ from app.core.database import get_db
 from app.main import app
 from app.models.base import Base
 from app.models.lot import Lot
+from tests.conftest import create_auctioneer
 
 
 @pytest_asyncio.fixture
@@ -110,8 +111,8 @@ async def test_outbid_notification_emitted_to_previous_leader_via_websocket(
     client: httpx.AsyncClient,
     db_session: AsyncSession,
 ):
-    auctioneer = await _register_and_fund(
-        client, "Helena Leiloeira", "helena@verzel.com.br", "AUCTIONEER"
+    auctioneer = await create_auctioneer(
+        db_session, "Helena Leiloeira", "helena@verzel.com.br"
     )
     user_a = await _register_and_fund(
         client, "Licitante A", "licitante_a@verzel.com.br", "BIDDER", 50000
@@ -199,8 +200,8 @@ async def test_anti_sniping_broadcasts_lot_extended(
     client: httpx.AsyncClient,
     db_session: AsyncSession,
 ):
-    auctioneer = await _register_and_fund(
-        client, "Helena Leiloeira", "helena_anti@verzel.com.br", "AUCTIONEER"
+    auctioneer = await create_auctioneer(
+        db_session, "Helena Leiloeira", "helena_anti@verzel.com.br"
     )
     bidder = await _register_and_fund(
         client, "Licitante C", "licitante_c@verzel.com.br", "BIDDER", 50000

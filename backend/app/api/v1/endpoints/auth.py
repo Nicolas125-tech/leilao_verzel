@@ -20,6 +20,12 @@ async def register(
     payload: UserRegisterRequest,
     db: AsyncSession = Depends(get_db),
 ):
+    if payload.role != "BIDDER":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="O cadastro público está disponível apenas para licitantes (BIDDER).",
+        )
+
     existing_user_query = await db.execute(select(User).where(User.email == payload.email))
     if existing_user_query.scalar_one_or_none():
         raise HTTPException(
@@ -28,7 +34,7 @@ async def register(
         )
 
     user_id = uuid.uuid4()
-    public_code = generate_public_code(user_id, payload.role)
+    public_code = generate_public_code(user_id, "BIDDER")
     masked = mask_name(payload.name, public_code)
     hashed_pwd = hash_password(payload.password)
 
@@ -37,7 +43,7 @@ async def register(
         name=payload.name,
         email=payload.email,
         password_hash=hashed_pwd,
-        role=payload.role,
+        role="BIDDER",
         public_code=public_code,
         masked_name=masked,
     )

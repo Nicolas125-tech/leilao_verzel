@@ -14,6 +14,7 @@ from app.models.base import Base
 from app.models.lot import Lot
 from app.models.wallet import Wallet
 from app.services.audit import build_lot_seal
+from tests.conftest import create_auctioneer
 
 
 @pytest_asyncio.fixture
@@ -120,7 +121,7 @@ async def test_lot_settlement_transfers_balance_and_creates_signed_receipt(
     client: httpx.AsyncClient,
     db_session: AsyncSession,
 ):
-    auctioneer = await _register_and_fund(client, "Helena Leiloeira", "helena@verzel.com.br", "AUCTIONEER")
+    auctioneer = await create_auctioneer(db_session, "Helena Leiloeira", "helena@verzel.com.br")
     bidder = await _register_and_fund(client, "Nicolas Brito", "nicolas@verzel.com.br", "BIDDER", 400000)
 
     lot = await _create_live_lot(client, auctioneer["access_token"])
@@ -188,7 +189,7 @@ async def test_public_receipt_consultation(
     client: httpx.AsyncClient,
     db_session: AsyncSession,
 ):
-    auctioneer = await _register_and_fund(client, "Helena Leiloeira", "helena@verzel.com.br", "AUCTIONEER")
+    auctioneer = await create_auctioneer(db_session, "Helena Leiloeira", "helena@verzel.com.br")
     bidder = await _register_and_fund(client, "Nicolas Brito", "nicolas@verzel.com.br", "BIDDER", 300000)
 
     lot = await _create_live_lot(client, auctioneer["access_token"], title="The Bedroom", artist="Vincent van Gogh")
@@ -223,7 +224,7 @@ async def test_bidder_bids_and_wins_listing(
     client: httpx.AsyncClient,
     db_session: AsyncSession,
 ):
-    auctioneer = await _register_and_fund(client, "Helena Leiloeira", "helena@verzel.com.br", "AUCTIONEER")
+    auctioneer = await create_auctioneer(db_session, "Helena Leiloeira", "helena@verzel.com.br")
     bidder1 = await _register_and_fund(client, "Nicolas Brito", "nicolas@verzel.com.br", "BIDDER", 800000)
     bidder2 = await _register_and_fund(client, "Marina Silva", "marina@verzel.com.br", "BIDDER", 800000)
 
@@ -282,7 +283,7 @@ async def test_auctioneer_dashboard(
     client: httpx.AsyncClient,
     db_session: AsyncSession,
 ):
-    auctioneer = await _register_and_fund(client, "Helena Leiloeira", "helena@verzel.com.br", "AUCTIONEER")
+    auctioneer = await create_auctioneer(db_session, "Helena Leiloeira", "helena@verzel.com.br")
     bidder = await _register_and_fund(client, "Nicolas Brito", "nicolas@verzel.com.br", "BIDDER", 500000)
 
     lot1 = await _create_live_lot(client, auctioneer["access_token"], title="Lote Vendido")
@@ -317,7 +318,7 @@ async def test_websocket_lot_events_broadcast(
     client: httpx.AsyncClient,
     db_session: AsyncSession,
 ):
-    auctioneer = await _register_and_fund(client, "Helena Leiloeira", "helena@verzel.com.br", "AUCTIONEER")
+    auctioneer = await create_auctioneer(db_session, "Helena Leiloeira", "helena@verzel.com.br")
     bidder = await _register_and_fund(client, "Nicolas Brito", "nicolas@verzel.com.br", "BIDDER", 500000)
 
     lot = await _create_live_lot(client, auctioneer["access_token"])
@@ -336,6 +337,9 @@ async def test_websocket_lot_events_broadcast(
             assert msg1["event"] == "NEW_BID"
             assert msg1["lot_id"] == lot_id
             assert msg1["bid"]["amount_cents"] == 110000
+            assert "user_id" not in msg1["bid"]
+            assert "leader_user_id" not in msg1
+            assert "leader_user_id" not in msg1["lot"]
 
             await _expire_lot_in_db(db_session, lot_id)
             await client.get(f"/api/v1/lots/{lot_id}")
@@ -344,6 +348,8 @@ async def test_websocket_lot_events_broadcast(
             assert msg2["event"] == "LOT_SETTLED"
             assert msg2["lot_id"] == lot_id
             assert msg2["certificate"]["receipt_code"].startswith("ARP-")
+            assert "winner_user_id" not in msg2["certificate"]
+            assert "auctioneer_user_id" not in msg2["certificate"]
 
 
 
@@ -354,7 +360,7 @@ async def test_settle_expired_lots_sweep(
 ):
     from app.services.settlement import settle_expired_lots
 
-    auctioneer = await _register_and_fund(client, "Helena Leiloeira", "helena2@verzel.com.br", "AUCTIONEER")
+    auctioneer = await create_auctioneer(db_session, "Helena Leiloeira", "helena2@verzel.com.br")
     bidder = await _register_and_fund(client, "Nicolas Brito", "nicolas2@verzel.com.br", "BIDDER", 500000)
 
     lot = await _create_live_lot(client, auctioneer["access_token"], title="Obra Expirada")

@@ -94,9 +94,11 @@ export const LiveAuctionPage: React.FC = () => {
     );
   }
 
-  const isLeader = Boolean(user && lotData.leader_user_id === user.id);
+  const isLeader = Boolean(user && lotData.is_user_leading);
   const hasParticipated = Boolean(
-    user && bidsHistory.some((b) => b.user_id === user.id),
+    user &&
+      (lotData.has_user_participated ||
+        bidsHistory.some((b) => b.is_own_bid)),
   );
   const isOutbid = hasParticipated && !isLeader;
 

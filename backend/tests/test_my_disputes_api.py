@@ -11,6 +11,7 @@ from app.main import app
 from app.models.base import Base
 from app.models.lot import Lot
 from app.services.audit import build_lot_seal
+from tests.conftest import create_auctioneer
 
 
 @pytest_asyncio.fixture
@@ -118,11 +119,10 @@ async def test_my_disputes_endpoint_classifies_winning_outbid_and_lost(
     client: httpx.AsyncClient,
     db_session: AsyncSession,
 ):
-    auctioneer = await _register_and_fund(
-        client,
+    auctioneer = await create_auctioneer(
+        db_session,
         name="Helena Curadora",
         email="helena@verzel.com.br",
-        role="AUCTIONEER",
     )
     bidder1 = await _register_and_fund(
         client,

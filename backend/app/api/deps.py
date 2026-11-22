@@ -12,52 +12,53 @@ from app.models.user import User
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-async def get_current_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
-    db: AsyncSession = Depends(get_db),
-) -> User:
+async def _resolve_user_from_credentials(
+    credentials: HTTPAuthorizationCredentials | None,
+    db: AsyncSession,
+) -> tuple[User | None, str | None]:
     if not credentials or not credentials.credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token de autenticação ausente.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        return None, "Token de autenticação ausente."
 
-    token = credentials.credentials
-    payload = decode_access_token(token)
+    payload = decode_access_token(credentials.credentials)
     if not payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token de autenticação inválido ou expirado.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        return None, "Token de autenticação inválido ou expirado."
 
     user_id_str = payload.get("sub")
     if not user_id_str:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token malformado.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        return None, "Token malformado."
 
     try:
         user_uuid = UUID(user_id_str)
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Identificador de usuário inválido no token.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        return None, "Identificador de usuário inválido no token."
 
     result = await db.execute(select(User).where(User.id == user_uuid))
     user = result.scalar_one_or_none()
     if not user:
+        return None, "Usuário não encontrado."
+
+    return user, None
+
+
+async def get_optional_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> User | None:
+    user, _ = await _resolve_user_from_credentials(credentials, db)
+    return user
+
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    user, error_detail = await _resolve_user_from_credentials(credentials, db)
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuário não encontrado.",
+            detail=error_detail or "Token de autenticação inválido.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
     return user
 
 

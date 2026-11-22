@@ -56,7 +56,6 @@ interface AuthContextValue {
     name: string,
     email: string,
     password: string,
-    role: UserRole,
   ) => Promise<User>;
   quickSeedLogin: (preset: SeedAccountPreset) => Promise<User>;
   logout: () => void;
@@ -104,9 +103,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     name: string,
     email: string,
     password: string,
-    role: UserRole,
   ): Promise<User> => {
-    const res = await authApi.register(name, email, password, role);
+    const res = await authApi.register(name, email, password);
     setStoredToken(res.access_token);
     setUser(res.user);
     return res.user;

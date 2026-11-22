@@ -2,13 +2,19 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import require_auctioneer, require_bidder
+from app.api.deps import get_optional_current_user, require_auctioneer, require_bidder
 from app.core.database import get_db
 from app.core.rate_limit import rate_limiter
 from app.models.user import User
 from app.schemas.audit import AuditChainResponse
 from app.schemas.bid import BidCreateRequest, BidResponse
-from app.schemas.lot import LotCreateRequest, LotResponse, MyDisputesResponse
+from app.schemas.lot import (
+    LotCreateRequest,
+    LotResponse,
+    MyDisputesResponse,
+    serialize_bid,
+    serialize_lot,
+)
 from app.services.audit import audit_lot_bid_chain
 from app.services.bidding import place_bid
 from app.services.lots import (
@@ -29,17 +35,19 @@ async def create_new_lot(
     db: AsyncSession = Depends(get_db),
 ):
     lot = await create_lot(db=db, auctioneer=current_user, payload=payload)
-    return LotResponse.model_validate(lot)
+    return serialize_lot(lot, current_user.id)
 
 
 @router.get("", response_model=list[LotResponse])
 async def get_public_lots(
     status: str | None = Query(default=None, description="Filtro por status: LIVE, SCHEDULED, ENDED"),
     q: str | None = Query(default=None, description="Busca por título, artista ou técnica"),
+    current_user: User | None = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     lots = await list_public_lots(db=db, status_filter=status, query_text=q)
-    return [LotResponse.model_validate(item) for item in lots]
+    viewer_id = current_user.id if current_user else None
+    return [serialize_lot(item, viewer_id) for item in lots]
 
 
 @router.get("/my-disputes", response_model=MyDisputesResponse)
@@ -53,10 +61,12 @@ async def get_current_user_disputes(
 @router.get("/{lot_id}", response_model=LotResponse)
 async def get_lot_detail(
     lot_id: UUID,
+    current_user: User | None = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     lot = await get_lot_by_id(db=db, lot_id=lot_id)
-    return LotResponse.model_validate(lot)
+    viewer_id = current_user.id if current_user else None
+    return serialize_lot(lot, viewer_id)
 
 
 @router.post("/{lot_id}/cancel", response_model=LotResponse)
@@ -66,7 +76,7 @@ async def cancel_existing_lot(
     db: AsyncSession = Depends(get_db),
 ):
     lot = await cancel_lot(db=db, auctioneer=current_user, lot_id=lot_id)
-    return LotResponse.model_validate(lot)
+    return serialize_lot(lot, current_user.id)
 
 
 @router.post("/{lot_id}/bids", response_model=BidResponse, status_code=status.HTTP_201_CREATED)
@@ -83,7 +93,7 @@ async def submit_bid(
         detail="Limite de lances excedido (máximo de 30 por minuto). Aguarde antes de enviar uma nova oferta.",
     )
     bid = await place_bid(db=db, bidder=current_user, lot_id=lot_id, payload=payload)
-    return BidResponse.model_validate(bid)
+    return serialize_bid(bid, current_user.id)
 
 
 @router.get("/{lot_id}/audit", response_model=AuditChainResponse)

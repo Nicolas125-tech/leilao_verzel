@@ -18,18 +18,18 @@ from app.models.lot import Bid, Lot, WinningCertificate
 from app.models.wallet import Wallet
 from app.services.audit import LotIntegrityError, build_lot_seal
 from app.services.settlement import settle_expired_lots, settle_lot
+from tests.conftest import create_auctioneer
 from tests.test_audit import _create_live_lot, _register_and_fund, client, db_session
 
 
 PSEUDONYM_PATTERN = re.compile(r"^LICITANTE-[0-9A-F]{6,10}$")
 
 
-async def _seed_lot_with_three_bids(client: httpx.AsyncClient) -> dict:
-    auctioneer = await _register_and_fund(
-        client,
+async def _seed_lot_with_three_bids(client: httpx.AsyncClient, db_session: AsyncSession) -> dict:
+    auctioneer = await create_auctioneer(
+        db_session,
         "Helena Curadora",
         "helena.curadora@verzel.com.br",
-        "AUCTIONEER",
     )
     bidder_1 = await _register_and_fund(
         client,
@@ -76,8 +76,11 @@ async def _seed_lot_with_three_bids(client: httpx.AsyncClient) -> dict:
 
 
 @pytest.mark.asyncio
-async def test_intact_audit_chain_and_pseudonym_privacy(client: httpx.AsyncClient):
-    seeded = await _seed_lot_with_three_bids(client)
+async def test_intact_audit_chain_and_pseudonym_privacy(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    seeded = await _seed_lot_with_three_bids(client, db_session)
     lot_id = seeded["lot_id"]
 
     audit_resp = await client.get(f"/api/v1/lots/{lot_id}/audit")
@@ -113,7 +116,7 @@ async def test_sql_tampering_on_node_2_invalidates_node_2_and_subsequent_nodes(
     client: httpx.AsyncClient,
     db_session: AsyncSession,
 ):
-    seeded = await _seed_lot_with_three_bids(client)
+    seeded = await _seed_lot_with_three_bids(client, db_session)
     lot_id = seeded["lot_id"]
 
     await db_session.execute(
@@ -144,7 +147,7 @@ async def test_sql_forging_unkeyed_sha256_chain_still_fails_hmac_audit(
     client: httpx.AsyncClient,
     db_session: AsyncSession,
 ):
-    seeded = await _seed_lot_with_three_bids(client)
+    seeded = await _seed_lot_with_three_bids(client, db_session)
     lot_id = UUID(seeded["lot_id"])
 
     bids_res = await db_session.execute(
@@ -190,7 +193,7 @@ async def test_deleting_last_bid_and_updating_head_detected_by_lot_seal(
     client: httpx.AsyncClient,
     db_session: AsyncSession,
 ):
-    seeded = await _seed_lot_with_three_bids(client)
+    seeded = await _seed_lot_with_three_bids(client, db_session)
     lot_id = UUID(seeded["lot_id"])
 
     bids_res = await db_session.execute(
@@ -218,7 +221,7 @@ async def test_tampering_auctioneer_or_end_time_blocks_bidding_cancel_and_settle
     client: httpx.AsyncClient,
     db_session: AsyncSession,
 ):
-    seeded = await _seed_lot_with_three_bids(client)
+    seeded = await _seed_lot_with_three_bids(client, db_session)
     lot_id = UUID(seeded["lot_id"])
     bidder_2_token = seeded["bidder_2"]["access_token"]
     auctioneer_token = seeded["auctioneer"]["access_token"]

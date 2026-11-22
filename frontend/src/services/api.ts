@@ -10,7 +10,6 @@ import type {
   PublicReceipt,
   TokenResponse,
   User,
-  UserRole,
   Wallet,
   WalletTransaction,
 } from "../types/api.ts";
@@ -122,11 +121,10 @@ export const authApi = {
     name: string,
     email: string,
     password: string,
-    role: UserRole,
   ): Promise<TokenResponse> {
     return apiRequest<TokenResponse>("/auth/register", {
       method: "POST",
-      body: JSON.stringify({ name, email, password, role }),
+      body: JSON.stringify({ name, email, password }),
     });
   },
 

@@ -11,6 +11,7 @@ from app.core.database import get_db
 from app.main import app
 from app.models.base import Base
 from app.models.lot import Bid
+from tests.conftest import create_auctioneer
 
 
 @pytest_asyncio.fixture
@@ -105,8 +106,8 @@ async def _create_live_lot(
 
 
 @pytest.mark.asyncio
-async def test_audit_empty_lot(client: httpx.AsyncClient):
-    auctioneer = await _register_and_fund(client, "Helena Leiloeira", "helena@verzel.com.br", "AUCTIONEER")
+async def test_audit_empty_lot(client: httpx.AsyncClient, db_session: AsyncSession):
+    auctioneer = await create_auctioneer(db_session, "Helena Leiloeira", "helena@verzel.com.br")
     lot = await _create_live_lot(client, auctioneer["access_token"])
     lot_id = lot["id"]
 
@@ -125,8 +126,8 @@ async def test_audit_empty_lot(client: httpx.AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_audit_valid_bid_chain(client: httpx.AsyncClient):
-    auctioneer = await _register_and_fund(client, "Helena Leiloeira", "helena@verzel.com.br", "AUCTIONEER")
+async def test_audit_valid_bid_chain(client: httpx.AsyncClient, db_session: AsyncSession):
+    auctioneer = await create_auctioneer(db_session, "Helena Leiloeira", "helena@verzel.com.br")
     bidder1 = await _register_and_fund(client, "Nicolas Brito", "nicolas@verzel.com.br", "BIDDER", 600000)
     bidder2 = await _register_and_fund(client, "Marina Silva", "marina@verzel.com.br", "BIDDER", 600000)
 
@@ -177,7 +178,7 @@ async def test_audit_tampered_bid_detection(
     client: httpx.AsyncClient,
     db_session: AsyncSession,
 ):
-    auctioneer = await _register_and_fund(client, "Helena Leiloeira", "helena@verzel.com.br", "AUCTIONEER")
+    auctioneer = await create_auctioneer(db_session, "Helena Leiloeira", "helena@verzel.com.br")
     bidder1 = await _register_and_fund(client, "Nicolas Brito", "nicolas@verzel.com.br", "BIDDER", 600000)
     bidder2 = await _register_and_fund(client, "Marina Silva", "marina@verzel.com.br", "BIDDER", 600000)
 
@@ -220,8 +221,8 @@ async def test_audit_tampered_bid_detection(
 
 
 @pytest.mark.asyncio
-async def test_audit_route_is_public(client: httpx.AsyncClient):
-    auctioneer = await _register_and_fund(client, "Helena Leiloeira", "helena@verzel.com.br", "AUCTIONEER")
+async def test_audit_route_is_public(client: httpx.AsyncClient, db_session: AsyncSession):
+    auctioneer = await create_auctioneer(db_session, "Helena Leiloeira", "helena@verzel.com.br")
     lot = await _create_live_lot(client, auctioneer["access_token"])
     lot_id = lot["id"]
 

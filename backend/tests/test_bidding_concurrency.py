@@ -11,6 +11,7 @@ from app.core.database import get_db
 from app.main import app
 from app.models.base import Base
 from app.services.bidding import lock_wallets
+from tests.conftest import create_auctioneer
 
 
 @pytest_asyncio.fixture
@@ -110,10 +111,12 @@ async def _create_open_lot(
 @pytest.mark.asyncio
 async def test_massive_concurrent_bidding_preserves_financial_and_lot_integrity(
     client: httpx.AsyncClient,
+    session_factory: async_sessionmaker[AsyncSession],
 ):
-    auctioneer = await _register_and_fund(
-        client, "Curador Verzel", "curador_stress@verzel.com.br", "AUCTIONEER"
-    )
+    async with session_factory() as s:
+        auctioneer = await create_auctioneer(
+            s, "Curador Verzel", "curador_stress@verzel.com.br"
+        )
     bidders = [
         await _register_and_fund(
             client,
@@ -176,6 +179,8 @@ async def test_massive_concurrent_bidding_preserves_financial_and_lot_integrity(
     lot_after = (await client.get(f"/api/v1/lots/{lot_id}")).json()
     assert lot_after["current_bid_cents"] == highest_accepted_amount
     assert lot_after["bid_count"] == len(accepted_bids)
+    assert "leader_user_id" not in lot_after
+    assert "auctioneer_id" not in lot_after
 
     audit_resp = await client.get(f"/api/v1/lots/{lot_id}/audit")
     assert audit_resp.status_code == 200
@@ -185,6 +190,12 @@ async def test_massive_concurrent_bidding_preserves_financial_and_lot_integrity(
 
     wallets = []
     for bidder in bidders:
+        bidder_lot_view = (
+            await client.get(
+                f"/api/v1/lots/{lot_id}",
+                headers={"Authorization": f"Bearer {bidder['access_token']}"},
+            )
+        ).json()
         w_resp = await client.get(
             "/api/v1/wallet",
             headers={"Authorization": f"Bearer {bidder['access_token']}"},
@@ -199,7 +210,7 @@ async def test_massive_concurrent_bidding_preserves_financial_and_lot_integrity(
             == w_data["committed_balance_cents"] + w_data["available_balance_cents"]
         )
 
-        if bidder["user"]["id"] == lot_after["leader_user_id"]:
+        if bidder_lot_view["is_user_leading"]:
             assert w_data["committed_balance_cents"] == highest_accepted_amount
             assert w_data["available_balance_cents"] == 500000 - highest_accepted_amount
         else:

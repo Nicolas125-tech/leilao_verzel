@@ -15,6 +15,7 @@ from app.services.catalog import (
     STALE_CACHE_NOTICE,
     CatalogCircuitBreaker,
 )
+from tests.conftest import create_auctioneer
 
 
 @pytest_asyncio.fixture
@@ -261,18 +262,14 @@ async def test_catastrophic_outage_without_prior_cache_returns_local_fallback_20
 @pytest.mark.asyncio
 async def test_lot_creation_persists_immutable_artwork_snapshot_independent_of_external_api(
     client: httpx.AsyncClient,
+    db_session: AsyncSession,
 ):
-    reg = await client.post(
-        "/api/v1/auth/register",
-        json={
-            "name": "Curador Resiliencia",
-            "email": "curador_resiliencia@verzel.com.br",
-            "password": "StrongPassword123",
-            "role": "AUCTIONEER",
-        },
+    reg = await create_auctioneer(
+        db_session,
+        "Curador Resiliencia",
+        "curador_resiliencia@verzel.com.br",
     )
-    assert reg.status_code == 201
-    token = reg.json()["access_token"]
+    token = reg["access_token"]
 
     now = datetime.now(timezone.utc)
     create_resp = await client.post(

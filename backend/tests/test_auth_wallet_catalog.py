@@ -1,11 +1,15 @@
+from datetime import datetime, timedelta, timezone
 import httpx
 import pytest
 import pytest_asyncio
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.database import get_db
 from app.main import app
 from app.models.base import Base
+from app.models.user import User
+from tests.conftest import create_auctioneer
 
 
 @pytest_asyncio.fixture
@@ -80,14 +84,36 @@ async def test_register_duplicate_email_returns_conflict(client: httpx.AsyncClie
         "name": "Helena Costa",
         "email": "helena@verzel.com.br",
         "password": "StrongPassword123",
-        "role": "AUCTIONEER",
+        "role": "BIDDER",
     }
     first = await client.post("/api/v1/auth/register", json=payload)
     assert first.status_code == 201
-    assert first.json()["user"]["public_code"].startswith("LEI-")
+    assert first.json()["user"]["public_code"].startswith("LIC-")
 
     duplicate = await client.post("/api/v1/auth/register", json=payload)
     assert duplicate.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_public_register_rejects_auctioneer_role(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    resp = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "name": "Leiloeiro Invasor",
+            "email": "invasor@verzel.com.br",
+            "password": "StrongPassword123",
+            "role": "AUCTIONEER",
+        },
+    )
+    assert resp.status_code == 403
+
+    user = (
+        await db_session.execute(select(User).where(User.email == "invasor@verzel.com.br"))
+    ).scalar_one_or_none()
+    assert user is None
 
 
 @pytest.mark.asyncio
@@ -225,17 +251,12 @@ async def test_deposit_invalid_amount_returns_422(client: httpx.AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_auctioneer_cannot_deposit_or_access_wallet(client: httpx.AsyncClient):
-    reg = await client.post(
-        "/api/v1/auth/register",
-        json={
-            "name": "Carla Leiloeira",
-            "email": "carla.leiloeira@verzel.com.br",
-            "password": "StrongPassword123",
-            "role": "AUCTIONEER",
-        },
-    )
-    token = reg.json()["access_token"]
+async def test_auctioneer_cannot_deposit_or_access_wallet(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    reg = await create_auctioneer(db_session, "Carla Leiloeira", "carla.leiloeira@verzel.com.br")
+    token = reg["access_token"]
 
     wallet_resp = await client.get(
         "/api/v1/wallet",
@@ -286,4 +307,120 @@ async def test_wallet_transactions_chronological_listing(client: httpx.AsyncClie
     assert txs[0]["balance_after_cents"] == 350000
     assert txs[1]["amount_cents"] == 100000
     assert txs[1]["balance_after_cents"] == 100000
+
+
+@pytest.mark.asyncio
+async def test_public_lot_routes_do_not_expose_user_ids_and_return_own_flags(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    auctioneer = await create_auctioneer(db_session, "Helena Curadora", "helena.priv@verzel.com.br")
+    bidder1 = (
+        await client.post(
+            "/api/v1/auth/register",
+            json={
+                "name": "Nicolas Brito",
+                "email": "nicolas.priv@verzel.com.br",
+                "password": "StrongPassword123",
+            },
+        )
+    ).json()
+    bidder2 = (
+        await client.post(
+            "/api/v1/auth/register",
+            json={
+                "name": "Marina Silva",
+                "email": "marina.priv@verzel.com.br",
+                "password": "StrongPassword123",
+            },
+        )
+    ).json()
+
+    for bidder in (bidder1, bidder2):
+        dep = await client.post(
+            "/api/v1/wallet/deposit",
+            headers={"Authorization": f"Bearer {bidder['access_token']}"},
+            json={"amount_cents": 500000},
+        )
+        assert dep.status_code == 200
+
+    now = datetime.now(timezone.utc)
+    lot_resp = await client.post(
+        "/api/v1/lots",
+        headers={"Authorization": f"Bearer {auctioneer['access_token']}"},
+        json={
+            "external_artwork_id": "27992",
+            "title": "Privacy Check Artwork",
+            "artist": "Georges Seurat",
+            "date_display": "1886",
+            "medium_display": "Oil on canvas",
+            "image_url": "/artworks/grande-jatte.svg",
+            "attributes_json": {"origin": "France"},
+            "starting_bid_cents": 100000,
+            "min_increment_cents": 10000,
+            "start_time": (now - timedelta(minutes=10)).isoformat(),
+            "end_time": (now + timedelta(hours=1)).isoformat(),
+        },
+    )
+    assert lot_resp.status_code == 201
+    lot_id = lot_resp.json()["id"]
+
+    b1 = await client.post(
+        f"/api/v1/lots/{lot_id}/bids",
+        headers={"Authorization": f"Bearer {bidder1['access_token']}"},
+        json={"amount_cents": 100000},
+    )
+    assert b1.status_code == 201
+    b2 = await client.post(
+        f"/api/v1/lots/{lot_id}/bids",
+        headers={"Authorization": f"Bearer {bidder2['access_token']}"},
+        json={"amount_cents": 120000},
+    )
+    assert b2.status_code == 201
+
+    sensitive_ids = {
+        auctioneer["user"]["id"],
+        bidder1["user"]["id"],
+        bidder2["user"]["id"],
+    }
+    forbidden_keys = {
+        "user_id",
+        "leader_user_id",
+        "auctioneer_id",
+        "winner_user_id",
+        "auctioneer_user_id",
+    }
+
+    for path in ("/api/v1/lots", f"/api/v1/lots/{lot_id}"):
+        anon_resp = await client.get(path)
+        assert anon_resp.status_code == 200
+        for uid in sensitive_ids:
+            assert uid not in anon_resp.text
+        for key in forbidden_keys:
+            assert f'"{key}"' not in anon_resp.text
+
+    anon_detail = (await client.get(f"/api/v1/lots/{lot_id}")).json()
+    assert anon_detail["is_user_leading"] is False
+    assert anon_detail["has_user_participated"] is False
+    assert all(b["is_own_bid"] is False for b in anon_detail["bids"])
+
+    b2_detail = (
+        await client.get(
+            f"/api/v1/lots/{lot_id}",
+            headers={"Authorization": f"Bearer {bidder2['access_token']}"},
+        )
+    ).json()
+    assert b2_detail["is_user_leading"] is True
+    assert b2_detail["has_user_participated"] is True
+    assert [b["is_own_bid"] for b in b2_detail["bids"]] == [False, True]
+
+    b1_detail = (
+        await client.get(
+            f"/api/v1/lots/{lot_id}",
+            headers={"Authorization": f"Bearer {bidder1['access_token']}"},
+        )
+    ).json()
+    assert b1_detail["is_user_leading"] is False
+    assert b1_detail["has_user_participated"] is True
+    assert [b["is_own_bid"] for b in b1_detail["bids"]] == [True, False]
 

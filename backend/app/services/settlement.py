@@ -18,9 +18,9 @@ from app.schemas.lot import (
     AuctioneerDashboardResponse,
     BidderBidsAndWinsResponse,
     CertificateSummaryResponse,
-    LotResponse,
     ParticipatedLotItem,
     PublicReceiptResponse,
+    serialize_lot,
 )
 from app.services.audit import LotIntegrityError, verify_lot_integrity
 from app.services.websocket import ws_manager
@@ -281,7 +281,7 @@ async def get_bidder_bids_and_wins(
         else:
             user_status = "WINNING" if lot.leader_user_id == bidder.id else "OUTBID"
 
-        lot_resp = LotResponse.model_validate(lot)
+        lot_resp = serialize_lot(lot, bidder.id)
         participated_lots.append(
             ParticipatedLotItem(
                 lot=lot_resp,
@@ -299,7 +299,7 @@ async def get_bidder_bids_and_wins(
         .order_by(Lot.settled_at.desc())
     )
     won_lots_raw = list(won_lots_res.scalars().all())
-    won_lots = [LotResponse.model_validate(l) for l in won_lots_raw]
+    won_lots = [serialize_lot(l, bidder.id) for l in won_lots_raw]
 
     return BidderBidsAndWinsResponse(
         participated_lots=participated_lots,
@@ -335,7 +335,7 @@ async def get_auctioneer_dashboard(
             settled_with_winner_count += 1
             total_revenue_cents += l.current_bid_cents
 
-    lot_responses = [LotResponse.model_validate(l) for l in synced_lots]
+    lot_responses = [serialize_lot(l, auctioneer.id) for l in synced_lots]
 
     return AuctioneerDashboardResponse(
         total_revenue_cents=total_revenue_cents,
