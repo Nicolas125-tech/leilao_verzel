@@ -1,5 +1,6 @@
 import asyncio
 from collections import defaultdict
+from contextlib import nullcontext
 from datetime import timedelta
 import logging
 from uuid import UUID
@@ -53,7 +54,9 @@ async def place_bid(
     lot_id: UUID,
     payload: BidCreateRequest,
 ) -> Bid:
-    async with _lot_locks[lot_id]:
+    bind = db.get_bind()
+    lock_ctx = _lot_locks[lot_id] if bind.dialect.name == "sqlite" else nullcontext()
+    async with lock_ctx:
         lot_query = await db.execute(
             select(Lot)
             .where(Lot.id == lot_id)

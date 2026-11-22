@@ -19,7 +19,7 @@ from app.models.wallet import Wallet
 from app.services.audit import LotIntegrityError, build_lot_seal
 from app.services.settlement import settle_expired_lots, settle_lot
 from tests.conftest import create_auctioneer
-from tests.test_audit import _create_live_lot, _register_and_fund, client, db_session
+from tests.test_audit import _create_live_lot, _register_and_fund
 
 
 PSEUDONYM_PATTERN = re.compile(r"^LICITANTE-[0-9A-F]{6,10}$")

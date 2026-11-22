@@ -3,53 +3,14 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 import httpx
 import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.core.database import get_db
-from app.main import app
-from app.models.base import Base
+from app.core.crypto import GENESIS_HASH
+from app.models.base import utc_now
+from app.models.lot import Bid
 from app.services.bidding import lock_wallets
-from tests.conftest import create_auctioneer
-
-
-@pytest_asyncio.fixture
-async def session_factory():
-    test_engine = create_async_engine(
-        "sqlite+aiosqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        echo=False,
-    )
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    factory = async_sessionmaker(
-        bind=test_engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-        autoflush=False,
-    )
-
-    yield factory
-
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-    await test_engine.dispose()
-
-
-@pytest_asyncio.fixture
-async def client(session_factory: async_sessionmaker[AsyncSession]):
-    async def _override_get_db():
-        async with session_factory() as session:
-            yield session
-
-    app.dependency_overrides[get_db] = _override_get_db
-    transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
-    app.dependency_overrides.clear()
+from tests.conftest import IS_POSTGRES, create_auctioneer
 
 
 async def _register_and_fund(
@@ -186,6 +147,7 @@ async def test_massive_concurrent_bidding_preserves_financial_and_lot_integrity(
     assert audit_resp.status_code == 200
     audit_data = audit_resp.json()
     assert audit_data["is_chain_valid"] is True
+    assert audit_data["is_lot_seal_valid"] is True
     assert audit_data["total_bids"] == len(accepted_bids)
 
     wallets = []
@@ -245,3 +207,115 @@ async def test_lock_wallets_deterministic_ordering_and_deduplication(
         assert locked[uid2].total_balance_cents == 200000
         assert list(locked.keys()) == sorted([uid1, uid2], key=lambda u: str(u))
 
+
+@pytest.mark.skipif(
+    not IS_POSTGRES,
+    reason="Requer PostgreSQL real via TEST_DATABASE_URL para exercitar SELECT ... FOR UPDATE cruzado sem asyncio.Lock",
+)
+@pytest.mark.asyncio
+async def test_cross_lot_concurrent_outbids_no_deadlock(
+    client: httpx.AsyncClient,
+    session_factory: async_sessionmaker[AsyncSession],
+):
+    async with session_factory() as s:
+        auctioneer = await create_auctioneer(
+            s, "Curador Cross", "curador_cross@verzel.com.br"
+        )
+
+    bidder_a = await _register_and_fund(
+        client, "Licitante A", "cross_a@verzel.com.br", "BIDDER", 1_000_000
+    )
+    bidder_b = await _register_and_fund(
+        client, "Licitante B", "cross_b@verzel.com.br", "BIDDER", 1_000_000
+    )
+
+    lot_1 = await _create_open_lot(client, auctioneer["access_token"], 100000, 10000)
+    lot_2 = await _create_open_lot(client, auctioneer["access_token"], 100000, 10000)
+
+    r1 = await client.post(
+        f"/api/v1/lots/{lot_1['id']}/bids",
+        headers={"Authorization": f"Bearer {bidder_a['access_token']}"},
+        json={"amount_cents": 100000},
+    )
+    assert r1.status_code == 201
+    r2 = await client.post(
+        f"/api/v1/lots/{lot_2['id']}/bids",
+        headers={"Authorization": f"Bearer {bidder_b['access_token']}"},
+        json={"amount_cents": 100000},
+    )
+    assert r2.status_code == 201
+
+    # Simultaneous cross-lot outbids: bidder_b outbids bidder_a on lot_1 while bidder_a outbids bidder_b on lot_2.
+    res_b_on_1, res_a_on_2 = await asyncio.gather(
+        client.post(
+            f"/api/v1/lots/{lot_1['id']}/bids",
+            headers={"Authorization": f"Bearer {bidder_b['access_token']}"},
+            json={"amount_cents": 120000},
+        ),
+        client.post(
+            f"/api/v1/lots/{lot_2['id']}/bids",
+            headers={"Authorization": f"Bearer {bidder_a['access_token']}"},
+            json={"amount_cents": 120000},
+        ),
+    )
+
+    assert res_b_on_1.status_code == 201
+    assert res_a_on_2.status_code == 201
+
+    for bidder, expected_leading_lot_id in (
+        (bidder_a, lot_2["id"]),
+        (bidder_b, lot_1["id"]),
+    ):
+        lot_view = (
+            await client.get(
+                f"/api/v1/lots/{expected_leading_lot_id}",
+                headers={"Authorization": f"Bearer {bidder['access_token']}"},
+            )
+        ).json()
+        assert lot_view["is_user_leading"] is True
+
+        wallet_data = (
+            await client.get(
+                "/api/v1/wallet",
+                headers={"Authorization": f"Bearer {bidder['access_token']}"},
+            )
+        ).json()
+        assert wallet_data["total_balance_cents"] == 1_000_000
+        assert wallet_data["committed_balance_cents"] == 120000
+        assert wallet_data["available_balance_cents"] == 880000
+
+
+@pytest.mark.asyncio
+async def test_uq_bid_lot_sequence_prevents_duplicate_sequence(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    auctioneer = await create_auctioneer(db_session, "Curador Seq", "seq_auc@verzel.com.br")
+    bidder = await _register_and_fund(
+        client, "Licitante Seq", "seq_bidder@verzel.com.br", "BIDDER", 500000
+    )
+    lot = await _create_open_lot(client, auctioneer["access_token"], 100000, 10000)
+
+    first_bid = await client.post(
+        f"/api/v1/lots/{lot['id']}/bids",
+        headers={"Authorization": f"Bearer {bidder['access_token']}"},
+        json={"amount_cents": 100000},
+    )
+    assert first_bid.status_code == 201
+
+    duplicate_seq_bid = Bid(
+        lot_id=UUID(lot["id"]),
+        user_id=UUID(bidder["user"]["id"]),
+        bidder_masked_name=bidder["user"]["masked_name"],
+        sequence_number=1,
+        amount_cents=110000,
+        previous_hash=GENESIS_HASH,
+        current_hash="f" * 64,
+        node_signature="e" * 64,
+        extension_triggered=False,
+        created_at=utc_now(),
+    )
+    db_session.add(duplicate_seq_bid)
+    with pytest.raises(IntegrityError):
+        await db_session.commit()
+    await db_session.rollback()

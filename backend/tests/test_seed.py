@@ -2,39 +2,17 @@ from datetime import timedelta
 from unittest.mock import AsyncMock, patch
 import httpx
 import pytest
-import pytest_asyncio
 from sqlalchemy import func, select, update
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.crypto import format_utc_iso, verify_receipt_signature
-from app.models.base import Base, utc_now
+from app.models.base import utc_now
 from app.models.lot import Bid, Lot, WinningCertificate
 from app.models.user import User
 from app.models.wallet import Wallet
 from app.seed import reset_demo_data, run_seed
 from app.services.audit import audit_lot_bid_chain
 from app.services.lots import ensure_utc
-
-
-@pytest_asyncio.fixture
-async def db_session():
-    test_engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    session_factory = async_sessionmaker(
-        bind=test_engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-        autoflush=False,
-    )
-
-    async with session_factory() as session:
-        yield session
-
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-    await test_engine.dispose()
 
 
 @pytest.mark.asyncio
