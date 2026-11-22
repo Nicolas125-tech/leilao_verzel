@@ -2,47 +2,12 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 import httpx
 import pytest
-import pytest_asyncio
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
-from app.main import app
-from app.models.base import Base
 from app.models.lot import Lot
-
-
-@pytest_asyncio.fixture
-async def db_session():
-    test_engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    session_factory = async_sessionmaker(
-        bind=test_engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-        autoflush=False,
-    )
-
-    async with session_factory() as session:
-        yield session
-
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-    await test_engine.dispose()
-
-
-@pytest_asyncio.fixture
-async def client(db_session: AsyncSession):
-    async def _override_get_db():
-        yield db_session
-
-    app.dependency_overrides[get_db] = _override_get_db
-    transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
-    app.dependency_overrides.clear()
+from app.services.audit import build_lot_seal
+from tests.conftest import create_auctioneer
 
 
 async def _register_and_fund(
@@ -108,6 +73,7 @@ async def _expire_lot_in_db(db_session: AsyncSession, lot_id: str) -> None:
     res = await db_session.execute(select(Lot).where(Lot.id == UUID(lot_id)))
     lot_obj = res.scalar_one()
     lot_obj.end_time = datetime.now(timezone.utc) - timedelta(seconds=10)
+    lot_obj.integrity_seal = build_lot_seal(lot_obj)
     await db_session.commit()
 
 
@@ -116,11 +82,10 @@ async def test_my_disputes_endpoint_classifies_winning_outbid_and_lost(
     client: httpx.AsyncClient,
     db_session: AsyncSession,
 ):
-    auctioneer = await _register_and_fund(
-        client,
+    auctioneer = await create_auctioneer(
+        db_session,
         name="Helena Curadora",
         email="helena@verzel.com.br",
-        role="AUCTIONEER",
     )
     bidder1 = await _register_and_fund(
         client,

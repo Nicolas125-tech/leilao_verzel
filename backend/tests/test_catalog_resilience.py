@@ -2,52 +2,17 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch
 import httpx
 import pytest
-import pytest_asyncio
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy import text, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
-from app.main import app
-from app.models.base import Base
+from app.models.lot import CatalogCache
 import app.services.catalog as catalog_service
 from app.services.catalog import (
     LOCAL_FALLBACK_ARTWORKS,
     STALE_CACHE_NOTICE,
     CatalogCircuitBreaker,
 )
-
-
-@pytest_asyncio.fixture
-async def db_session():
-    test_engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    session_factory = async_sessionmaker(
-        bind=test_engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-        autoflush=False,
-    )
-
-    async with session_factory() as session:
-        yield session
-
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-    await test_engine.dispose()
-
-
-@pytest_asyncio.fixture
-async def client(db_session: AsyncSession):
-    async def _override_get_db():
-        yield db_session
-
-    app.dependency_overrides[get_db] = _override_get_db
-    transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
-    app.dependency_overrides.clear()
+from tests.conftest import create_auctioneer
 
 
 @pytest.fixture(autouse=True)
@@ -158,10 +123,7 @@ async def test_slow_external_api_timeout_retries_with_backoff_and_returns_stale_
         assert warm_resp.status_code == 200
 
     past_time = datetime.now(timezone.utc) - timedelta(minutes=15)
-    await db_session.execute(
-        text("UPDATE catalog_cache SET expires_at = :expired_at"),
-        {"expired_at": past_time.isoformat()},
-    )
+    await db_session.execute(update(CatalogCache).values(expires_at=past_time))
     await db_session.commit()
 
     timeout_exc = httpx.TimeoutException("Request timed out after 4.0s")
@@ -261,18 +223,14 @@ async def test_catastrophic_outage_without_prior_cache_returns_local_fallback_20
 @pytest.mark.asyncio
 async def test_lot_creation_persists_immutable_artwork_snapshot_independent_of_external_api(
     client: httpx.AsyncClient,
+    db_session: AsyncSession,
 ):
-    reg = await client.post(
-        "/api/v1/auth/register",
-        json={
-            "name": "Curador Resiliencia",
-            "email": "curador_resiliencia@verzel.com.br",
-            "password": "StrongPassword123",
-            "role": "AUCTIONEER",
-        },
+    reg = await create_auctioneer(
+        db_session,
+        "Curador Resiliencia",
+        "curador_resiliencia@verzel.com.br",
     )
-    assert reg.status_code == 201
-    token = reg.json()["access_token"]
+    token = reg["access_token"]
 
     now = datetime.now(timezone.utc)
     create_resp = await client.post(

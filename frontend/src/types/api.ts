@@ -59,7 +59,6 @@ export interface CatalogItem {
 export interface Bid {
   id: string;
   lot_id: string;
-  user_id: string;
   bidder_masked_name: string;
   sequence_number: number;
   amount_cents: number;
@@ -67,15 +66,14 @@ export interface Bid {
   current_hash: string;
   extension_triggered: boolean;
   created_at: string;
+  is_own_bid: boolean;
 }
 
 export interface CertificateSummary {
   id: string;
   receipt_code: string;
   lot_id: string;
-  winner_user_id: string;
   winner_masked_name: string;
-  auctioneer_user_id: string;
   final_amount_cents: number;
   final_bid_hash: string;
   receipt_signature: string;
@@ -88,7 +86,6 @@ export type LotStatus = "SCHEDULED" | "LIVE" | "ENDED" | "CANCELLED";
 export interface Lot {
   id: string;
   lot_number: number;
-  auctioneer_id: string;
   external_artwork_id: string;
   title: string;
   artist: string;
@@ -99,7 +96,6 @@ export interface Lot {
   starting_bid_cents: number;
   min_increment_cents: number;
   current_bid_cents: number | null;
-  leader_user_id: string | null;
   leader_masked_name: string | null;
   start_time: string;
   end_time: string;
@@ -113,6 +109,8 @@ export interface Lot {
   created_at: string;
   certificate: CertificateSummary | null;
   bids: Bid[];
+  is_user_leading: boolean;
+  has_user_participated: boolean;
 }
 
 export interface LotCreatePayload {
@@ -199,23 +197,33 @@ export interface AuditNode {
   sequence_number: number;
   bid_id: string;
   bidder_masked_name: string;
+  bidder_pseudonym: string;
   amount_cents: number;
   created_at_iso: string;
   previous_hash: string;
   expected_previous_hash: string;
   stored_hash: string;
   recalculated_hash: string;
+  stored_signature: string;
+  node_signature: string;
+  is_signature_valid: boolean;
   is_valid: boolean;
+  status: string;
 }
 
 export interface AuditChain {
   lot_id: string;
   lot_number: number;
   title: string;
+  genesis_hash: string;
+  lot_seal: string;
+  is_lot_seal_valid: boolean;
   is_chain_valid: boolean;
+  is_intact: boolean;
   total_bids: number;
   head_hash: string;
   broken_at_sequence: number | null;
+  tampered_at_sequence: number | null;
   anomalies: string[];
   nodes: AuditNode[];
 }

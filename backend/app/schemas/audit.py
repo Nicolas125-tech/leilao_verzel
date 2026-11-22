@@ -13,7 +13,9 @@ class AuditNodeResponse(BaseModel):
     expected_previous_hash: str
     stored_hash: str
     recalculated_hash: str
+    stored_signature: str
     node_signature: str
+    is_signature_valid: bool
     is_valid: bool
     status: str
 
@@ -22,6 +24,9 @@ class AuditChainResponse(BaseModel):
     lot_id: UUID
     lot_number: int
     title: str
+    genesis_hash: str
+    lot_seal: str
+    is_lot_seal_valid: bool
     is_chain_valid: bool
     is_intact: bool
     total_bids: int

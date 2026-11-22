@@ -1,46 +1,10 @@
 from datetime import datetime, timedelta, timezone
 import httpx
 import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.crypto import GENESIS_HASH
-from app.core.database import get_db
-from app.main import app
-from app.models.base import Base
-
-
-@pytest_asyncio.fixture
-async def db_session():
-    test_engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    session_factory = async_sessionmaker(
-        bind=test_engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-        autoflush=False,
-    )
-
-    async with session_factory() as session:
-        yield session
-
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-    await test_engine.dispose()
-
-
-@pytest_asyncio.fixture
-async def client(db_session: AsyncSession):
-    async def _override_get_db():
-        yield db_session
-
-    app.dependency_overrides[get_db] = _override_get_db
-    transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
-    app.dependency_overrides.clear()
+from tests.conftest import create_auctioneer
 
 
 async def _register_user(client: httpx.AsyncClient, name: str, email: str, role: str) -> dict:
@@ -86,8 +50,11 @@ def _sample_lot_payload(
 
 
 @pytest.mark.asyncio
-async def test_auctioneer_can_create_lot_and_persist_full_artwork_snapshot(client: httpx.AsyncClient):
-    auctioneer = await _register_user(client, "Helena Curadora", "helena@verzel.com.br", "AUCTIONEER")
+async def test_auctioneer_can_create_lot_and_persist_full_artwork_snapshot(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    auctioneer = await create_auctioneer(db_session, "Helena Curadora", "helena@verzel.com.br")
     token = auctioneer["access_token"]
 
     payload = _sample_lot_payload()
@@ -112,9 +79,12 @@ async def test_auctioneer_can_create_lot_and_persist_full_artwork_snapshot(clien
 
 
 @pytest.mark.asyncio
-async def test_bidder_and_non_owner_permissions_on_lots(client: httpx.AsyncClient):
-    owner = await _register_user(client, "Leiloeiro Dono", "dono@verzel.com.br", "AUCTIONEER")
-    other_auctioneer = await _register_user(client, "Outro Leiloeiro", "outro@verzel.com.br", "AUCTIONEER")
+async def test_bidder_and_non_owner_permissions_on_lots(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    owner = await create_auctioneer(db_session, "Leiloeiro Dono", "dono@verzel.com.br")
+    other_auctioneer = await create_auctioneer(db_session, "Outro Leiloeiro", "outro@verzel.com.br")
     bidder = await _register_user(client, "Nicolas Licitante", "nicolas@verzel.com.br", "BIDDER")
 
     forbidden_create = await client.post(
@@ -148,8 +118,9 @@ async def test_bidder_and_non_owner_permissions_on_lots(client: httpx.AsyncClien
 @pytest.mark.asyncio
 async def test_public_showcase_lists_lots_with_search_status_filter_and_hides_cancelled(
     client: httpx.AsyncClient,
+    db_session: AsyncSession,
 ):
-    auctioneer = await _register_user(client, "Curador Chefe", "curador@verzel.com.br", "AUCTIONEER")
+    auctioneer = await create_auctioneer(db_session, "Curador Chefe", "curador@verzel.com.br")
     headers = {"Authorization": f"Bearer {auctioneer['access_token']}"}
 
     live_resp = await client.post(
@@ -217,8 +188,11 @@ async def test_public_showcase_lists_lots_with_search_status_filter_and_hides_ca
 
 
 @pytest.mark.asyncio
-async def test_lot_status_transitions_and_time_window_validation(client: httpx.AsyncClient):
-    auctioneer = await _register_user(client, "Curador Tempo", "tempo@verzel.com.br", "AUCTIONEER")
+async def test_lot_status_transitions_and_time_window_validation(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    auctioneer = await create_auctioneer(db_session, "Curador Tempo", "tempo@verzel.com.br")
     headers = {"Authorization": f"Bearer {auctioneer['access_token']}"}
 
     invalid_window = await client.post(

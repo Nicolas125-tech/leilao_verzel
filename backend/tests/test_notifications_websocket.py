@@ -3,48 +3,13 @@ from uuid import UUID
 from fastapi.testclient import TestClient
 import httpx
 import pytest
-import pytest_asyncio
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.websockets import WebSocketDisconnect
 
-from app.core.database import get_db
 from app.main import app
-from app.models.base import Base
 from app.models.lot import Lot
-
-
-@pytest_asyncio.fixture
-async def db_session():
-    test_engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    session_factory = async_sessionmaker(
-        bind=test_engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-        autoflush=False,
-    )
-
-    async with session_factory() as session:
-        yield session
-
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-    await test_engine.dispose()
-
-
-@pytest_asyncio.fixture
-async def client(db_session: AsyncSession):
-    async def _override_get_db():
-        yield db_session
-
-    app.dependency_overrides[get_db] = _override_get_db
-    transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
-    app.dependency_overrides.clear()
+from tests.conftest import create_auctioneer
 
 
 async def _register_and_fund(
@@ -110,8 +75,8 @@ async def test_outbid_notification_emitted_to_previous_leader_via_websocket(
     client: httpx.AsyncClient,
     db_session: AsyncSession,
 ):
-    auctioneer = await _register_and_fund(
-        client, "Helena Leiloeira", "helena@verzel.com.br", "AUCTIONEER"
+    auctioneer = await create_auctioneer(
+        db_session, "Helena Leiloeira", "helena@verzel.com.br"
     )
     user_a = await _register_and_fund(
         client, "Licitante A", "licitante_a@verzel.com.br", "BIDDER", 50000
@@ -199,8 +164,8 @@ async def test_anti_sniping_broadcasts_lot_extended(
     client: httpx.AsyncClient,
     db_session: AsyncSession,
 ):
-    auctioneer = await _register_and_fund(
-        client, "Helena Leiloeira", "helena_anti@verzel.com.br", "AUCTIONEER"
+    auctioneer = await create_auctioneer(
+        db_session, "Helena Leiloeira", "helena_anti@verzel.com.br"
     )
     bidder = await _register_and_fund(
         client, "Licitante C", "licitante_c@verzel.com.br", "BIDDER", 50000

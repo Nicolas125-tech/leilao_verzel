@@ -51,7 +51,7 @@ export const LotAuditPage: React.FC = () => {
             Auditoria da Cadeia de Lances
           </h1>
           <p className="mt-1 max-w-[72ch] font-serif italic text-sm text-paper-subtext dark:text-charcoal-subtext">
-            Recalcula cada hash desde o bloco GENESIS diretamente no banco de dados para confirmar que nenhum lance foi alterado ou excluído.
+            Valida o selo HMAC do lote e cada assinatura HMAC encadeada desde o bloco gênesis para confirmar que nenhum registro foi adulterado ou excluído.
           </p>
         </div>
 
@@ -93,20 +93,33 @@ export const LotAuditPage: React.FC = () => {
                   }`}
                 >
                   {audit.is_chain_valid
-                    ? "Histórico íntegro: cadeia de lances verificada"
-                    : `Adulteração detectada no banco de dados (sequência #${audit.broken_at_sequence ?? "?"})`}
+                    ? "Histórico íntegro: cadeia HMAC e selo do lote verificados"
+                    : audit.broken_at_sequence !== null
+                      ? `Adulteração detectada no banco de dados (sequência #${audit.broken_at_sequence})`
+                      : "Violação detectada no selo criptográfico do lote"}
                 </h2>
                 <p className="mt-1 font-serif text-xl font-bold text-paper-text dark:text-charcoal-text">
                   Lote #{audit.lot_number}: {audit.title}
                 </p>
               </div>
 
-              <div className="text-right font-mono text-xs tabular-nums">
+              <div className="text-right font-mono text-xs tabular-nums space-y-1">
                 <span className="block text-paper-subtext dark:text-charcoal-subtext">
                   Total de lances: <strong>{audit.total_bids}</strong>
                 </span>
                 <span className="block text-paper-subtext dark:text-charcoal-subtext">
                   Hash de topo: {audit.head_hash.slice(0, 20)}...
+                </span>
+                <span
+                  className={`block font-semibold ${
+                    audit.is_lot_seal_valid
+                      ? "text-status-winning"
+                      : "text-status-outbid"
+                  }`}
+                >
+                  Selo do lote (HMAC):{" "}
+                  {audit.is_lot_seal_valid ? "Válido" : "Violado"}{" "}
+                  {audit.lot_seal ? `(${audit.lot_seal.slice(0, 12)}...)` : "(ausente)"}
                 </span>
               </div>
             </div>
@@ -127,13 +140,15 @@ export const LotAuditPage: React.FC = () => {
 
           <section className="space-y-4">
             <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-4 font-mono text-xs shadow-card">
-              <span className="font-semibold text-gold">Bloco #0 (Raiz):</span>{" "}
-              <span className="text-paper-text dark:text-charcoal-text">GENESIS</span>
+              <span className="font-semibold text-gold">Bloco #0 (Gênesis):</span>{" "}
+              <span className="break-all text-paper-text dark:text-charcoal-text">
+                {audit.genesis_hash}
+              </span>
             </div>
 
             {audit.nodes.length === 0 ? (
               <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-surface dark:bg-charcoal-surface p-6 font-serif italic text-sm text-paper-subtext dark:text-charcoal-subtext shadow-card">
-                Este lote ainda não recebeu lances. O hash inicial permanece em GENESIS.
+                Este lote ainda não recebeu lances. O hash de topo permanece no bloco gênesis ({audit.genesis_hash.slice(0, 16)}...).
               </div>
             ) : (
               audit.nodes.map((node) => {
@@ -151,12 +166,12 @@ export const LotAuditPage: React.FC = () => {
                     }`}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-paper-border dark:border-charcoal-border pb-3">
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-3">
                         <span className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg px-2.5 py-1 font-mono text-xs font-bold tabular-nums">
                           Lance #{node.sequence_number}
                         </span>
                         <span className="font-mono text-xs font-semibold">
-                          Licitante: {node.bidder_masked_name}
+                          Pseudônimo LGPD: {node.bidder_pseudonym || node.bidder_masked_name}
                         </span>
                         <span className="font-mono text-xs text-paper-subtext dark:text-charcoal-subtext tabular-nums">
                           {node.created_at_iso}
@@ -200,7 +215,7 @@ export const LotAuditPage: React.FC = () => {
 
                       <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg p-3">
                         <span className="block text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
-                          Hash gravado vs. recalculado
+                          Hash HMAC gravado vs. recalculado
                         </span>
                         <p className="mt-1 break-all font-mono">
                           Gravado: {node.stored_hash}
@@ -213,6 +228,34 @@ export const LotAuditPage: React.FC = () => {
                           }`}
                         >
                           Calculado: {node.recalculated_hash}
+                        </p>
+                      </div>
+
+                      <div className="rounded-sm border border-paper-border dark:border-charcoal-border bg-paper-bg dark:bg-charcoal-bg p-3 md:col-span-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-xs font-medium text-paper-subtext dark:text-charcoal-subtext">
+                            Assinatura HMAC-SHA256 persistida no lance
+                          </span>
+                          <span
+                            className={`font-mono text-[11px] font-semibold uppercase ${
+                              node.is_signature_valid
+                                ? "text-status-winning"
+                                : "text-status-outbid"
+                            }`}
+                          >
+                            {node.is_signature_valid
+                              ? "Assinatura válida"
+                              : "Assinatura inválida ou ausente"}
+                          </span>
+                        </div>
+                        <p
+                          className={`mt-1 break-all font-mono ${
+                            node.is_signature_valid
+                              ? ""
+                              : "font-bold text-status-outbid"
+                          }`}
+                        >
+                          {node.stored_signature || "(ausente no banco de dados)"}
                         </p>
                       </div>
                     </div>

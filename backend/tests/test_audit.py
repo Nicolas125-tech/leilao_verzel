@@ -2,48 +2,12 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 import httpx
 import pytest
-import pytest_asyncio
-from sqlalchemy import select, update
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy import update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.crypto import GENESIS_HASH
-from app.core.database import get_db
-from app.main import app
-from app.models.base import Base
 from app.models.lot import Bid
-
-
-@pytest_asyncio.fixture
-async def db_session():
-    test_engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    session_factory = async_sessionmaker(
-        bind=test_engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-        autoflush=False,
-    )
-
-    async with session_factory() as session:
-        yield session
-
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-    await test_engine.dispose()
-
-
-@pytest_asyncio.fixture
-async def client(db_session: AsyncSession):
-    async def _override_get_db():
-        yield db_session
-
-    app.dependency_overrides[get_db] = _override_get_db
-    transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
-    app.dependency_overrides.clear()
+from tests.conftest import create_auctioneer
 
 
 async def _register_and_fund(
@@ -105,8 +69,8 @@ async def _create_live_lot(
 
 
 @pytest.mark.asyncio
-async def test_audit_empty_lot(client: httpx.AsyncClient):
-    auctioneer = await _register_and_fund(client, "Helena Leiloeira", "helena@verzel.com.br", "AUCTIONEER")
+async def test_audit_empty_lot(client: httpx.AsyncClient, db_session: AsyncSession):
+    auctioneer = await create_auctioneer(db_session, "Helena Leiloeira", "helena@verzel.com.br")
     lot = await _create_live_lot(client, auctioneer["access_token"])
     lot_id = lot["id"]
 
@@ -115,6 +79,8 @@ async def test_audit_empty_lot(client: httpx.AsyncClient):
     audit = resp.json()
 
     assert audit["lot_id"] == lot_id
+    assert audit["genesis_hash"] == GENESIS_HASH
+    assert audit["is_lot_seal_valid"] is True
     assert audit["is_chain_valid"] is True
     assert audit["total_bids"] == 0
     assert audit["head_hash"] == GENESIS_HASH
@@ -123,8 +89,8 @@ async def test_audit_empty_lot(client: httpx.AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_audit_valid_bid_chain(client: httpx.AsyncClient):
-    auctioneer = await _register_and_fund(client, "Helena Leiloeira", "helena@verzel.com.br", "AUCTIONEER")
+async def test_audit_valid_bid_chain(client: httpx.AsyncClient, db_session: AsyncSession):
+    auctioneer = await create_auctioneer(db_session, "Helena Leiloeira", "helena@verzel.com.br")
     bidder1 = await _register_and_fund(client, "Nicolas Brito", "nicolas@verzel.com.br", "BIDDER", 600000)
     bidder2 = await _register_and_fund(client, "Marina Silva", "marina@verzel.com.br", "BIDDER", 600000)
 
@@ -153,6 +119,7 @@ async def test_audit_valid_bid_chain(client: httpx.AsyncClient):
     audit = resp.json()
 
     assert audit["lot_id"] == lot_id
+    assert audit["is_lot_seal_valid"] is True
     assert audit["is_chain_valid"] is True
     assert audit["total_bids"] == 3
     assert audit["head_hash"] == last_bid_hash
@@ -160,9 +127,12 @@ async def test_audit_valid_bid_chain(client: httpx.AsyncClient):
     assert len(audit["nodes"]) == 3
     assert audit["nodes"][0]["sequence_number"] == 1
     assert audit["nodes"][0]["previous_hash"] == GENESIS_HASH
+    assert audit["nodes"][0]["is_signature_valid"] is True
+    assert audit["nodes"][0]["stored_signature"] == audit["nodes"][0]["node_signature"]
     assert audit["nodes"][0]["is_valid"] is True
     assert audit["nodes"][2]["sequence_number"] == 3
     assert audit["nodes"][2]["stored_hash"] == last_bid_hash
+    assert audit["nodes"][2]["is_signature_valid"] is True
     assert audit["nodes"][2]["is_valid"] is True
 
 
@@ -171,7 +141,7 @@ async def test_audit_tampered_bid_detection(
     client: httpx.AsyncClient,
     db_session: AsyncSession,
 ):
-    auctioneer = await _register_and_fund(client, "Helena Leiloeira", "helena@verzel.com.br", "AUCTIONEER")
+    auctioneer = await create_auctioneer(db_session, "Helena Leiloeira", "helena@verzel.com.br")
     bidder1 = await _register_and_fund(client, "Nicolas Brito", "nicolas@verzel.com.br", "BIDDER", 600000)
     bidder2 = await _register_and_fund(client, "Marina Silva", "marina@verzel.com.br", "BIDDER", 600000)
 
@@ -214,8 +184,8 @@ async def test_audit_tampered_bid_detection(
 
 
 @pytest.mark.asyncio
-async def test_audit_route_is_public(client: httpx.AsyncClient):
-    auctioneer = await _register_and_fund(client, "Helena Leiloeira", "helena@verzel.com.br", "AUCTIONEER")
+async def test_audit_route_is_public(client: httpx.AsyncClient, db_session: AsyncSession):
+    auctioneer = await create_auctioneer(db_session, "Helena Leiloeira", "helena@verzel.com.br")
     lot = await _create_live_lot(client, auctioneer["access_token"])
     lot_id = lot["id"]
 

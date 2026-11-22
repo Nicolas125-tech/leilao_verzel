@@ -1,10 +1,13 @@
 from datetime import datetime, timezone
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 from app.core.crypto import format_utc_iso
 from app.schemas.bid import BidResponse
+
+if TYPE_CHECKING:
+    from app.models.lot import Bid, Lot
 
 
 def _to_utc(dt: datetime) -> datetime:
@@ -43,9 +46,7 @@ class CertificateSummaryResponse(BaseModel):
     id: UUID
     receipt_code: str
     lot_id: UUID
-    winner_user_id: UUID
     winner_masked_name: str
-    auctioneer_user_id: UUID
     final_amount_cents: int
     final_bid_hash: str
     receipt_signature: str
@@ -62,7 +63,6 @@ class LotResponse(BaseModel):
 
     id: UUID
     lot_number: int
-    auctioneer_id: UUID
     external_artwork_id: str
     title: str
     artist: str
@@ -73,7 +73,6 @@ class LotResponse(BaseModel):
     starting_bid_cents: int
     min_increment_cents: int
     current_bid_cents: int | None = None
-    leader_user_id: UUID | None = None
     leader_masked_name: str | None = None
     start_time: datetime
     end_time: datetime
@@ -87,6 +86,27 @@ class LotResponse(BaseModel):
     created_at: datetime
     certificate: CertificateSummaryResponse | None = None
     bids: list[BidResponse] = Field(default_factory=list)
+    is_user_leading: bool = False
+    has_user_participated: bool = False
+
+
+def serialize_bid(bid: "Bid", viewer_user_id: UUID | None = None) -> BidResponse:
+    resp = BidResponse.model_validate(bid)
+    if viewer_user_id is not None:
+        resp.is_own_bid = (bid.user_id == viewer_user_id)
+    return resp
+
+
+def serialize_lot(lot: "Lot", viewer_user_id: UUID | None = None) -> LotResponse:
+    resp = LotResponse.model_validate(lot)
+    if viewer_user_id is not None:
+        for serialized_bid, raw_bid in zip(resp.bids, lot.bids or []):
+            serialized_bid.is_own_bid = (raw_bid.user_id == viewer_user_id)
+        resp.is_user_leading = bool(
+            lot.leader_user_id is not None and lot.leader_user_id == viewer_user_id
+        )
+        resp.has_user_participated = any(b.is_own_bid for b in resp.bids)
+    return resp
 
 
 class PublicReceiptResponse(BaseModel):

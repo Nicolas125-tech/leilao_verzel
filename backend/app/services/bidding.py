@@ -1,5 +1,6 @@
 import asyncio
 from collections import defaultdict
+from contextlib import nullcontext
 from datetime import timedelta
 import logging
 from uuid import UUID
@@ -8,12 +9,19 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.crypto import compute_bid_hash, format_utc_iso, generate_bidder_pseudonym
+from app.core.crypto import (
+    compute_bid_hash,
+    compute_node_signature,
+    format_utc_iso,
+    generate_bidder_pseudonym,
+)
 from app.models.base import utc_now
 from app.models.lot import Bid, Lot
 from app.models.user import User
 from app.models.wallet import Wallet, WalletTransaction
-from app.schemas.bid import BidCreateRequest, BidResponse
+from app.schemas.bid import BidCreateRequest
+from app.schemas.lot import serialize_bid
+from app.services.audit import build_lot_seal, verify_lot_integrity
 from app.services.lots import ensure_utc, resolve_lot_status
 from app.services.websocket import ws_manager
 
@@ -46,7 +54,9 @@ async def place_bid(
     lot_id: UUID,
     payload: BidCreateRequest,
 ) -> Bid:
-    async with _lot_locks[lot_id]:
+    bind = db.get_bind()
+    lock_ctx = _lot_locks[lot_id] if bind.dialect.name == "sqlite" else nullcontext()
+    async with lock_ctx:
         lot_query = await db.execute(
             select(Lot)
             .where(Lot.id == lot_id)
@@ -58,6 +68,13 @@ async def place_bid(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Lote não encontrado.",
+            )
+
+        is_intact, _ = await verify_lot_integrity(db, lot)
+        if not is_intact:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Integridade criptográfica do lote comprometida; novos lances bloqueados.",
             )
 
         now_utc = utc_now()
@@ -198,6 +215,15 @@ async def place_bid(
             created_at_iso=created_at_iso,
             previous_hash=previous_hash,
         )
+        node_signature = compute_node_signature(
+            lot_id=lot.id,
+            sequence_number=sequence_number,
+            pseudonym=bidder_pseudonym,
+            amount_cents=payload.amount_cents,
+            created_at_iso=created_at_iso,
+            previous_hash=previous_hash,
+            current_hash=current_hash,
+        )
 
         new_bid = Bid(
             lot_id=lot.id,
@@ -207,6 +233,7 @@ async def place_bid(
             amount_cents=payload.amount_cents,
             previous_hash=previous_hash,
             current_hash=current_hash,
+            node_signature=node_signature,
             extension_triggered=extension_triggered,
             created_at=bid_created_at,
         )
@@ -219,6 +246,7 @@ async def place_bid(
         lot.leader_masked_name = bidder.masked_name
         lot.bid_count = sequence_number
         lot.head_hash = current_hash
+        lot.integrity_seal = build_lot_seal(lot)
 
         await db.commit()
         await db.refresh(new_bid)
@@ -231,14 +259,13 @@ async def place_bid(
             bidder.masked_name,
         )
 
-        bid_payload = BidResponse.model_validate(new_bid).model_dump(mode="json")
+        bid_payload = serialize_bid(new_bid, viewer_user_id=None).model_dump(mode="json")
         lot_summary = {
             "lot_id": str(lot.id),
             "lot_number": lot.lot_number,
             "title": lot.title,
             "current_bid_cents": lot.current_bid_cents,
             "bid_count": lot.bid_count,
-            "leader_user_id": str(lot.leader_user_id) if lot.leader_user_id else None,
             "leader_masked_name": lot.leader_masked_name,
             "lot_end_time": format_utc_iso(lot.end_time),
             "extension_count": lot.extension_count,

@@ -1,46 +1,10 @@
 from datetime import datetime, timedelta, timezone
 import httpx
 import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.crypto import GENESIS_HASH
-from app.core.database import get_db
-from app.main import app
-from app.models.base import Base
-
-
-@pytest_asyncio.fixture
-async def db_session():
-    test_engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    session_factory = async_sessionmaker(
-        bind=test_engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-        autoflush=False,
-    )
-
-    async with session_factory() as session:
-        yield session
-
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-    await test_engine.dispose()
-
-
-@pytest_asyncio.fixture
-async def client(db_session: AsyncSession):
-    async def _override_get_db():
-        yield db_session
-
-    app.dependency_overrides[get_db] = _override_get_db
-    transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as ac:
-        yield ac
-    app.dependency_overrides.clear()
+from tests.conftest import create_auctioneer
 
 
 async def _create_user_and_deposit(
@@ -102,8 +66,11 @@ async def _create_lot(
 
 
 @pytest.mark.asyncio
-async def test_first_bid_acceptance_and_hash_chain(client: httpx.AsyncClient):
-    auctioneer = await _create_user_and_deposit(client, "Curador", "curador@verzel.com.br", "AUCTIONEER")
+async def test_first_bid_acceptance_and_hash_chain(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    auctioneer = await create_auctioneer(db_session, "Curador", "curador@verzel.com.br")
     bidder1 = await _create_user_and_deposit(client, "Nicolas Brito", "nicolas@verzel.com.br", "BIDDER", 300000)
 
     lot = await _create_lot(client, auctioneer["access_token"])
@@ -152,8 +119,11 @@ async def test_first_bid_acceptance_and_hash_chain(client: httpx.AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_outbid_and_immediate_balance_release(client: httpx.AsyncClient):
-    auctioneer = await _create_user_and_deposit(client, "Curador", "curador@verzel.com.br", "AUCTIONEER")
+async def test_outbid_and_immediate_balance_release(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    auctioneer = await create_auctioneer(db_session, "Curador", "curador@verzel.com.br")
     bidder1 = await _create_user_and_deposit(client, "Nicolas Brito", "nicolas@verzel.com.br", "BIDDER", 300000)
     bidder2 = await _create_user_and_deposit(client, "Marina Silva", "marina@verzel.com.br", "BIDDER", 300000)
 
@@ -210,8 +180,11 @@ async def test_outbid_and_immediate_balance_release(client: httpx.AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_bidding_rejection_rules(client: httpx.AsyncClient):
-    auctioneer = await _create_user_and_deposit(client, "Curador", "curador@verzel.com.br", "AUCTIONEER")
+async def test_bidding_rejection_rules(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    auctioneer = await create_auctioneer(db_session, "Curador", "curador@verzel.com.br")
     bidder1 = await _create_user_and_deposit(client, "Licitante Um", "lic1@verzel.com.br", "BIDDER", 300000)
     bidder2 = await _create_user_and_deposit(client, "Licitante Dois", "lic2@verzel.com.br", "BIDDER", 200000)
 
@@ -297,8 +270,11 @@ async def test_bidding_rejection_rules(client: httpx.AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_anti_sniping_extension(client: httpx.AsyncClient):
-    auctioneer = await _create_user_and_deposit(client, "Curador", "curador@verzel.com.br", "AUCTIONEER")
+async def test_anti_sniping_extension(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    auctioneer = await create_auctioneer(db_session, "Curador", "curador@verzel.com.br")
     bidder = await _create_user_and_deposit(client, "Licitante Rapido", "rapido@verzel.com.br", "BIDDER", 500000)
 
     sniping_lot = await _create_lot(
@@ -326,8 +302,11 @@ async def test_anti_sniping_extension(client: httpx.AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_cancelled_lot_refunds_committed_balance(client: httpx.AsyncClient):
-    auctioneer = await _create_user_and_deposit(client, "Curador", "curador@verzel.com.br", "AUCTIONEER")
+async def test_cancelled_lot_refunds_committed_balance(
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+):
+    auctioneer = await create_auctioneer(db_session, "Curador", "curador@verzel.com.br")
     bidder = await _create_user_and_deposit(client, "Licitante Estorno", "estorno@verzel.com.br", "BIDDER", 300000)
 
     lot = await _create_lot(client, auctioneer["access_token"])
