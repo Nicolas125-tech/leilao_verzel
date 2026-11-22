@@ -40,6 +40,7 @@ async def settlement_background_worker(interval_seconds: int = 15):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    settings.validate_production_secrets()
     logger.info("Iniciando motor de pregão Verzel no ambiente: %s", settings.ENVIRONMENT)
     try:
         async with engine.begin() as conn:

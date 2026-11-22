@@ -13,10 +13,12 @@ from sqlalchemy import (
     JSON,
     String,
     Text,
+    UniqueConstraint,
     Uuid,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.crypto import GENESIS_HASH
 from app.models.base import Base, TimestampMixin, utc_now
 
 if TYPE_CHECKING:
@@ -87,7 +89,12 @@ class Lot(Base, TimestampMixin):
     bid_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     head_hash: Mapped[str] = mapped_column(
         String(64),
-        default="GENESIS",
+        default=GENESIS_HASH,
+        nullable=False,
+    )
+    integrity_seal: Mapped[str] = mapped_column(
+        String(64),
+        default="",
         nullable=False,
     )
     cancelled_at: Mapped[datetime | None] = mapped_column(
@@ -144,7 +151,8 @@ class Bid(Base):
     sequence_number: Mapped[int] = mapped_column(Integer, nullable=False)
     amount_cents: Mapped[int] = mapped_column(BigInteger, nullable=False)
     previous_hash: Mapped[str] = mapped_column(String(64), nullable=False)
-    current_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    current_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    node_signature: Mapped[str] = mapped_column(String(64), default="", nullable=False)
     extension_triggered: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -154,6 +162,10 @@ class Bid(Base):
     )
 
     lot: Mapped["Lot"] = relationship("Lot", back_populates="bids")
+
+    __table_args__ = (
+        UniqueConstraint("lot_id", "sequence_number", name="uq_bid_lot_sequence"),
+    )
 
 
 class WinningCertificate(Base):

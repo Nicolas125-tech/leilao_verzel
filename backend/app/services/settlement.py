@@ -22,13 +22,19 @@ from app.schemas.lot import (
     ParticipatedLotItem,
     PublicReceiptResponse,
 )
+from app.services.audit import LotIntegrityError, verify_lot_integrity
 from app.services.websocket import ws_manager
 
 logger = logging.getLogger("verzel.auction.clearing")
 
 
 async def settle_lot(db: AsyncSession, lot: Lot) -> Lot:
-    res = await db.execute(select(Lot).where(Lot.id == lot.id).with_for_update())
+    res = await db.execute(
+        select(Lot)
+        .where(Lot.id == lot.id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
     locked_lot = res.scalar_one_or_none()
     if not locked_lot:
         return lot
@@ -38,6 +44,10 @@ async def settle_lot(db: AsyncSession, lot: Lot) -> Lot:
 
     if locked_lot.settled_at is not None and locked_lot.status == "ENDED":
         return locked_lot
+
+    is_intact, integrity_meta = await verify_lot_integrity(db, locked_lot)
+    if not is_intact:
+        raise LotIntegrityError(locked_lot.id, integrity_meta["anomalies"])
 
     now_utc = utc_now()
 
@@ -133,6 +143,7 @@ async def settle_lot(db: AsyncSession, lot: Lot) -> Lot:
         lot_id=locked_lot.id,
         winner_masked_name=winner_masked,
         final_amount_cents=final_amount,
+        final_bid_hash=locked_lot.head_hash,
         settled_at_iso=settled_at_iso,
     )
 
@@ -195,6 +206,7 @@ async def get_public_receipt(
         lot_id=cert.lot_id,
         winner_masked_name=cert.winner_masked_name,
         final_amount_cents=cert.final_amount_cents,
+        final_bid_hash=cert.final_bid_hash,
         settled_at_iso=settled_at_iso,
     )
 
@@ -337,7 +349,7 @@ async def get_auctioneer_dashboard(
 async def settle_expired_lots(db: AsyncSession) -> int:
     now_utc = utc_now()
     stmt = (
-        select(Lot)
+        select(Lot.id)
         .where(
             Lot.status == "LIVE",
             Lot.end_time <= now_utc,
@@ -345,9 +357,25 @@ async def settle_expired_lots(db: AsyncSession) -> int:
         .with_for_update(skip_locked=True)
     )
     res = await db.execute(stmt)
-    due_lots = list(res.scalars().all())
+    due_lot_ids = list(res.scalars().all())
     processed_count = 0
-    for lot in due_lots:
-        await settle_lot(db, lot)
-        processed_count += 1
+    for lot_id in due_lot_ids:
+        lot_res = await db.execute(
+            select(Lot)
+            .where(Lot.id == lot_id)
+            .execution_options(populate_existing=True)
+        )
+        lot = lot_res.scalar_one_or_none()
+        if not lot:
+            continue
+        try:
+            await settle_lot(db, lot)
+            processed_count += 1
+        except LotIntegrityError as exc:
+            await db.rollback()
+            logger.critical(
+                "Liquidação em background bloqueada para o Lote %s por falha de integridade: %s",
+                lot_id,
+                "; ".join(exc.anomalies),
+            )
     return processed_count

@@ -10,6 +10,7 @@ from app.core.database import get_db
 from app.main import app
 from app.models.base import Base
 from app.models.lot import Lot
+from app.services.audit import build_lot_seal
 
 
 @pytest_asyncio.fixture
@@ -108,6 +109,7 @@ async def _expire_lot_in_db(db_session: AsyncSession, lot_id: str) -> None:
     res = await db_session.execute(select(Lot).where(Lot.id == UUID(lot_id)))
     lot_obj = res.scalar_one()
     lot_obj.end_time = datetime.now(timezone.utc) - timedelta(seconds=10)
+    lot_obj.integrity_seal = build_lot_seal(lot_obj)
     await db_session.commit()
 
 

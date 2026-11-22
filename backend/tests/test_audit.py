@@ -115,6 +115,8 @@ async def test_audit_empty_lot(client: httpx.AsyncClient):
     audit = resp.json()
 
     assert audit["lot_id"] == lot_id
+    assert audit["genesis_hash"] == GENESIS_HASH
+    assert audit["is_lot_seal_valid"] is True
     assert audit["is_chain_valid"] is True
     assert audit["total_bids"] == 0
     assert audit["head_hash"] == GENESIS_HASH
@@ -153,6 +155,7 @@ async def test_audit_valid_bid_chain(client: httpx.AsyncClient):
     audit = resp.json()
 
     assert audit["lot_id"] == lot_id
+    assert audit["is_lot_seal_valid"] is True
     assert audit["is_chain_valid"] is True
     assert audit["total_bids"] == 3
     assert audit["head_hash"] == last_bid_hash
@@ -160,9 +163,12 @@ async def test_audit_valid_bid_chain(client: httpx.AsyncClient):
     assert len(audit["nodes"]) == 3
     assert audit["nodes"][0]["sequence_number"] == 1
     assert audit["nodes"][0]["previous_hash"] == GENESIS_HASH
+    assert audit["nodes"][0]["is_signature_valid"] is True
+    assert audit["nodes"][0]["stored_signature"] == audit["nodes"][0]["node_signature"]
     assert audit["nodes"][0]["is_valid"] is True
     assert audit["nodes"][2]["sequence_number"] == 3
     assert audit["nodes"][2]["stored_hash"] == last_bid_hash
+    assert audit["nodes"][2]["is_signature_valid"] is True
     assert audit["nodes"][2]["is_valid"] is True
 
 

@@ -199,23 +199,33 @@ export interface AuditNode {
   sequence_number: number;
   bid_id: string;
   bidder_masked_name: string;
+  bidder_pseudonym: string;
   amount_cents: number;
   created_at_iso: string;
   previous_hash: string;
   expected_previous_hash: string;
   stored_hash: string;
   recalculated_hash: string;
+  stored_signature: string;
+  node_signature: string;
+  is_signature_valid: boolean;
   is_valid: boolean;
+  status: string;
 }
 
 export interface AuditChain {
   lot_id: string;
   lot_number: number;
   title: string;
+  genesis_hash: string;
+  lot_seal: string;
+  is_lot_seal_valid: boolean;
   is_chain_valid: boolean;
+  is_intact: boolean;
   total_bids: number;
   head_hash: string;
   broken_at_sequence: number | null;
+  tampered_at_sequence: number | null;
   anomalies: string[];
   nodes: AuditNode[];
 }

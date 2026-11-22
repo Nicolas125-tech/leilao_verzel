@@ -2,10 +2,12 @@ from app.core.config import settings
 from app.core.crypto import (
     GENESIS_HASH,
     compute_bid_hash,
+    compute_lot_seal,
     compute_node_signature,
     generate_bidder_pseudonym,
     generate_receipt_signature,
     verify_bid_chain,
+    verify_lot_seal,
     verify_receipt_signature,
 )
 from app.core.database import AsyncSessionLocal, engine, get_db
@@ -20,9 +22,11 @@ __all__ = [
     "mask_name",
     "GENESIS_HASH",
     "compute_bid_hash",
+    "compute_lot_seal",
     "compute_node_signature",
     "generate_bidder_pseudonym",
     "verify_bid_chain",
+    "verify_lot_seal",
     "generate_receipt_signature",
     "verify_receipt_signature",
 ]

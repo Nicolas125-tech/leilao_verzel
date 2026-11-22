@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.core.crypto import (
     GENESIS_HASH,
     compute_bid_hash,
+    compute_node_signature,
     format_utc_iso,
     generate_bidder_pseudonym,
     generate_receipt_signature,
@@ -25,6 +26,7 @@ from app.models.lot import Bid, Lot, WinningCertificate
 from app.models.user import User
 from app.models.wallet import Wallet, WalletTransaction
 from app.services import catalog
+from app.services.audit import build_lot_seal
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +128,47 @@ async def _resolve_all_seed_artworks() -> dict[int, dict[str, Any]]:
         103: art_103,
         104: art_104,
     }
+
+
+def _build_seeded_bid(
+    lot_id: uuid.UUID,
+    bidder: User,
+    pseudonym: str,
+    sequence_number: int,
+    amount_cents: int,
+    previous_hash: str,
+    created_at,
+) -> Bid:
+    created_at_iso = format_utc_iso(created_at)
+    current_hash = compute_bid_hash(
+        lot_id=lot_id,
+        sequence_number=sequence_number,
+        bidder_masked_name=pseudonym,
+        amount_cents=amount_cents,
+        created_at_iso=created_at_iso,
+        previous_hash=previous_hash,
+    )
+    node_signature = compute_node_signature(
+        lot_id=lot_id,
+        sequence_number=sequence_number,
+        pseudonym=pseudonym,
+        amount_cents=amount_cents,
+        created_at_iso=created_at_iso,
+        previous_hash=previous_hash,
+        current_hash=current_hash,
+    )
+    return Bid(
+        lot_id=lot_id,
+        user_id=bidder.id,
+        bidder_masked_name=bidder.masked_name,
+        sequence_number=sequence_number,
+        amount_cents=amount_cents,
+        previous_hash=previous_hash,
+        current_hash=current_hash,
+        node_signature=node_signature,
+        extension_triggered=False,
+        created_at=created_at,
+    )
 
 
 def _build_user(name: str, email: str, role: str, password: str = "Verzel2026!") -> User:
@@ -237,32 +280,18 @@ async def run_seed(db: AsyncSession) -> None:
 
     lot_live_disputed_id = uuid.uuid4()
     b1_time = now - timedelta(minutes=25)
-    b1_hash = compute_bid_hash(
-        lot_id=lot_live_disputed_id,
-        sequence_number=1,
-        bidder_masked_name=nicolas_pseudo,
-        amount_cents=200000,
-        created_at_iso=format_utc_iso(b1_time),
-        previous_hash=GENESIS_HASH,
+    b1 = _build_seeded_bid(
+        lot_live_disputed_id, nicolas, nicolas_pseudo, 1, 200000, GENESIS_HASH, b1_time
     )
     b2_time = now - timedelta(minutes=18)
-    b2_hash = compute_bid_hash(
-        lot_id=lot_live_disputed_id,
-        sequence_number=2,
-        bidder_masked_name=marina_pseudo,
-        amount_cents=240000,
-        created_at_iso=format_utc_iso(b2_time),
-        previous_hash=b1_hash,
+    b2 = _build_seeded_bid(
+        lot_live_disputed_id, marina, marina_pseudo, 2, 240000, b1.current_hash, b2_time
     )
     b3_time = now - timedelta(minutes=9)
-    b3_hash = compute_bid_hash(
-        lot_id=lot_live_disputed_id,
-        sequence_number=3,
-        bidder_masked_name=nicolas_pseudo,
-        amount_cents=280000,
-        created_at_iso=format_utc_iso(b3_time),
-        previous_hash=b2_hash,
+    b3 = _build_seeded_bid(
+        lot_live_disputed_id, nicolas, nicolas_pseudo, 3, 280000, b2.current_hash, b3_time
     )
+    bids_103 = [b1, b2, b3]
 
     lot_live_disputed = Lot(
         id=lot_live_disputed_id,
@@ -280,28 +309,20 @@ async def run_seed(db: AsyncSession) -> None:
         extension_count=0,
         status="LIVE",
         bid_count=3,
-        head_hash=b3_hash,
+        head_hash=b3.current_hash,
     )
 
     lot_settled_id = uuid.uuid4()
     s1_time = now - timedelta(hours=3, minutes=20)
-    s1_hash = compute_bid_hash(
-        lot_id=lot_settled_id,
-        sequence_number=1,
-        bidder_masked_name=marina_pseudo,
-        amount_cents=260000,
-        created_at_iso=format_utc_iso(s1_time),
-        previous_hash=GENESIS_HASH,
+    s1 = _build_seeded_bid(
+        lot_settled_id, marina, marina_pseudo, 1, 260000, GENESIS_HASH, s1_time
     )
     s2_time = now - timedelta(hours=2, minutes=45)
-    s2_hash = compute_bid_hash(
-        lot_id=lot_settled_id,
-        sequence_number=2,
-        bidder_masked_name=nicolas_pseudo,
-        amount_cents=320000,
-        created_at_iso=format_utc_iso(s2_time),
-        previous_hash=s1_hash,
+    s2 = _build_seeded_bid(
+        lot_settled_id, nicolas, nicolas_pseudo, 2, 320000, s1.current_hash, s2_time
     )
+    bids_104 = [s1, s2]
+    s2_hash = s2.current_hash
     settled_time = now - timedelta(hours=2)
 
     lot_settled = Lot(
@@ -356,77 +377,19 @@ async def run_seed(db: AsyncSession) -> None:
         cancelled_at=cancelled_time,
     )
 
-    db.add_all(
-        [
-            lot_scheduled,
-            lot_live_empty,
-            lot_live_disputed,
-            lot_settled,
-            lot_cancelled,
-        ]
-    )
+    seeded_lots = [
+        lot_scheduled,
+        lot_live_empty,
+        lot_live_disputed,
+        lot_settled,
+        lot_cancelled,
+    ]
+    for seeded_lot in seeded_lots:
+        seeded_lot.integrity_seal = build_lot_seal(seeded_lot)
+
+    db.add_all(seeded_lots)
     await db.flush()
 
-    bids_103 = [
-        Bid(
-            lot_id=lot_live_disputed.id,
-            user_id=nicolas.id,
-            bidder_masked_name=nicolas.masked_name,
-            sequence_number=1,
-            amount_cents=200000,
-            previous_hash=GENESIS_HASH,
-            current_hash=b1_hash,
-            extension_triggered=False,
-            created_at=b1_time,
-        ),
-        Bid(
-            lot_id=lot_live_disputed.id,
-            user_id=marina.id,
-            bidder_masked_name=marina.masked_name,
-            sequence_number=2,
-            amount_cents=240000,
-            previous_hash=b1_hash,
-            current_hash=b2_hash,
-            extension_triggered=False,
-            created_at=b2_time,
-        ),
-        Bid(
-            lot_id=lot_live_disputed.id,
-            user_id=nicolas.id,
-            bidder_masked_name=nicolas.masked_name,
-            sequence_number=3,
-            amount_cents=280000,
-            previous_hash=b2_hash,
-            current_hash=b3_hash,
-            extension_triggered=False,
-            created_at=b3_time,
-        ),
-    ]
-
-    bids_104 = [
-        Bid(
-            lot_id=lot_settled.id,
-            user_id=marina.id,
-            bidder_masked_name=marina.masked_name,
-            sequence_number=1,
-            amount_cents=260000,
-            previous_hash=GENESIS_HASH,
-            current_hash=s1_hash,
-            extension_triggered=False,
-            created_at=s1_time,
-        ),
-        Bid(
-            lot_id=lot_settled.id,
-            user_id=nicolas.id,
-            bidder_masked_name=nicolas.masked_name,
-            sequence_number=2,
-            amount_cents=320000,
-            previous_hash=s1_hash,
-            current_hash=s2_hash,
-            extension_triggered=False,
-            created_at=s2_time,
-        ),
-    ]
     db.add_all(bids_103 + bids_104)
 
     receipt_code = f"ARP-{settled_time.year}-104A9F"
@@ -436,6 +399,7 @@ async def run_seed(db: AsyncSession) -> None:
         lot_id=lot_settled.id,
         winner_masked_name=nicolas.masked_name,
         final_amount_cents=320000,
+        final_bid_hash=s2_hash,
         settled_at_iso=settled_at_iso,
     )
     certificate = WinningCertificate(

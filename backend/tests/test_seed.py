@@ -6,7 +6,7 @@ import pytest_asyncio
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.core.crypto import verify_receipt_signature
+from app.core.crypto import format_utc_iso, verify_receipt_signature
 from app.models.base import Base, utc_now
 from app.models.lot import Bid, Lot, WinningCertificate
 from app.models.user import User
@@ -84,12 +84,14 @@ async def test_seed_populates_all_lifecycle_states(db_session: AsyncSession):
         lot_id=cert.lot_id,
         winner_masked_name=cert.winner_masked_name,
         final_amount_cents=cert.final_amount_cents,
-        settled_at_iso=cert.settled_at.isoformat() if cert.settled_at.tzinfo else f"{cert.settled_at.isoformat()}+00:00",
+        final_bid_hash=cert.final_bid_hash,
+        settled_at_iso=format_utc_iso(cert.settled_at),
     )
 
     disputed_lot = live_with_bids[0]
     audit = await audit_lot_bid_chain(db_session, disputed_lot.id)
     assert audit.is_chain_valid is True
+    assert audit.is_lot_seal_valid is True
     assert audit.total_bids == disputed_lot.bid_count
     assert audit.head_hash == disputed_lot.head_hash
 
@@ -195,7 +197,8 @@ async def test_seed_with_active_external_api_uses_cleveland_images(db_session: A
         lot_id=cert.lot_id,
         winner_masked_name=cert.winner_masked_name,
         final_amount_cents=cert.final_amount_cents,
-        settled_at_iso=cert.settled_at.isoformat() if cert.settled_at.tzinfo else f"{cert.settled_at.isoformat()}+00:00",
+        final_bid_hash=cert.final_bid_hash,
+        settled_at_iso=format_utc_iso(cert.settled_at),
     )
 
 
@@ -217,6 +220,7 @@ async def test_seed_with_unavailable_external_api_falls_back_to_local_svg(db_ses
 
     audit_103 = await audit_lot_bid_chain(db_session, lots_by_number[103].id)
     assert audit_103.is_chain_valid is True
+    assert audit_103.is_lot_seal_valid is True
     assert audit_103.total_bids == 3
 
     cert = lots_by_number[104].certificate
@@ -227,5 +231,6 @@ async def test_seed_with_unavailable_external_api_falls_back_to_local_svg(db_ses
         lot_id=cert.lot_id,
         winner_masked_name=cert.winner_masked_name,
         final_amount_cents=cert.final_amount_cents,
-        settled_at_iso=cert.settled_at.isoformat() if cert.settled_at.tzinfo else f"{cert.settled_at.isoformat()}+00:00",
+        final_bid_hash=cert.final_bid_hash,
+        settled_at_iso=format_utc_iso(cert.settled_at),
     )

@@ -1,6 +1,7 @@
 import copy
 from datetime import datetime, timezone
 import logging
+import uuid
 from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy import func, or_, select
@@ -15,6 +16,11 @@ from app.schemas.lot import (
     DisputeItem,
     LotCreateRequest,
     MyDisputesResponse,
+)
+from app.services.audit import (
+    LotIntegrityError,
+    build_lot_seal,
+    verify_lot_integrity,
 )
 from app.services.settlement import settle_lot
 from app.services.websocket import ws_manager
@@ -49,7 +55,16 @@ async def sync_lot_temporal_state(db: AsyncSession, lot: Lot) -> Lot:
     now_utc = datetime.now(timezone.utc)
     resolved = resolve_lot_status(lot, now_utc)
     if resolved == "ENDED" and (lot.status != "ENDED" or lot.settled_at is None):
-        return await settle_lot(db, lot)
+        try:
+            return await settle_lot(db, lot)
+        except LotIntegrityError as exc:
+            logger.critical(
+                "Bloqueio de liquidação do Lote #%s (%s) por falha de integridade: %s",
+                lot.lot_number,
+                lot.id,
+                "; ".join(exc.anomalies),
+            )
+            return lot
 
     if resolved != lot.status:
         lot.status = resolved
@@ -82,6 +97,7 @@ async def create_lot(
     snapshot_attributes = copy.deepcopy(dict(payload.attributes_json or {}))
 
     lot = Lot(
+        id=uuid.uuid4(),
         lot_number=next_number,
         auctioneer_id=auctioneer.id,
         external_artwork_id=str(payload.external_artwork_id).strip(),
@@ -105,6 +121,7 @@ async def create_lot(
         head_hash=GENESIS_HASH,
         settled_at=now_utc if initial_status == "ENDED" else None,
     )
+    lot.integrity_seal = build_lot_seal(lot)
     db.add(lot)
     await db.commit()
     await db.refresh(lot)
@@ -136,7 +153,7 @@ async def list_public_lots(
             )
         )
 
-    result = await db.execute(stmt)
+    result = await db.execute(stmt.execution_options(populate_existing=True))
     lots = list(result.scalars().all())
 
     synced_lots: list[Lot] = []
@@ -152,7 +169,9 @@ async def list_public_lots(
 
 
 async def get_lot_by_id(db: AsyncSession, lot_id: UUID) -> Lot:
-    result = await db.execute(select(Lot).where(Lot.id == lot_id))
+    result = await db.execute(
+        select(Lot).where(Lot.id == lot_id).execution_options(populate_existing=True)
+    )
     lot = result.scalar_one_or_none()
     if not lot:
         raise HTTPException(
@@ -163,7 +182,12 @@ async def get_lot_by_id(db: AsyncSession, lot_id: UUID) -> Lot:
 
 
 async def cancel_lot(db: AsyncSession, auctioneer: User, lot_id: UUID) -> Lot:
-    result = await db.execute(select(Lot).where(Lot.id == lot_id).with_for_update())
+    result = await db.execute(
+        select(Lot)
+        .where(Lot.id == lot_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
     lot = result.scalar_one_or_none()
     if not lot:
         raise HTTPException(
@@ -175,6 +199,13 @@ async def cancel_lot(db: AsyncSession, auctioneer: User, lot_id: UUID) -> Lot:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Apenas o leiloeiro responsável por este lote pode cancelá-lo.",
+        )
+
+    is_intact, _ = await verify_lot_integrity(db, lot)
+    if not is_intact:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Integridade criptográfica do lote comprometida; cancelamento bloqueado.",
         )
 
     now_utc = datetime.now(timezone.utc)

@@ -8,12 +8,18 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.crypto import compute_bid_hash, format_utc_iso, generate_bidder_pseudonym
+from app.core.crypto import (
+    compute_bid_hash,
+    compute_node_signature,
+    format_utc_iso,
+    generate_bidder_pseudonym,
+)
 from app.models.base import utc_now
 from app.models.lot import Bid, Lot
 from app.models.user import User
 from app.models.wallet import Wallet, WalletTransaction
 from app.schemas.bid import BidCreateRequest, BidResponse
+from app.services.audit import build_lot_seal, verify_lot_integrity
 from app.services.lots import ensure_utc, resolve_lot_status
 from app.services.websocket import ws_manager
 
@@ -58,6 +64,13 @@ async def place_bid(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Lote não encontrado.",
+            )
+
+        is_intact, _ = await verify_lot_integrity(db, lot)
+        if not is_intact:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Integridade criptográfica do lote comprometida; novos lances bloqueados.",
             )
 
         now_utc = utc_now()
@@ -198,6 +211,15 @@ async def place_bid(
             created_at_iso=created_at_iso,
             previous_hash=previous_hash,
         )
+        node_signature = compute_node_signature(
+            lot_id=lot.id,
+            sequence_number=sequence_number,
+            pseudonym=bidder_pseudonym,
+            amount_cents=payload.amount_cents,
+            created_at_iso=created_at_iso,
+            previous_hash=previous_hash,
+            current_hash=current_hash,
+        )
 
         new_bid = Bid(
             lot_id=lot.id,
@@ -207,6 +229,7 @@ async def place_bid(
             amount_cents=payload.amount_cents,
             previous_hash=previous_hash,
             current_hash=current_hash,
+            node_signature=node_signature,
             extension_triggered=extension_triggered,
             created_at=bid_created_at,
         )
@@ -219,6 +242,7 @@ async def place_bid(
         lot.leader_masked_name = bidder.masked_name
         lot.bid_count = sequence_number
         lot.head_hash = current_hash
+        lot.integrity_seal = build_lot_seal(lot)
 
         await db.commit()
         await db.refresh(new_bid)

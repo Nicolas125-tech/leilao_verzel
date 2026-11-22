@@ -13,6 +13,7 @@ from app.main import app
 from app.models.base import Base
 from app.models.lot import Lot
 from app.models.wallet import Wallet
+from app.services.audit import build_lot_seal
 
 
 @pytest_asyncio.fixture
@@ -110,6 +111,7 @@ async def _expire_lot_in_db(db_session: AsyncSession, lot_id: str) -> None:
     res = await db_session.execute(select(Lot).where(Lot.id == UUID(lot_id)))
     lot_obj = res.scalar_one()
     lot_obj.end_time = datetime.now(timezone.utc) - timedelta(seconds=10)
+    lot_obj.integrity_seal = build_lot_seal(lot_obj)
     await db_session.commit()
 
 
@@ -151,6 +153,7 @@ async def test_lot_settlement_transfers_balance_and_creates_signed_receipt(
         lot_id=lot_id,
         winner_masked_name=cert["winner_masked_name"],
         final_amount_cents=cert["final_amount_cents"],
+        final_bid_hash=cert["final_bid_hash"],
         settled_at_iso=cert["settled_at_iso"],
     )
 
